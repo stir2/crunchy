@@ -1,11 +1,113 @@
 extends Node
+## Global game state (autoload "GameController"): day loop, souls, Rations, stats.
+## The numbers here are placeholders until the quota table exists.
+
+signal day_started(day: int)
+## quota_met is false when the monster should take a villager.
+signal day_ended(day: int, quota_met: bool)
+signal finale_reached(village_health: int)
+signal trips_changed(trips_left: int)
+signal souls_changed(souls: int)
+signal rations_changed(rations: int)
+signal village_health_changed(village_health: int)
+signal stats_changed(stats: Dictionary)
+
+const RUN_LENGTH := 10
+const TRIPS_PER_DAY := 3
+# 4 starting villagers, 2 days of upkeep each
+const STARTING_RATIONS := 8
+
+const BASE_STATS := {
+	"max_health": 100,
+	"damage": 10,
+	"max_stamina": 100,
+	"map_range": 1,
+}
+
+var day: int = 1
+var trips_left: int = TRIPS_PER_DAY:
+	set(value):
+		trips_left = maxi(value, 0)
+		trips_changed.emit(trips_left)
+# Souls banked today. Only the toll spends them, and they reset every day.
+var souls: int = 0:
+	set(value):
+		souls = maxi(value, 0)
+		souls_changed.emit(souls)
+var rations: int = STARTING_RATIONS:
+	set(value):
+		rations = maxi(value, 0)
+		rations_changed.emit(rations)
+var village_health: int = 100:
+	set(value):
+		village_health = clampi(value, 0, 100)
+		village_health_changed.emit(village_health)
+
+# BASE_STATS plus building bonuses. Read it from anywhere, but change bonuses
+# through set_stat_bonus() so stats_changed fires.
+var stats: Dictionary = BASE_STATS.duplicate()
+var stat_bonuses: Dictionary = {}
 
 
-# Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	pass # Replace with function body.
+	recalculate_stats()
+	start_day()
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
+# Placeholder curve, replace once the quota table is tuned.
+func quota_for_day(for_day: int) -> int:
+	return 5 + 3 * (for_day - 1)
+
+
+func current_quota() -> int:
+	return quota_for_day(day)
+
+
+func set_stat_bonus(key: String, value: int) -> void:
+	stat_bonuses[key] = value
+	recalculate_stats()
+
+
+func recalculate_stats() -> void:
+	stats = BASE_STATS.duplicate()
+	for key in stat_bonuses:
+		stats[key] = stats.get(key, 0) + stat_bonuses[key]
+	stats_changed.emit(stats)
+
+
+func add_souls(amount: int) -> void:
+	souls += amount
+
+
+func spend_rations(amount: int) -> bool:
+	if rations < amount:
+		return false
+	rations -= amount
+	return true
+
+
+## Returns false when no trips are left. Dying in the abyss also costs a trip.
+func use_trip() -> bool:
+	if trips_left <= 0:
+		return false
+	trips_left -= 1
+	return true
+
+
+func start_day() -> void:
+	souls = 0
+	trips_left = TRIPS_PER_DAY
+	day_started.emit(day)
+
+
+## Called when the player sleeps at the desk. The last day has no toll, so
+## it hands off to the finale instead of starting another day.
+func end_day() -> void:
+	if day >= RUN_LENGTH:
+		return
+	day_ended.emit(day, souls >= current_quota())
+	day += 1
+	if day >= RUN_LENGTH:
+		finale_reached.emit(village_health)
+	else:
+		start_day()

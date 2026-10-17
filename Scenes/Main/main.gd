@@ -1,11 +1,22 @@
 extends Node
+## Root scene. Holds whichever top-level scene is active (house, abyss, cutscene).
+## Switch scenes with: get_tree().current_scene.change_scene("res://Scenes/...tscn")
+
+const HOUSE_SCENE := "res://Scenes/Village/House/house.tscn"
+
+var active_scene: Node
 
 
-# Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	pass # Replace with function body.
+	change_scene(HOUSE_SCENE)
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
+func change_scene(path: String) -> void:
+	var packed := load(path) as PackedScene
+	if packed == null:
+		push_error("change_scene: could not load %s" % path)
+		return
+	if active_scene != null:
+		active_scene.queue_free()
+	active_scene = packed.instantiate()
+	add_child(active_scene)
