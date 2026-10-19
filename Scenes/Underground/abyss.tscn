@@ -1,0 +1,114 @@
+[gd_scene format=3 uid="uid://c6bvh2518eupx"]
+
+[ext_resource type="Script" path="res://Scenes/Underground/abyss.gd" id="1_abyss"]
+[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/bar_empty.png" id="2_barempty"]
+[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/bar_health.png" id="3_bargreen"]
+[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/bar_stamina.png" id="4_barorange"]
+[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/button_normal.png" id="5_btnnorm"]
+[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/button_hover.png" id="6_btnhover"]
+[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/button_pressed.png" id="7_btnpress"]
+[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/button_disabled.png" id="8_btndis"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_norm"]
+texture = ExtResource("5_btnnorm")
+texture_margin_left = 6.0
+texture_margin_top = 5.0
+texture_margin_right = 6.0
+texture_margin_bottom = 5.0
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_hover"]
+texture = ExtResource("6_btnhover")
+texture_margin_left = 6.0
+texture_margin_top = 5.0
+texture_margin_right = 6.0
+texture_margin_bottom = 5.0
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_press"]
+texture = ExtResource("7_btnpress")
+texture_margin_left = 6.0
+texture_margin_top = 5.0
+texture_margin_right = 6.0
+texture_margin_bottom = 5.0
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_dis"]
+texture = ExtResource("8_btndis")
+texture_margin_left = 6.0
+texture_margin_top = 5.0
+texture_margin_right = 6.0
+texture_margin_bottom = 5.0
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_focus"]
+
+[node name="abyss" type="Node2D"]
+script = ExtResource("1_abyss")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="MarginContainer" type="MarginContainer" parent="HUD"]
+offset_right = 296.0
+offset_bottom = 140.0
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HUD/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HPBar" type="TextureProgressBar" parent="HUD/MarginContainer/VBoxContainer"]
+texture_filter = 1
+custom_minimum_size = Vector2(256, 32)
+layout_mode = 2
+nine_patch_stretch = true
+stretch_margin_left = 4
+stretch_margin_top = 2
+stretch_margin_right = 4
+stretch_margin_bottom = 2
+texture_under = ExtResource("2_barempty")
+texture_over = ExtResource("2_barempty")
+texture_progress = ExtResource("3_bargreen")
+
+[node name="StaminaBar" type="TextureProgressBar" parent="HUD/MarginContainer/VBoxContainer"]
+texture_filter = 1
+custom_minimum_size = Vector2(256, 32)
+layout_mode = 2
+nine_patch_stretch = true
+stretch_margin_left = 4
+stretch_margin_top = 2
+stretch_margin_right = 4
+stretch_margin_bottom = 2
+texture_under = ExtResource("2_barempty")
+texture_over = ExtResource("2_barempty")
+texture_progress = ExtResource("4_barorange")
+
+[node name="ReturnButton" type="Button" parent="HUD/MarginContainer/VBoxContainer"]
+texture_filter = 1
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.1, 0.11, 0.14, 1)
+theme_override_colors/font_hover_color = Color(0.04, 0.04, 0.06, 1)
+theme_override_colors/font_pressed_color = Color(0.18, 0.19, 0.22, 1)
+theme_override_font_sizes/font_size = 15
+theme_override_styles/focus = SubResource("StyleBoxEmpty_focus")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_btn_dis")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn_press")
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn_norm")
+text = "Return to House"

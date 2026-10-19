@@ -1,26 +1,40 @@
 extends Node2D
 
-# Not built yet.
 const ABYSS_SCENE := "res://Scenes/Underground/abyss.tscn"
 
 @onready var camera: HouseCamera = $Camera2D
 @onready var hotspots: Node2D = $Hotspots
 @onready var village_panel: Control = $UI/VillagePanel
-@onready var info_label: Label = $UI/VillagePanel/VBox/InfoLabel
-@onready var close_button: Button = $UI/VillagePanel/VBox/CloseButton
-@onready var sleep_button: Button = $UI/VillagePanel/VBox/SleepButton
+@onready var info_label: Label = %InfoLabel
+@onready var close_button: Button = %CloseButton
+@onready var close_x_button: TextureButton = %CloseXButton
+@onready var sleep_button: Button = %SleepButton
+@onready var day_label: Label = %DayLabel
+@onready var toll_label: Label = %TollLabel
+@onready var rations_label: Label = %RationsLabel
+@onready var trips_label: Label = %TripsLabel
 
 
 func _ready() -> void:
+	# Set custom cursor provided by user
+	var cursor_tex: Texture2D = load("res://Assets/Sprites/UI/cursor.png")
+	if cursor_tex != null:
+		Input.set_custom_mouse_cursor(cursor_tex, Input.CURSOR_ARROW)
+		Input.set_custom_mouse_cursor(cursor_tex, Input.CURSOR_POINTING_HAND)
+
 	for hotspot: Hotspot in hotspots.get_children():
 		hotspot.activated.connect(_on_hotspot_activated)
 	close_button.pressed.connect(_close_panel)
+	if close_x_button != null:
+		close_x_button.pressed.connect(_close_panel)
 	sleep_button.pressed.connect(_on_sleep_pressed)
 
 	GameController.day_started.connect(_refresh_info.unbind(1))
 	GameController.souls_changed.connect(_refresh_info.unbind(1))
 	GameController.rations_changed.connect(_refresh_info.unbind(1))
 	GameController.trips_changed.connect(_refresh_info.unbind(1))
+	GameController.health_changed.connect(_refresh_info.unbind(2))
+	GameController.stamina_changed.connect(_refresh_info.unbind(2))
 
 	village_panel.hide()
 	_refresh_info()
@@ -76,10 +90,14 @@ func _on_sleep_pressed() -> void:
 
 
 func _refresh_info() -> void:
-	info_label.text = "Day %d  |  Quota %d  |  Souls %d  |  Rations %d  |  Trips left %d" % [
-		GameController.day,
-		GameController.current_quota(),
-		GameController.souls,
-		GameController.rations,
-		GameController.trips_left,
+	day_label.text = "Day %d/%d" % [GameController.day, GameController.RUN_LENGTH]
+	toll_label.text = "%d / %d Souls" % [GameController.souls, GameController.current_quota()]
+	rations_label.text = "%d Tokens" % GameController.rations
+	trips_label.text = "%d/%d Trips" % [GameController.trips_left, GameController.TRIPS_PER_DAY]
+	info_label.text = "Village Health: %d%%  |  Chief: %d/%d HP  |  %d/%d Stamina" % [
+		GameController.village_health,
+		GameController.health,
+		GameController.stats.get("max_health", 100),
+		GameController.stamina,
+		GameController.stats.get("max_stamina", 100),
 	]

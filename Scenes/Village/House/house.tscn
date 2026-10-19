@@ -4,6 +4,15 @@
 [ext_resource type="Texture2D" uid="uid://c76001q87sh2d" path="res://Assets/Sprites/House/placeholder.png" id="1_v8hko"]
 [ext_resource type="Script" uid="uid://c34sfp0ffipoh" path="res://Scenes/Village/House/camera_pan.gd" id="3_gaml6"]
 [ext_resource type="Script" uid="uid://cfvy342u762ba" path="res://Scenes/Village/House/hotspot.gd" id="4_edaox"]
+[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/panel_parchment.png" id="5_parchment"]
+[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/ui_frame.png" id="6_uiframe"]
+[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/icon_close_x.png" id="7_closex"]
+[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/icon_soul.png" id="8_soul"]
+[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/icon_ration.png" id="9_ration"]
+[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/button_normal.png" id="10_btnnorm"]
+[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/button_hover.png" id="11_btnhover"]
+[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/button_pressed.png" id="12_btnpress"]
+[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/button_disabled.png" id="13_btndis"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_xux64"]
 size = Vector2(1114, 1080)
@@ -13,6 +22,52 @@ size = Vector2(1612, 1080)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_qfnau"]
 size = Vector2(1114, 1080)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_norm"]
+texture = ExtResource("10_btnnorm")
+texture_margin_left = 6.0
+texture_margin_top = 5.0
+texture_margin_right = 6.0
+texture_margin_bottom = 5.0
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_hover"]
+texture = ExtResource("11_btnhover")
+texture_margin_left = 6.0
+texture_margin_top = 5.0
+texture_margin_right = 6.0
+texture_margin_bottom = 5.0
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_press"]
+texture = ExtResource("12_btnpress")
+texture_margin_left = 6.0
+texture_margin_top = 5.0
+texture_margin_right = 6.0
+texture_margin_bottom = 5.0
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_dis"]
+texture = ExtResource("13_btndis")
+texture_margin_left = 6.0
+texture_margin_top = 5.0
+texture_margin_right = 6.0
+texture_margin_bottom = 5.0
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_focus"]
 
 [node name="house" type="Node2D" unique_id=1401054728]
 script = ExtResource("1_7x8k6")
@@ -52,30 +107,174 @@ shape = SubResource("RectangleShape2D_qfnau")
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1007732978]
 
-[node name="VillagePanel" type="PanelContainer" parent="UI" unique_id=869373022]
-custom_minimum_size = Vector2(700, 300)
+[node name="VillagePanel" type="MarginContainer" parent="UI" unique_id=869373022]
+texture_filter = 1
+custom_minimum_size = Vector2(740, 270)
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -20.0
-offset_top = -23.5
-offset_right = 20.0
-offset_bottom = 23.5
+offset_left = -370.0
+offset_top = -135.0
+offset_right = 370.0
+offset_bottom = 135.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="UI/VillagePanel" unique_id=1693364093]
+[node name="PaperBg" type="NinePatchRect" parent="UI/VillagePanel" unique_id=3101]
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("5_parchment")
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
+
+[node name="FrameBorder" type="NinePatchRect" parent="UI/VillagePanel" unique_id=3102]
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("6_uiframe")
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
+
+[node name="ContentMargin" type="MarginContainer" parent="UI/VillagePanel" unique_id=3103]
+layout_mode = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="UI/VillagePanel/ContentMargin" unique_id=1693364093]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="HeaderRow" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=3001]
+layout_mode = 2
+alignment = 1
+
+[node name="LeftSpacer" type="Control" parent="UI/VillagePanel/ContentMargin/VBox/HeaderRow" unique_id=3002]
+custom_minimum_size = Vector2(16, 0)
 layout_mode = 2
 
-[node name="InfoLabel" type="Label" parent="UI/VillagePanel/VBox" unique_id=1765928910]
+[node name="TitleLabel" type="Label" parent="UI/VillagePanel/ContentMargin/VBox/HeaderRow" unique_id=3003]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
+theme_override_font_sizes/font_size = 20
+text = "CHIEF'S LEDGER"
+horizontal_alignment = 1
+
+[node name="CloseXButton" type="TextureButton" parent="UI/VillagePanel/ContentMargin/VBox/HeaderRow" unique_id=3004]
+unique_name_in_owner = true
+texture_filter = 1
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+texture_normal = ExtResource("7_closex")
+stretch_mode = 3
+
+[node name="ResourceRow" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=3005]
+layout_mode = 2
+theme_override_constants/separation = 28
+alignment = 1
+
+[node name="DayBox" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox/ResourceRow" unique_id=3006]
 layout_mode = 2
 
-[node name="CloseButton" type="Button" parent="UI/VillagePanel/VBox" unique_id=262337837]
+[node name="DayLabel" type="Label" parent="UI/VillagePanel/ContentMargin/VBox/ResourceRow/DayBox" unique_id=3008]
+unique_name_in_owner = true
 layout_mode = 2
-text = "Close"
+theme_override_colors/font_color = Color(0.22, 0.18, 0.14, 1)
+text = "Day 1/10"
 
-[node name="SleepButton" type="Button" parent="UI/VillagePanel/VBox" unique_id=623239659]
+[node name="TollBox" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox/ResourceRow" unique_id=3009]
 layout_mode = 2
-text = "Sleep"
+theme_override_constants/separation = 6
+
+[node name="TollIcon" type="TextureRect" parent="UI/VillagePanel/ContentMargin/VBox/ResourceRow/TollBox" unique_id=3010]
+texture_filter = 1
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+texture = ExtResource("8_soul")
+stretch_mode = 3
+
+[node name="TollLabel" type="Label" parent="UI/VillagePanel/ContentMargin/VBox/ResourceRow/TollBox" unique_id=3011]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.22, 0.18, 0.14, 1)
+text = "0 / 5 Souls"
+
+[node name="RationsBox" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox/ResourceRow" unique_id=3012]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="RationsIcon" type="TextureRect" parent="UI/VillagePanel/ContentMargin/VBox/ResourceRow/RationsBox" unique_id=3013]
+texture_filter = 1
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+texture = ExtResource("9_ration")
+stretch_mode = 3
+
+[node name="RationsLabel" type="Label" parent="UI/VillagePanel/ContentMargin/VBox/ResourceRow/RationsBox" unique_id=3014]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.22, 0.18, 0.14, 1)
+text = "8 Rations"
+
+[node name="TripsBox" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox/ResourceRow" unique_id=3015]
+layout_mode = 2
+
+[node name="TripsLabel" type="Label" parent="UI/VillagePanel/ContentMargin/VBox/ResourceRow/TripsBox" unique_id=3017]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.22, 0.18, 0.14, 1)
+text = "3 / 3 Trips"
+
+[node name="HSeparator" type="HSeparator" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=3018]
+layout_mode = 2
+
+[node name="InfoLabel" type="Label" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=1765928910]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.28, 0.24, 0.2, 1)
+text = "Village Health: 100%  |  Chief: 100/100 HP  |  100/100 Stamina"
+horizontal_alignment = 1
+
+[node name="ButtonRow" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=3019]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="SleepButton" type="Button" parent="UI/VillagePanel/ContentMargin/VBox/ButtonRow" unique_id=623239659]
+unique_name_in_owner = true
+texture_filter = 1
+custom_minimum_size = Vector2(170, 38)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.1, 0.11, 0.14, 1)
+theme_override_colors/font_hover_color = Color(0.04, 0.04, 0.06, 1)
+theme_override_colors/font_pressed_color = Color(0.18, 0.19, 0.22, 1)
+theme_override_font_sizes/font_size = 15
+theme_override_styles/focus = SubResource("StyleBoxEmpty_focus")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_btn_dis")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn_press")
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn_norm")
+text = "Sleep (End Day)"
+
+[node name="CloseButton" type="Button" parent="UI/VillagePanel/ContentMargin/VBox/ButtonRow" unique_id=262337837]
+unique_name_in_owner = true
+texture_filter = 1
+custom_minimum_size = Vector2(130, 38)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.1, 0.11, 0.14, 1)
+theme_override_colors/font_hover_color = Color(0.04, 0.04, 0.06, 1)
+theme_override_colors/font_pressed_color = Color(0.18, 0.19, 0.22, 1)
+theme_override_font_sizes/font_size = 15
+theme_override_styles/focus = SubResource("StyleBoxEmpty_focus")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_btn_dis")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn_press")
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn_norm")
+text = "Step Away"
