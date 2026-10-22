@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="AbyssRoomTemplateMetadata" format=3 uid="uid://iahxfv3qfwax"]
+
+[ext_resource type="Script" uid="uid://dnt0nogb0yx73" path="res://Scenes/Underground/Generation/room_opening_profile.gd" id="1_h0ei5"]
+[ext_resource type="PackedScene" path="res://Scenes/Underground/Rooms/Examples/packed_vertical.tscn" id="2_oho8x"]
+[ext_resource type="Script" uid="uid://ck5jir3ntl07j" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="3_njcvl"]
+
+[sub_resource type="Resource" id="Resource_dqo1l"]
+script = ExtResource("1_h0ei5")
+openings = Array[StringName]([&"north:0", &"south:0"])
+opening_tiles = Dictionary[StringName, Vector2i]({
+&"north:0": Vector2i(3, 0),
+&"south:0": Vector2i(3, 11)
+})
+
+[resource]
+script = ExtResource("3_njcvl")
+template_id = &"packed_vertical"
+display_name = "Packed vertical tunnel"
+scene = ExtResource("2_oho8x")
+supported_openings = Array[StringName]([&"north:0", &"south:0"])
+opening_combinations = Array[ExtResource("1_h0ei5")]([SubResource("Resource_dqo1l")])
+compatibility_tags = Array[StringName]([&"example"])

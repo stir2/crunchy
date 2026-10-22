@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AbyssRoomTemplateRegistry" format=3]
+
+[ext_resource type="Script" path="res://Scenes/Underground/Generation/room_template_registry.gd" id="1_rhhgg"]
+[ext_resource type="Script" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="2_ww0ww"]
+[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/packed_horizontal.tres" id="3_0w1ml"]
+[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/packed_vertical.tres" id="4_fla7t"]
+[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/packed_corner.tres" id="5_7j1mt"]
+[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/open_cavern.tres" id="6_l4iyj"]
+[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/transition_west.tres" id="7_tkeh5"]
+
+[resource]
+script = ExtResource("1_rhhgg")
+templates = Array[ExtResource("2_ww0ww")]([ExtResource("3_0w1ml"), ExtResource("4_fla7t"), ExtResource("5_7j1mt"), ExtResource("6_l4iyj"), ExtResource("7_tkeh5")])

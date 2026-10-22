@@ -1,0 +1,14 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scenes/Underground/Rooms/example_gallery.gd" id="1"]
+[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/example_registry.tres" id="2"]
+
+[node name="RoomTemplateGallery" type="Node2D"]
+script = ExtResource("1")
+registry = ExtResource("2")
+
+[node name="Title" type="Label" parent="."]
+offset_left = 32.0
+offset_top = 24.0
+text = "ROOM TEMPLATE GALLERY — example connection combinations
+Open an Examples/*.tscn scene to paint its Solid, Platforms, or Decorations layers."
