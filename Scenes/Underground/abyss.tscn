@@ -1,66 +1,84 @@
 [gd_scene format=3 uid="uid://c6bvh2518eupx"]
 
-[ext_resource type="Script" path="res://Scenes/Underground/abyss.gd" id="1_abyss"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/bar_empty.png" id="2_barempty"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/bar_health.png" id="3_bargreen"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/bar_stamina.png" id="4_barorange"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/button_normal.png" id="5_btnnorm"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/button_hover.png" id="6_btnhover"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/button_pressed.png" id="7_btnpress"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/button_disabled.png" id="8_btndis"]
+[ext_resource type="Script" uid="uid://dweu24icdmc5k" path="res://Scenes/Underground/abyss.gd" id="1_abyss"]
+[ext_resource type="Texture2D" uid="uid://baxnpnqrtt2fe" path="res://Assets/Sprites/UI/bar_empty.png" id="2_barempty"]
+[ext_resource type="Texture2D" uid="uid://hoi0p1nugcba" path="res://Assets/Sprites/UI/bar_health.png" id="3_bargreen"]
+[ext_resource type="Texture2D" uid="uid://b6hrd755ue4x2" path="res://Assets/Sprites/UI/bar_stamina.png" id="4_barorange"]
+[ext_resource type="Texture2D" uid="uid://cimj5kjk1qvq3" path="res://Assets/Sprites/UI/button_normal.png" id="5_btnnorm"]
+[ext_resource type="Texture2D" uid="uid://bnnmiubwxnxdr" path="res://Assets/Sprites/UI/button_hover.png" id="6_btnhover"]
+[ext_resource type="Texture2D" uid="uid://cuonmh2315nks" path="res://Assets/Sprites/UI/button_pressed.png" id="7_btnpress"]
+[ext_resource type="Texture2D" uid="uid://dsso6fkauct5" path="res://Assets/Sprites/UI/button_disabled.png" id="8_btndis"]
+[ext_resource type="Script" uid="uid://cpry8ro8l5wwp" path="res://Scenes/Underground/Generation/region_preview.gd" id="9_preview"]
+[ext_resource type="Script" uid="uid://bxa4vfgduq7h" path="res://Scenes/Underground/Generation/region_config.gd" id="10_config"]
+[ext_resource type="Script" uid="uid://cire5kx3cof5u" path="res://Scenes/Underground/Generation/route_config.gd" id="11_routes"]
+
+[sub_resource type="Resource" id="Resource_generation"]
+script = ExtResource("10_config")
+
+[sub_resource type="Resource" id="Resource_routes"]
+script = ExtResource("11_routes")
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_norm"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
 texture = ExtResource("5_btnnorm")
 texture_margin_left = 6.0
 texture_margin_top = 5.0
 texture_margin_right = 6.0
 texture_margin_bottom = 5.0
-content_margin_left = 16.0
-content_margin_top = 8.0
-content_margin_right = 16.0
-content_margin_bottom = 8.0
-
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_hover"]
-texture = ExtResource("6_btnhover")
-texture_margin_left = 6.0
-texture_margin_top = 5.0
-texture_margin_right = 6.0
-texture_margin_bottom = 5.0
-content_margin_left = 16.0
-content_margin_top = 8.0
-content_margin_right = 16.0
-content_margin_bottom = 8.0
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_press"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
 texture = ExtResource("7_btnpress")
 texture_margin_left = 6.0
 texture_margin_top = 5.0
 texture_margin_right = 6.0
 texture_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_hover"]
 content_margin_left = 16.0
 content_margin_top = 8.0
 content_margin_right = 16.0
 content_margin_bottom = 8.0
+texture = ExtResource("6_btnhover")
+texture_margin_left = 6.0
+texture_margin_top = 5.0
+texture_margin_right = 6.0
+texture_margin_bottom = 5.0
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_dis"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
 texture = ExtResource("8_btndis")
 texture_margin_left = 6.0
 texture_margin_top = 5.0
 texture_margin_right = 6.0
 texture_margin_bottom = 5.0
-content_margin_left = 16.0
-content_margin_top = 8.0
-content_margin_right = 16.0
-content_margin_bottom = 8.0
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_focus"]
 
-[node name="abyss" type="Node2D"]
+[node name="abyss" type="Node2D" unique_id=811338859]
 script = ExtResource("1_abyss")
 
-[node name="HUD" type="CanvasLayer" parent="."]
+[node name="RegionPreview" type="Node2D" parent="." unique_id=2118079972]
+script = ExtResource("9_preview")
+configuration = SubResource("Resource_generation")
+route_configuration = SubResource("Resource_routes")
 
-[node name="MarginContainer" type="MarginContainer" parent="HUD"]
+[node name="ClassificationTiles" type="TileMapLayer" parent="RegionPreview" unique_id=447121867]
+texture_filter = 1
+collision_enabled = false
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1263381438]
+
+[node name="MarginContainer" type="MarginContainer" parent="HUD" unique_id=2083615202]
 offset_right = 296.0
 offset_bottom = 140.0
 theme_override_constants/margin_left = 24
@@ -68,11 +86,11 @@ theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="VBoxContainer" type="VBoxContainer" parent="HUD/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="HUD/MarginContainer" unique_id=1110290616]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="HPBar" type="TextureProgressBar" parent="HUD/MarginContainer/VBoxContainer"]
+[node name="HPBar" type="TextureProgressBar" parent="HUD/MarginContainer/VBoxContainer" unique_id=1236519167]
 texture_filter = 1
 custom_minimum_size = Vector2(256, 32)
 layout_mode = 2
@@ -85,7 +103,7 @@ texture_under = ExtResource("2_barempty")
 texture_over = ExtResource("2_barempty")
 texture_progress = ExtResource("3_bargreen")
 
-[node name="StaminaBar" type="TextureProgressBar" parent="HUD/MarginContainer/VBoxContainer"]
+[node name="StaminaBar" type="TextureProgressBar" parent="HUD/MarginContainer/VBoxContainer" unique_id=1163485555]
 texture_filter = 1
 custom_minimum_size = Vector2(256, 32)
 layout_mode = 2
@@ -98,17 +116,35 @@ texture_under = ExtResource("2_barempty")
 texture_over = ExtResource("2_barempty")
 texture_progress = ExtResource("4_barorange")
 
-[node name="ReturnButton" type="Button" parent="HUD/MarginContainer/VBoxContainer"]
+[node name="ReturnButton" type="Button" parent="HUD/MarginContainer/VBoxContainer" unique_id=1304328893]
 texture_filter = 1
 custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.1, 0.11, 0.14, 1)
-theme_override_colors/font_hover_color = Color(0.04, 0.04, 0.06, 1)
 theme_override_colors/font_pressed_color = Color(0.18, 0.19, 0.22, 1)
+theme_override_colors/font_hover_color = Color(0.04, 0.04, 0.06, 1)
 theme_override_font_sizes/font_size = 15
-theme_override_styles/focus = SubResource("StyleBoxEmpty_focus")
-theme_override_styles/disabled = SubResource("StyleBoxTexture_btn_dis")
-theme_override_styles/hover = SubResource("StyleBoxTexture_btn_hover")
-theme_override_styles/pressed = SubResource("StyleBoxTexture_btn_press")
 theme_override_styles/normal = SubResource("StyleBoxTexture_btn_norm")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn_press")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn_hover")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_btn_dis")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_focus")
 text = "Return to House"
+
+[node name="PreviewLegend" type="Label" parent="HUD" unique_id=1762405786]
+offset_left = 24.0
+offset_top = 230.0
+offset_right = 310.0
+offset_bottom = 330.0
+text = "REGIONS + LOGICAL ROUTES
+Cyan: OPEN
+Slate: PACKED
+Gray dashes: chunk grid
+Thin lines: room boundaries
+Yellow: main / purple: access
+Yellow tint: main chunks
+Orange: branch / pink: reconnect
+White dots: actual crossings
+Cyan boxes: boundary contracts
+Red dots: packed openings
+A: authored / F: fallback (optional)"

@@ -1,0 +1,53 @@
+[gd_scene format=4]
+
+[ext_resource type="Script" path="res://Scenes/Underground/Rooms/authored_room.gd" id="1_7lhiu"]
+[ext_resource type="TileSet" path="res://Assets/Tiles/room_placeholders.tres" id="2_gkkgw"]
+
+[node name="TransitionWest" type="Node2D" unique_id=1028207327]
+script = ExtResource("1_7lhiu")
+
+[node name="Solid" type="TileMapLayer" parent="." unique_id=461684019]
+texture_filter = 1
+tile_map_data = PackedByteArray("AAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAACAAAAAAAAAAAAAAADAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAFAAAAAAAAAAAAAAAGAAAAAAAAAAAAAAAHAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAJAAAAAAAAAAAAAAAKAAAAAAAAAAAAAAALAAAAAAAAAAAAAAAFAAEAAAAAAAAAAAAGAAEAAAAAAAAAAAAHAAEAAAAAAAAAAAAIAAEAAAAAAAAAAAAJAAEAAAAAAAAAAAAKAAEAAAAAAAAAAAALAAEAAAAAAAAAAAAFAAIAAAAAAAAAAAAGAAIAAAAAAAAAAAAHAAIAAAAAAAAAAAAIAAIAAAAAAAAAAAAJAAIAAAAAAAAAAAAKAAIAAAAAAAAAAAALAAIAAAAAAAAAAAAFAAQAAAAAAAAAAAAGAAQAAAAAAAAAAAAHAAQAAAAAAAAAAAAIAAQAAAAAAAAAAAAJAAQAAAAAAAAAAAAKAAQAAAAAAAAAAAALAAQAAAAAAAAAAAAFAAUAAAAAAAAAAAAGAAUAAAAAAAAAAAAHAAUAAAAAAAAAAAAIAAUAAAAAAAAAAAAJAAUAAAAAAAAAAAAKAAUAAAAAAAAAAAALAAUAAAAAAAAAAAAFAAYAAAAAAAAAAAAGAAYAAAAAAAAAAAAHAAYAAAAAAAAAAAAIAAYAAAAAAAAAAAAJAAYAAAAAAAAAAAAKAAYAAAAAAAAAAAALAAYAAAAAAAAAAAAFAAcAAAAAAAAAAAAGAAcAAAAAAAAAAAAHAAcAAAAAAAAAAAAIAAcAAAAAAAAAAAAJAAcAAAAAAAAAAAAKAAcAAAAAAAAAAAALAAcAAAAAAAAAAAAFAAgAAAAAAAAAAAAGAAgAAAAAAAAAAAAHAAgAAAAAAAAAAAAIAAgAAAAAAAAAAAAJAAgAAAAAAAAAAAAKAAgAAAAAAAAAAAALAAgAAAAAAAAAAAAFAAkAAAAAAAAAAAAGAAkAAAAAAAAAAAAHAAkAAAAAAAAAAAAIAAkAAAAAAAAAAAAJAAkAAAAAAAAAAAAKAAkAAAAAAAAAAAALAAkAAAAAAAAAAAAFAAoAAAAAAAAAAAAGAAoAAAAAAAAAAAAHAAoAAAAAAAAAAAAIAAoAAAAAAAAAAAAJAAoAAAAAAAAAAAAKAAoAAAAAAAAAAAALAAoAAAAAAAAAAAAAAAsAAAAAAAAAAAABAAsAAAAAAAAAAAACAAsAAAAAAAAAAAADAAsAAAAAAAAAAAAEAAsAAAAAAAAAAAAFAAsAAAAAAAAAAAAGAAsAAAAAAAAAAAAHAAsAAAAAAAAAAAAIAAsAAAAAAAAAAAAJAAsAAAAAAAAAAAAKAAsAAAAAAAAAAAALAAsAAAAAAAAAAAA=")
+tile_set = ExtResource("2_gkkgw")
+
+[node name="Platforms" type="TileMapLayer" parent="." unique_id=1713691361]
+texture_filter = 1
+tile_set = ExtResource("2_gkkgw")
+
+[node name="Decorations" type="TileMapLayer" parent="." unique_id=353529183]
+texture_filter = 1
+tile_map_data = PackedByteArray("AAAGAAIAAAACAAAAAAA=")
+tile_set = ExtResource("2_gkkgw")
+collision_enabled = false
+
+[node name="ObjectMarkers" type="Node2D" parent="." unique_id=1060253185]
+
+[node name="RoomCenter" type="Marker2D" parent="ObjectMarkers" unique_id=836297]
+position = Vector2(96, 96)
+
+[node name="OpeningGuides" type="Node2D" parent="." unique_id=114670180]
+
+[node name="north_0" type="Marker2D" parent="OpeningGuides" unique_id=1419269484]
+position = Vector2(56, 8)
+
+[node name="north_1" type="Marker2D" parent="OpeningGuides" unique_id=662455926]
+position = Vector2(136, 8)
+
+[node name="east_0" type="Marker2D" parent="OpeningGuides" unique_id=494665657]
+position = Vector2(184, 56)
+
+[node name="east_1" type="Marker2D" parent="OpeningGuides" unique_id=1718440626]
+position = Vector2(184, 136)
+
+[node name="south_0" type="Marker2D" parent="OpeningGuides" unique_id=1797763445]
+position = Vector2(56, 184)
+
+[node name="south_1" type="Marker2D" parent="OpeningGuides" unique_id=1131951435]
+position = Vector2(136, 184)
+
+[node name="west_0" type="Marker2D" parent="OpeningGuides" unique_id=663756794]
+position = Vector2(8, 56)
+
+[node name="west_1" type="Marker2D" parent="OpeningGuides" unique_id=2100299284]
+position = Vector2(8, 136)

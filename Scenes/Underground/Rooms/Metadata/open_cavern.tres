@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="AbyssRoomTemplateMetadata" format=3 uid="uid://2asl0eg0vo4a"]
+
+[ext_resource type="Script" uid="uid://dnt0nogb0yx73" path="res://Scenes/Underground/Generation/room_opening_profile.gd" id="1_dx3xx"]
+[ext_resource type="PackedScene" path="res://Scenes/Underground/Rooms/Examples/open_cavern.tscn" id="2_2ffp2"]
+[ext_resource type="Script" uid="uid://ck5jir3ntl07j" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="3_dx2gp"]
+
+[sub_resource type="Resource" id="Resource_goqwd"]
+script = ExtResource("1_dx3xx")
+open_sides = 15
+
+[resource]
+script = ExtResource("3_dx2gp")
+template_id = &"open_cavern"
+display_name = "Open cavern"
+scene = ExtResource("2_2ffp2")
+region = 0
+opening_combinations = Array[ExtResource("1_dx3xx")]([SubResource("Resource_goqwd")])
+compatibility_tags = Array[StringName]([&"example"])
