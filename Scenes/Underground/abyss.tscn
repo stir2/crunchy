@@ -71,6 +71,7 @@ script = ExtResource("1_abyss")
 script = ExtResource("9_preview")
 configuration = SubResource("Resource_generation")
 route_configuration = SubResource("Resource_routes")
+show_terrain = true
 
 [node name="ClassificationTiles" type="TileMapLayer" parent="RegionPreview" unique_id=447121867]
 texture_filter = 1
@@ -136,7 +137,10 @@ offset_left = 24.0
 offset_top = 230.0
 offset_right = 310.0
 offset_bottom = 330.0
-text = "REGIONS + LOGICAL ROUTES
+text = "T: terrain / logical preview
+G: grid  O: openings  A: authored
+R: routes  Wheel: zoom  MMB: pan
+REGIONS + LOGICAL ROUTES
 Cyan: OPEN
 Slate: PACKED
 Gray dashes: chunk grid

@@ -18,7 +18,6 @@ var known_neighbor_sides: int = 0
 var horizontal_offsets: Vector2i
 var vertical_offsets: Vector2i
 
-
 static func from_room(room: AbyssRoomData, config: AbyssRegionConfig, routes: AbyssRouteConfig, neighbors: Array[AbyssRoomData], world_tile_pixels: int = 16) -> AbyssRoomRequirements:
 	var result := AbyssRoomRequirements.new()
 	result.room_id = room.room_id

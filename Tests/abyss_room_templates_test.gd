@@ -193,6 +193,7 @@ func run() -> void:
 	preview.preview_origin = Vector2i.ZERO
 	preview.preview_width_chunks = 1
 	preview.preview_height_chunks = 1
+	preview.show_terrain = false
 	preview.show_template_selection = true
 	root.add_child(abyss)
 	check(preview._construction_requests.size() == 64, "Generated preview selection overlay did not populate")

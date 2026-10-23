@@ -19,6 +19,10 @@ extends Node2D
 @export var show_packed_openings: bool = false
 @export var show_template_selection: bool = false
 @export var template_registry: AbyssRoomTemplateRegistry = preload("res://Scenes/Underground/Rooms/example_registry.tres")
+@export var show_terrain: bool = false
+@export var terrain_configuration: AbyssTerrainConfig = AbyssTerrainConfig.new()
+var _terrain: Node2D
+var construction_statistics: Dictionary = {}
 var _construction_requests: Dictionary[Vector2i, AbyssRoomConstructionRequest] = {}
 var route_generator: AbyssRouteGenerator
 var generator: AbyssRegionGenerator
@@ -34,8 +38,16 @@ func _ready() -> void:
 
 
 func regenerate() -> void:
+	if is_instance_valid(_terrain):
+		remove_child(_terrain)
+		_terrain.free()
+	construction_statistics = {"authored": 0, "procedural": 0, "solid_tiles": 0, "platform_tiles": 0}
 	_tiles.clear()
 	_construction_requests.clear()
+	if template_registry == null:
+		template_registry = AbyssRoomTemplateRegistry.new()
+	if terrain_configuration == null:
+		terrain_configuration = AbyssTerrainConfig.new()
 	if configuration == null or not configuration.is_valid():
 		push_error("Invalid abyss preview configuration")
 		return
@@ -47,7 +59,7 @@ func regenerate() -> void:
 	_tiles.tile_set = _make_debug_tileset()
 	_tiles.collision_enabled = false
 	_tiles.show_behind_parent = true
-	_tiles.visible = show_classifications
+	_tiles.visible = show_classifications and not show_terrain
 	_tiles.modulate.a = classification_opacity
 	_room_count = Vector2i(preview_width_chunks, preview_height_chunks) * configuration.chunk_size
 	_first_room = preview_origin * configuration.chunk_size
@@ -59,7 +71,7 @@ func regenerate() -> void:
 				for y in range(configuration.room_size.y):
 					for x in range(configuration.room_size.x):
 						_tiles.set_cell(tile_origin + Vector2i(x, y), 0, atlas)
-	if show_template_selection and template_registry != null:
+	if (show_template_selection or show_terrain) and template_registry != null:
 		var selector := AbyssRoomTemplateSelector.new(template_registry, configuration.global_seed)
 		for error in selector.registration_errors:
 			push_warning("Room template registration: " + error)
@@ -67,6 +79,30 @@ func regenerate() -> void:
 			for cx in range(preview_origin.x, preview_origin.x + preview_width_chunks):
 				for room in route_generator.get_chunk(Vector2i(cx, cy)).rooms:
 					_construction_requests[room.global_coords] = selector.select_room(route_generator, room.global_coords)
+	if show_terrain:
+		_terrain = Node2D.new()
+		_terrain.name = "PhysicalChunks"
+		# The debug canvas uses 8px tiles; physical content retains its 16px grid.
+		_terrain.scale = Vector2.ONE * float(TILE_PIXELS) / template_registry.tile_pixels
+		_terrain.show_behind_parent = true
+		add_child(_terrain)
+		for cy in range(preview_origin.y, preview_origin.y + preview_height_chunks):
+			for cx in range(preview_origin.x, preview_origin.x + preview_width_chunks):
+				var coords := Vector2i(cx, cy)
+				var chunk := Node2D.new()
+				chunk.name = "Chunk_%d_%d" % [cx, cy]
+				chunk.position = Vector2(coords * configuration.chunk_size * configuration.room_size * template_registry.tile_pixels)
+				_terrain.add_child(chunk)
+				for data in route_generator.get_chunk(coords).rooms:
+					var request: AbyssRoomConstructionRequest = _construction_requests[data.global_coords]
+					var room := AbyssRoomTerrainBuilder.build(request, terrain_configuration)
+					chunk.add_child(room)
+					room.position -= chunk.position
+					var key := "authored" if request.method == AbyssRoomConstructionRequest.Method.AUTHORED else "procedural"
+					construction_statistics[key] += 1
+					construction_statistics.solid_tiles += room.get_node("Solid").get_used_cells().size()
+					construction_statistics.platform_tiles += room.get_node("Platforms").get_used_cells().size()
+		print("Abyss construction: ", construction_statistics)
 	_fit_preview()
 	queue_redraw()
 
@@ -156,3 +192,38 @@ func _draw_routes() -> void:
 					if show_packed_openings and room.region == AbyssRoomData.Region.PACKED:
 						var tile := Vector2(room.global_coords * configuration.room_size + connection.opening_tile) + Vector2(0.5, 0.5)
 						draw_circle(tile * TILE_PIXELS, 5.0, Color("ff5555"))
+
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		match event.keycode:
+			KEY_T:
+				show_terrain = not show_terrain
+				regenerate()
+			KEY_G:
+				show_room_grid = not show_room_grid
+				queue_redraw()
+			KEY_O:
+				show_packed_openings = not show_packed_openings
+				queue_redraw()
+			KEY_R:
+				var enabled := not show_main_route
+				show_main_route = enabled
+				show_access_routes = enabled
+				show_branches = enabled
+				show_reconnections = enabled
+				queue_redraw()
+			KEY_A:
+				show_template_selection = not show_template_selection
+				regenerate()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			var factor := 1.2 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1.0 / 1.2
+			var anchor: Vector2 = event.position
+			position = anchor + (position - anchor) * factor
+			scale *= factor
+	if event is InputEventMouseMotion and event.button_mask & MOUSE_BUTTON_MASK_MIDDLE:
+		position += event.relative
