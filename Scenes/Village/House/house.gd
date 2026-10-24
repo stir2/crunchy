@@ -2,61 +2,137 @@ extends Node2D
 
 const ABYSS_SCENE := "res://Scenes/Underground/abyss.tscn"
 
-@onready var camera: HouseCamera = $Camera2D
-@onready var hotspots: Node2D = $Hotspots
-@onready var village_panel: Control = $UI/VillagePanel
-@onready var info_label: Label = %InfoLabel
-@onready var close_button: Button = %CloseButton
-@onready var close_x_button: TextureButton = %CloseXButton
-@onready var sleep_button: Button = %SleepButton
-@onready var day_label: Label = %DayLabel
-@onready var toll_label: Label = %TollLabel
-@onready var rations_label: Label = %RationsLabel
-@onready var trips_label: Label = %TripsLabel
+enum RoomPanel { STAIRS = 0, DESK = 1, WINDOW = 2 }
+
+var current_panel: RoomPanel = RoomPanel.DESK
+
+@onready var stairs_panel: Control = %StairsPanel
+@onready var desk_panel: Control = %DeskPanel
+@onready var window_panel: Control = %WindowPanel
+
+@onready var left_nav_btn: Button = %LeftNavButton
+@onready var right_nav_btn: Button = %RightNavButton
+
+@onready var top_day_label: Label = %TopDayLabel
+@onready var top_flesh_label: Label = %TopFleshLabel
+@onready var top_rations_label: Label = %TopRationsLabel
+@onready var top_potions_label: Label = %TopPotionsLabel
+@onready var top_trips_label: Label = %TopTripsLabel
+@onready var top_vitals_label: Label = %TopVitalsLabel
+
+@onready var descend_btn: Button = %DescendButton
+@onready var stairs_trips_label: Label = %StairsTripsLabel
+@onready var open_blueprint_btn: Button = %OpenBlueprintButton
+@onready var village_panel: Control = %VillagePanel
+
+@onready var refugee_modal: Control = %RefugeeModal
+@onready var refugee_name_label: Label = %RefugeeNameLabel
+@onready var refugee_desc_label: Label = %RefugeeDescLabel
+@onready var welcome_refugee_btn: Button = %WelcomeRefugeeButton
+@onready var turn_away_refugee_btn: Button = %TurnAwayRefugeeButton
+
+@onready var sacrifice_modal: Control = %SacrificeModal
+@onready var sacrifice_list_container: VBoxContainer = %SacrificeListContainer
 
 
 func _ready() -> void:
-	# Set custom cursor provided by user
+	# Custom cursor
 	var cursor_tex: Texture2D = load("res://Assets/Sprites/UI/cursor.png")
 	if cursor_tex != null:
 		Input.set_custom_mouse_cursor(cursor_tex, Input.CURSOR_ARROW)
 		Input.set_custom_mouse_cursor(cursor_tex, Input.CURSOR_POINTING_HAND)
 
-	for hotspot: Hotspot in hotspots.get_children():
-		hotspot.activated.connect(_on_hotspot_activated)
-	close_button.pressed.connect(_close_panel)
-	if close_x_button != null:
-		close_x_button.pressed.connect(_close_panel)
-	sleep_button.pressed.connect(_on_sleep_pressed)
+	left_nav_btn.pressed.connect(_on_left_nav_pressed)
+	right_nav_btn.pressed.connect(_on_right_nav_pressed)
 
-	GameController.day_started.connect(_refresh_info.unbind(1))
-	GameController.souls_changed.connect(_refresh_info.unbind(1))
-	GameController.rations_changed.connect(_refresh_info.unbind(1))
-	GameController.trips_changed.connect(_refresh_info.unbind(1))
-	GameController.health_changed.connect(_refresh_info.unbind(2))
-	GameController.stamina_changed.connect(_refresh_info.unbind(2))
+	descend_btn.pressed.connect(_descend)
+	open_blueprint_btn.pressed.connect(_open_blueprint)
 
+	village_panel.closed.connect(_close_blueprint)
+	village_panel.sleep_requested.connect(_on_sleep_requested)
 	village_panel.hide()
-	_refresh_info()
+
+	refugee_modal.hide()
+	sacrifice_modal.hide()
+	welcome_refugee_btn.pressed.connect(_on_welcome_refugee_pressed)
+	turn_away_refugee_btn.pressed.connect(_on_turn_away_refugee_pressed)
+
+	GameController.day_started.connect(_refresh_top_hud.unbind(1))
+	GameController.flesh_changed.connect(_refresh_top_hud.unbind(1))
+	GameController.rations_changed.connect(_refresh_top_hud.unbind(1))
+	GameController.potions_changed.connect(_refresh_top_hud.unbind(1))
+	GameController.trips_changed.connect(_refresh_top_hud.unbind(1))
+	GameController.health_changed.connect(_refresh_top_hud.unbind(2))
+	GameController.stamina_changed.connect(_refresh_top_hud.unbind(2))
+	GameController.village_health_changed.connect(_refresh_top_hud.unbind(1))
+
+	VillageManager.refugee_waiting.connect(_on_refugee_waiting)
+	VillageManager.victim_choice_requested.connect(_on_victim_choice_requested)
+	VillageManager.night_resolved.connect(_on_night_resolved)
+	VillageManager.village_wiped.connect(_on_village_wiped)
+
+	set_panel(RoomPanel.DESK)
+	_refresh_top_hud()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and village_panel.visible:
-		_close_panel()
+		_close_blueprint()
 
 
-func _on_hotspot_activated(id: StringName) -> void:
-	match id:
-		&"stairs":
-			_descend()
-		&"desk":
-			_open_panel()
-		&"window":
-			print("Window clicked, village view goes here later.")
+func set_panel(p: RoomPanel) -> void:
+	current_panel = p
+	stairs_panel.visible = (p == RoomPanel.STAIRS)
+	desk_panel.visible = (p == RoomPanel.DESK)
+	window_panel.visible = (p == RoomPanel.WINDOW)
+
+	match p:
+		RoomPanel.STAIRS:
+			left_nav_btn.hide()
+			right_nav_btn.show()
+			right_nav_btn.text = "DESK  ►"
+		RoomPanel.DESK:
+			left_nav_btn.show()
+			left_nav_btn.text = "◄  STAIRS"
+			right_nav_btn.show()
+			right_nav_btn.text = "WINDOW  ►"
+		RoomPanel.WINDOW:
+			left_nav_btn.show()
+			left_nav_btn.text = "◄  DESK"
+			right_nav_btn.hide()
+
+	_refresh_panel_content()
+
+
+func _on_left_nav_pressed() -> void:
+	if village_panel.visible:
+		_close_blueprint()
+	if current_panel == RoomPanel.DESK:
+		set_panel(RoomPanel.STAIRS)
+	elif current_panel == RoomPanel.WINDOW:
+		set_panel(RoomPanel.DESK)
+
+
+func _on_right_nav_pressed() -> void:
+	if village_panel.visible:
+		_close_blueprint()
+	if current_panel == RoomPanel.STAIRS:
+		set_panel(RoomPanel.DESK)
+	elif current_panel == RoomPanel.DESK:
+		set_panel(RoomPanel.WINDOW)
+
+
+func _open_blueprint() -> void:
+	if village_panel.has_method("refresh"):
+		village_panel.refresh()
+	village_panel.show()
+
+
+func _close_blueprint() -> void:
+	village_panel.hide()
 
 
 func _descend() -> void:
-	# Check first so a failed descent doesn't waste a day trip.
 	var main := get_tree().current_scene
 	if not ResourceLoader.exists(ABYSS_SCENE) or not main.has_method("change_scene"):
 		print("Can't descend yet: abyss scene missing, or house not run through Main.")
@@ -67,37 +143,120 @@ func _descend() -> void:
 	main.change_scene(ABYSS_SCENE)
 
 
-func _open_panel() -> void:
-	village_panel.show()
-	camera.pan_enabled = false
-	_set_hotspots_enabled(false)
-
-
-func _close_panel() -> void:
-	village_panel.hide()
-	camera.pan_enabled = true
-	_set_hotspots_enabled(true)
-
-
-func _set_hotspots_enabled(enabled: bool) -> void:
-	for hotspot: Hotspot in hotspots.get_children():
-		hotspot.input_pickable = enabled
-
-
-func _on_sleep_pressed() -> void:
+func _on_sleep_requested() -> void:
 	GameController.end_day()
-	_close_panel()
+	_close_blueprint()
 
 
-func _refresh_info() -> void:
-	day_label.text = "Day %d/%d" % [GameController.day, GameController.RUN_LENGTH]
-	toll_label.text = "%d / %d Souls" % [GameController.souls, GameController.current_quota()]
-	rations_label.text = "%d Tokens" % GameController.rations
-	trips_label.text = "%d/%d Trips" % [GameController.trips_left, GameController.TRIPS_PER_DAY]
-	info_label.text = "Village Health: %d%%  |  Chief: %d/%d HP  |  %d/%d Stamina" % [
-		GameController.village_health,
-		GameController.health,
-		GameController.stats.get("max_health", 100),
+func _refresh_top_hud() -> void:
+	top_day_label.text = "Day %d/%d" % [GameController.day, GameController.RUN_LENGTH]
+	top_flesh_label.text = "%d / %d Flesh" % [GameController.flesh, GameController.current_quota()]
+	top_rations_label.text = "%d Rations" % GameController.rations
+	if top_potions_label != null:
+		top_potions_label.text = "%d Potions" % GameController.potions
+	top_trips_label.text = "%d/%d Trips" % [GameController.trips_left, GameController.TRIPS_PER_DAY]
+	top_vitals_label.text = "Hearts: %.1f/%.1f  |  Stamina: %d/%d  |  Village Health: %d%%" % [
+		GameController.health / 2.0,
+		GameController.stats.get("max_health", 6) / 2.0,
 		GameController.stamina,
 		GameController.stats.get("max_stamina", 100),
+		GameController.village_health,
 	]
+	_refresh_panel_content()
+
+
+func _refresh_panel_content() -> void:
+	if stairs_trips_label != null:
+		stairs_trips_label.text = "Trips Remaining Today: %d / %d" % [GameController.trips_left, GameController.TRIPS_PER_DAY]
+	if descend_btn != null:
+		descend_btn.disabled = GameController.trips_left <= 0
+
+
+func _on_refugee_waiting(candidate: Dictionary) -> void:
+	var is_bum: bool = candidate.get("is_bum", false)
+	var type_str := "Permanent Bum" if is_bum else "Able Worker"
+	refugee_name_label.text = "%s (%s)" % [candidate.get("name", "Traveler"), type_str]
+	if is_bum:
+		refugee_desc_label.text = "Refuses to work. Eats 1 Ration every night, but serves as a sacrifice buffer."
+	else:
+		refugee_desc_label.text = "Able citizen. Can be trained in any hut to produce food and activate combat perks."
+	refugee_modal.show()
+
+
+func _on_welcome_refugee_pressed() -> void:
+	refugee_modal.hide()
+	VillageManager.accept_refugee()
+	_refresh_top_hud()
+
+
+func _on_turn_away_refugee_pressed() -> void:
+	refugee_modal.hide()
+	VillageManager.dismiss_refugee()
+
+
+func _on_victim_choice_requested(candidates: Array) -> void:
+	for child in sacrifice_list_container.get_children():
+		sacrifice_list_container.remove_child(child)
+		child.queue_free()
+
+	# Sort candidates so Bums are placed at the top (prime meat shields)
+	var sorted := candidates.duplicate()
+	sorted.sort_custom(func(a, b):
+		if a.is_bum and not b.is_bum:
+			return true
+		return false
+	)
+
+	for v: Villager in sorted:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+
+		var name_lbl := Label.new()
+		name_lbl.text = "• " + v.display_name
+		name_lbl.custom_minimum_size = Vector2(130, 0)
+		name_lbl.add_theme_font_size_override("font_size", 14)
+
+		var desc_lbl := Label.new()
+		desc_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		desc_lbl.add_theme_font_size_override("font_size", 12)
+
+		if v.is_bum:
+			name_lbl.add_theme_color_override("font_color", Color(0.65, 0.18, 0.18, 1))
+			desc_lbl.text = "[Permanent Bum] — Meat shield (Recommended)"
+			desc_lbl.add_theme_color_override("font_color", Color(0.55, 0.22, 0.22, 1))
+		elif v.is_employed():
+			name_lbl.add_theme_color_override("font_color", Color(0.18, 0.15, 0.12, 1))
+			desc_lbl.text = "[%s Worker] — Active contributor" % v.assignment.capitalize()
+			desc_lbl.add_theme_color_override("font_color", Color(0.40, 0.35, 0.28, 1))
+		else:
+			name_lbl.add_theme_color_override("font_color", Color(0.18, 0.15, 0.12, 1))
+			desc_lbl.text = "[Idle Worker] — In queue"
+			desc_lbl.add_theme_color_override("font_color", Color(0.40, 0.35, 0.28, 1))
+
+		row.add_child(name_lbl)
+		row.add_child(desc_lbl)
+
+		var sac_btn := Button.new()
+		sac_btn.text = "SACRIFICE"
+		sac_btn.custom_minimum_size = Vector2(100, 30)
+		sac_btn.add_theme_font_size_override("font_size", 11)
+		sac_btn.add_theme_color_override("font_color", Color(0.70, 0.15, 0.15, 1))
+		sac_btn.pressed.connect(func():
+			sacrifice_modal.hide()
+			VillageManager.choose_victim(v.id)
+		)
+		row.add_child(sac_btn)
+
+		sacrifice_list_container.add_child(row)
+
+	sacrifice_modal.show()
+
+
+func _on_night_resolved(report: Dictionary) -> void:
+	print("Night report: ", report)
+	# Re-open on the Desk panel each morning
+	set_panel(RoomPanel.DESK)
+
+
+func _on_village_wiped() -> void:
+	print("Village wiped: monster devours the Chief.")
