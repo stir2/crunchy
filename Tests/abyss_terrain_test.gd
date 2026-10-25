@@ -8,8 +8,11 @@ func _initialize() -> void:
 	call_deferred("run")
 func signature(room: Node) -> Array:
 	var result: Array = []
-	for key in ["Solid", "Platforms", "Decorations"]:
-		var layer := room.get_node(key) as TileMapLayer
+	for key in ["Solid", "Platforms", "Decorations", "ConditionalWalls"]:
+		var layer := room.get_node_or_null(NodePath(key)) as TileMapLayer
+		if layer == null:
+			result.append([])
+			continue
 		var cells := layer.get_used_cells()
 		cells.sort()
 		var values: Array = []
@@ -26,6 +29,36 @@ func run() -> void:
 	var registry: AbyssRoomTemplateRegistry = load("res://Scenes/Underground/Rooms/example_registry.tres")
 	var selector := AbyssRoomTemplateSelector.new(registry, config.global_seed)
 	var terrain := AbyssTerrainConfig.new()
+	# Unconnected packed rooms stay solid; transition cuts remain reachable
+	# from the cavern-facing boundary instead of forming sealed interior pockets.
+	for seed_value in range(16):
+		for open_sides in [0, 1, 2, 4, 8, 3, 15]:
+			var req := AbyssRoomRequirements.new()
+			req.room_size = config.room_size
+			req.region = AbyssRoomData.Region.PACKED
+			req.neighbor_open_sides = open_sides
+			var request := AbyssRoomConstructionRequest.new()
+			request.requirements = req
+			request.room_seed = seed_value
+			var room := AbyssRoomTerrainBuilder.build(request, terrain)
+			var solid := room.get_node("Solid") as TileMapLayer
+			if open_sides == 0:
+				check(solid.get_used_cells().size() == req.room_size.x * req.room_size.y, "Unconnected packed room contains an artificial pocket")
+			var pending: Array[Vector2i] = []
+			for y in range(req.room_size.y):
+				for x in range(req.room_size.x):
+					if x == 0 or x == req.room_size.x - 1 or y == 0 or y == req.room_size.y - 1:
+						pending.append(Vector2i(x, y))
+			var reached: Dictionary = {}
+			while not pending.is_empty():
+				var cell: Vector2i = pending.pop_back()
+				if reached.has(cell) or not Rect2i(Vector2i.ZERO, req.room_size).has_point(cell) or solid.get_cell_source_id(cell) != -1:
+					continue
+				reached[cell] = true
+				for direction in AbyssRegionGenerator.DIRECTIONS:
+					pending.append(cell + direction)
+			check(reached.size() + solid.get_used_cells().size() == req.room_size.x * req.room_size.y, "Unconnected transition contains a sealed pocket")
+			room.free()
 	var snapshots: Dictionary = {}
 	var stats := {"authored": 0, "procedural": 0, "solid": 0, "platforms": 0}
 	for chunk in [Vector2i(-1, 0), Vector2i.ZERO, Vector2i(1, 0), Vector2i(0, 1)]:
@@ -64,15 +97,15 @@ func run() -> void:
 						pending.append(cell + direction)
 				for opening in req.required_openings.values():
 					check(visited.has(opening), "Disconnected required tunnel")
-			for y in range(12):
-				for x in range(12):
-					if x > 0 and x < 11 and y > 0 and y < 11:
+			for y in range(req.room_size.y):
+				for x in range(req.room_size.x):
+					if x > 0 and x < req.room_size.x - 1 and y > 0 and y < req.room_size.y - 1:
 						continue
 					var cell := Vector2i(x, y)
 					if req.region == AbyssRoomData.Region.OPEN:
 						check(not AbyssRoomTemplateValidator._has_collision(solid, cell) and not AbyssRoomTemplateValidator._has_collision(platforms, cell), "Open room enclosed")
 					elif not req.required_openings.values().has(cell):
-						var touches_open := (y == 0 and req.neighbor_open_sides & 1) or (x == 11 and req.neighbor_open_sides & 2) or (y == 11 and req.neighbor_open_sides & 4) or (x == 0 and req.neighbor_open_sides & 8)
+						var touches_open := (y == 0 and req.neighbor_open_sides & 1) or (x == req.room_size.x - 1 and req.neighbor_open_sides & 2) or (y == req.room_size.y - 1 and req.neighbor_open_sides & 4) or (x == 0 and req.neighbor_open_sides & 8)
 						if not touches_open:
 							check(AbyssRoomTemplateValidator._has_solid_collision(solid, cell), "Unintended packed boundary hole")
 			if request.method == AbyssRoomConstructionRequest.Method.AUTHORED:

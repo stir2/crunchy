@@ -1,10 +1,13 @@
-[gd_scene format=3]
+[gd_scene format=4 uid="uid://bhyjbyih2d8wn"]
 
-[ext_resource type="Script" path="res://Scenes/Underground/Rooms/authored_room.gd" id="1_gw3xw"]
-[ext_resource type="TileSet" path="res://Assets/Tiles/room_placeholders.tres" id="2_8nuqp"]
+[ext_resource type="Script" uid="uid://bg8lhs2k6oonn" path="res://Scenes/Underground/Rooms/authored_room.gd" id="1_gw3xw"]
+[ext_resource type="TileSet" uid="uid://dsxrhc8fbe5le" path="res://Assets/Tiles/room_placeholders.tres" id="2_8nuqp"]
 
 [node name="OpenCavern" type="Node2D" unique_id=753023175]
 script = ExtResource("1_gw3xw")
+reserved_route_rects = Array[Rect2i]([Rect2i(11, 1, 2, 22), Rect2i(1, 11, 22, 2)])
+required_support_rects = null
+breakable_group_ids = null
 
 [node name="Solid" type="TileMapLayer" parent="." unique_id=695473181]
 texture_filter = 1
@@ -12,42 +15,60 @@ tile_set = ExtResource("2_8nuqp")
 
 [node name="Platforms" type="TileMapLayer" parent="." unique_id=969668497]
 texture_filter = 1
-tile_map_data = PackedByteArray(0, 0, 4, 0, 7, 0, 0, 0, 1, 0, 0, 0, 0, 0, 5, 0, 7, 0, 0, 0, 1, 0, 0, 0, 0, 0, 6, 0, 7, 0, 0, 0, 1, 0, 0, 0, 0, 0, 7, 0, 7, 0, 0, 0, 1, 0, 0, 0, 0, 0)
+tile_map_data = PackedByteArray("AAAIAA4AAAABAAAAAAAJAA4AAAABAAAAAAAKAA4AAAABAAAAAAALAA4AAAABAAAAAAAMAA4AAAABAAAAAAANAA4AAAABAAAAAAAOAA4AAAABAAAAAAAPAA4AAAABAAAAAAA=")
 tile_set = ExtResource("2_8nuqp")
 
 [node name="Decorations" type="TileMapLayer" parent="." unique_id=153795496]
 texture_filter = 1
-tile_map_data = PackedByteArray(0, 0, 6, 0, 5, 0, 0, 0, 2, 0, 0, 0, 0, 0)
+tile_map_data = PackedByteArray("AAAMAAoAAAACAAAAAAA=")
 tile_set = ExtResource("2_8nuqp")
 collision_enabled = false
+
+[node name="ConditionalWalls" type="TileMapLayer" parent="." unique_id=1996536693]
+modulate = Color(1, 0.75, 0.45, 1)
+texture_filter = 1
+tile_map_data = PackedByteArray("AAADAAMAAAAAAAAAAAAEAAMAAAAAAAAAAAAEAAQAAAAAAAAAAAATAAMAAAAAAAAAAAAUAAMAAAAAAAAAAAAUAAQAAAAAAAAAAAADABMAAAAAAAAAAAAEABMAAAAAAAAAAAAEABQAAAAAAAAAAAATABMAAAAAAAAAAAAUABMAAAAAAAAAAAAUABQAAAAAAAAAAAA=")
+tile_set = ExtResource("2_8nuqp")
+
+[node name="Climbables" type="TileMapLayer" parent="." unique_id=1248760530]
+texture_filter = 1
+tile_set = ExtResource("2_8nuqp")
+
+[node name="ConditionalPlatforms" type="TileMapLayer" parent="." unique_id=490057532]
+texture_filter = 1
+tile_set = ExtResource("2_8nuqp")
+
+[node name="BreakableWalls" type="TileMapLayer" parent="." unique_id=1435670221]
+texture_filter = 1
+tile_set = ExtResource("2_8nuqp")
 
 [node name="ObjectMarkers" type="Node2D" parent="." unique_id=1588271515]
 
 [node name="RoomCenter" type="Marker2D" parent="ObjectMarkers" unique_id=479885812]
-position = Vector2(96, 96)
+position = Vector2(192, 192)
 
 [node name="OpeningGuides" type="Node2D" parent="." unique_id=56203583]
 
 [node name="north_0" type="Marker2D" parent="OpeningGuides" unique_id=1310961657]
-position = Vector2(56, 8)
+position = Vector2(104, 8)
 
 [node name="north_1" type="Marker2D" parent="OpeningGuides" unique_id=2146369650]
-position = Vector2(136, 8)
+position = Vector2(280, 8)
 
 [node name="east_0" type="Marker2D" parent="OpeningGuides" unique_id=196420469]
-position = Vector2(184, 56)
+position = Vector2(376, 104)
 
 [node name="east_1" type="Marker2D" parent="OpeningGuides" unique_id=2133171281]
-position = Vector2(184, 136)
+position = Vector2(376, 280)
 
 [node name="south_0" type="Marker2D" parent="OpeningGuides" unique_id=417944854]
-position = Vector2(56, 184)
+position = Vector2(104, 376)
 
 [node name="south_1" type="Marker2D" parent="OpeningGuides" unique_id=750677602]
-position = Vector2(136, 184)
+position = Vector2(280, 376)
 
 [node name="west_0" type="Marker2D" parent="OpeningGuides" unique_id=42509620]
-position = Vector2(8, 56)
+position = Vector2(8, 104)
 
 [node name="west_1" type="Marker2D" parent="OpeningGuides" unique_id=2050172999]
-position = Vector2(8, 136)
+position = Vector2(8, 280)

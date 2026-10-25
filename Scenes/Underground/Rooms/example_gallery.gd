@@ -1,10 +1,21 @@
 extends Node2D
 ## Finite editor-friendly demonstration. No procedural geometry is built.
+@export var preview_seed: int = 12345
+var _cards: Node2D
 @export var registry: AbyssRoomTemplateRegistry
 
 
 func _ready() -> void:
-	var selector := AbyssRoomTemplateSelector.new(registry, 12345)
+	_rebuild()
+
+
+func _rebuild() -> void:
+	if is_instance_valid(_cards):
+		remove_child(_cards)
+		_cards.free()
+	_cards = Node2D.new()
+	add_child(_cards)
+	var selector := AbyssRoomTemplateSelector.new(registry, preview_seed)
 	var config := AbyssRegionConfig.new()
 	var routes := AbyssRouteConfig.new()
 	var index := 0
@@ -31,18 +42,30 @@ func _ready() -> void:
 			neighbors.append(neighbor)
 		var requirements := AbyssRoomRequirements.from_room(room, config, routes, neighbors)
 		var request := selector.select(requirements)
-		var origin := Vector2(60 + (index % 3) * 440, 135 + (index / 3) * 450)
+		var footprint := Vector2(config.room_size * registry.tile_pixels)
+		var spacing := footprint + Vector2(56, 66)
+		var origin := Vector2(60, 135) + Vector2(index % 3, index / 3) * spacing
 		var label := Label.new()
 		label.position = origin - Vector2(0, 55)
 		label.text = metadata.display_name + "\n" + String(request.template_id)
-		add_child(label)
+		_cards.add_child(label)
 		var instance := AbyssRoomSceneInstantiator.instantiate_authored(request)
 		if instance != null:
 			instance.position = origin
-			instance.scale = Vector2(2, 2)
-			add_child(instance)
+			_cards.add_child(instance)
+			if not instance.conditional_wall_groups.is_empty():
+				var included := 0
+				for group in instance.conditional_wall_groups:
+					included += int(group.included)
+				label.text += " • walls %d/%d" % [included, instance.conditional_wall_groups.size()]
 		index += 1
 	var label := Label.new()
-	label.position = Vector2(940, 530)
-	label.text = "PROCEDURAL FALLBACK\nUnmatched connections return a request.\nGeometry is deferred to Milestone 3B."
-	add_child(label)
+	label.position = Vector2(60, 135) + Vector2(2, 1) * (Vector2(config.room_size * registry.tile_pixels) + Vector2(56, 66))
+	label.text = "CONDITIONAL WALLS\nSeed: %d (N: next seed)\nOrange tiles: selected groups\nEnable metadata debug log for group IDs." % preview_seed
+	_cards.add_child(label)
+
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_N:
+		preview_seed += 1
+		_rebuild()

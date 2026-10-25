@@ -6,6 +6,8 @@ static func validate(metadata: AbyssRoomTemplateMetadata) -> PackedStringArray:
 	if metadata.room_size.x < 3 or metadata.room_size.y < 3 or metadata.opening_combinations.is_empty():
 		errors.append("Missing combinations or invalid room dimensions")
 		return errors
+	if not is_finite(metadata.conditional_wall_probability) or metadata.conditional_wall_probability < 0.0 or metadata.conditional_wall_probability > 1.0:
+		errors.append("Conditional wall probability must be finite and within [0, 1]")
 	var variants: Dictionary = {}
 	for profile in metadata.opening_combinations:
 		if profile == null:
@@ -75,6 +77,8 @@ static func validate(metadata: AbyssRoomTemplateMetadata) -> PackedStringArray:
 							errors.append("Blocked declared opening at %s" % cell)
 					elif not _has_solid_collision(layers[0], cell):
 						errors.append("Undeclared boundary hole at %s" % cell)
+		errors.append_array(_validate_conditional(room, metadata))
+		errors.append_array(AbyssRoomFeatureValidator.validate(room,metadata,profile))
 		room.free()
 	return errors
 
@@ -98,3 +102,32 @@ static func _has_solid_collision(layer: TileMapLayer, cell: Vector2i) -> bool:
 			if not data.is_collision_polygon_one_way(i, polygon):
 				return true
 	return false
+
+
+static func _validate_conditional(room: AbyssAuthoredRoom, metadata: AbyssRoomTemplateMetadata) -> PackedStringArray:
+	var errors := PackedStringArray()
+	var bounds := Rect2i(Vector2i.ZERO, metadata.room_size)
+	for rect in room.reserved_route_rects:
+		if rect.size.x <= 0 or rect.size.y <= 0 or not bounds.encloses(rect):
+			errors.append("Reserved route rectangles must be positive and inside the room")
+	var layer := room.get_node_or_null("ConditionalWalls") as TileMapLayer
+	if layer == null:
+		return errors # Compatibility with scenes authored before this optional layer.
+	if layer.tile_set == null:
+		errors.append("ConditionalWalls requires a TileSet")
+		return errors
+	if not layer.collision_enabled or layer.tile_set.tile_size != Vector2i.ONE * room.tile_pixels or layer.position != Vector2.ZERO or layer.scale != Vector2.ONE or not is_zero_approx(layer.rotation):
+		errors.append("ConditionalWalls requires solid collision, matching tile size and identity transform")
+	for cell in layer.get_used_cells():
+		if not bounds.has_point(cell) or cell.x == 0 or cell.y == 0 or cell.x == metadata.room_size.x - 1 or cell.y == metadata.room_size.y - 1:
+			errors.append("Conditional walls must be strictly inside the room: %s" % cell)
+		if not _has_solid_collision(layer, cell):
+			errors.append("Conditional wall tiles require non-one-way solid collision: %s" % cell)
+		for rect in room.reserved_route_rects:
+			if rect.has_point(cell):
+				errors.append("Conditional wall overlaps reserved route: %s" % cell)
+		for key in ["Solid", "Platforms"]:
+			var permanent := room.get_node_or_null(NodePath(key)) as TileMapLayer
+			if permanent != null and permanent.get_cell_source_id(cell) != -1:
+				errors.append("Conditional wall overlaps permanent geometry: %s" % cell)
+	return errors

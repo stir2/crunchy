@@ -41,7 +41,7 @@ No shared RNG is used. Raw noise always samples global room coordinates.
 
 `region_preview.gd` alone owns rendering. It builds a two-color TileSet with
 8-pixel tiles, no physics layers, and disabled TileMapLayer collision. Each
-room fills exactly `room_size` tile cells (12 by 12 by default). These tiles
+room fills exactly `room_size` tile cells (24 by 24 by default). These tiles
 are classification markers, not terrain.
 
 Run verification from the project directory:
@@ -217,7 +217,7 @@ main/branch polylines, contracts and edges without scene dependencies.
 `AbyssRoomTemplateMetadata` is an Inspector-editable Resource with stable template
 ID, PackedScene reference, region, dimensions, opening schema, supported stable
 opening IDs, and compatibility tags. A future selector can filter on region,
-12x12 dimensions, schema, and coverage of every required opening, then sort
+24x24 dimensions, schema, and coverage of every required opening, then sort
 compatible templates by stable ID and select via a room-ID/seed-derived value.
 If no compatible template exists, pass the same room requirements to procedural
 construction. Normal `.tscn` templates can own separate terrain/platform/decor

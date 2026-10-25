@@ -26,6 +26,10 @@ const BASE_STATS := {
 	"map_range": 1,
 }
 
+## Persistent abyss mutations survive scene/chunk unloading and later descents.
+## Save/load code can serialize/restore this store independently of generation.
+var abyss_room_state := AbyssRoomState.new()
+
 var day: int = 1
 var trips_left: int = TRIPS_PER_DAY:
 	set(value):

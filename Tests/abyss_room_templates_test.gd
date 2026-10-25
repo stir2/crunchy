@@ -71,7 +71,7 @@ func run() -> void:
 			scene.free()
 	for ids in [["east:0"], ["north:1", "south:1"], ["north:0", "south:0", "east:0"], []]:
 		var fallback := selector.select(requirements(ids))
-		check(fallback.method == AbyssRoomConstructionRequest.Method.PROCEDURAL and fallback.scene == null and fallback.requirements != null, "Unsupported combination did not fall back")
+		check(fallback.method == AbyssRoomConstructionRequest.Method.PROCEDURAL and fallback.scene == null and fallback.requirements != null and fallback.requirements.room_size == config.room_size, "Unsupported combination did not fall back")
 		check(fallback.global_seed == 12345 and fallback.room_seed == selector.select(requirements(ids)).room_seed, "Fallback seed missing or unstable")
 		check(AbyssRoomSceneInstantiator.instantiate_authored(fallback) == null, "Fallback unexpectedly built geometry")
 	var transition_registry := AbyssRoomTemplateRegistry.new()
@@ -184,7 +184,7 @@ func run() -> void:
 	check(authored + fallback_count == 64 and authored > 0 and fallback_count > 0, "Real generated-room integration not exercised")
 	var world_request := selector.select(requirements(["west:0", "east:0"], Vector2i(-1, 2)))
 	var world_scene := AbyssRoomSceneInstantiator.instantiate_authored(world_request)
-	check(world_scene != null and world_scene.position == Vector2(-192, 384), "Authored world placement uses wrong tile coordinates")
+	check(world_scene != null and world_scene.position == Vector2(Vector2i(-1, 2) * config.room_size * registry.tile_pixels), "Authored world placement uses wrong tile coordinates")
 	if world_scene != null:
 		world_scene.free()
 	var abyss := load("res://Scenes/Underground/abyss.tscn").instantiate() as Node2D

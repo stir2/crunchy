@@ -3,9 +3,9 @@ extends RefCounted
 ## Stateless construction. Every random choice belongs to the request's room seed.
 const TILES = preload("res://Assets/Tiles/room_placeholders.tres")
 
-static func build(request: AbyssRoomConstructionRequest, config: AbyssTerrainConfig) -> AbyssAuthoredRoom:
+static func build(request: AbyssRoomConstructionRequest, config: AbyssTerrainConfig, boundary: AbyssCavernBoundaryField = null, state: AbyssRoomState = null) -> AbyssAuthoredRoom:
 	if request.method == AbyssRoomConstructionRequest.Method.AUTHORED:
-		return AbyssRoomSceneInstantiator.instantiate_authored(request)
+		return AbyssRoomSceneInstantiator.instantiate_authored(request,state)
 	var room := AbyssAuthoredRoom.new()
 	var req := request.requirements
 	room.room_size = req.room_size
@@ -23,7 +23,23 @@ static func build(request: AbyssRoomConstructionRequest, config: AbyssTerrainCon
 	var platforms := room.get_node("Platforms") as TileMapLayer
 	var rng := RandomNumberGenerator.new()
 	rng.seed = request.room_seed
+	if boundary != null:
+		for y in range(req.room_size.y):
+			for x in range(req.room_size.x):
+				var cell := Vector2i(x, y)
+				if boundary.is_solid(req.global_coords * req.room_size + cell):
+					solid.set_cell(cell, 0, Vector2i.ZERO)
 	if req.region == AbyssRoomData.Region.OPEN:
+		# Preserve open-room route interiors after adding boundary formations.
+		for opening in req.route_openings.values():
+			var point: Vector2i = opening
+			var center := req.room_size / 2
+			while point != center:
+				_brush(solid, point, config.tunnel_width, req.room_size)
+				solid.erase_cell(point)
+				point += Vector2i(signi(center.x - point.x), 0) if point.x != center.x else Vector2i(0, signi(center.y - point.y))
+		if not req.route_openings.is_empty():
+			_brush(solid, req.room_size / 2, config.tunnel_width, req.room_size)
 		if rng.randf() < config.platform_probability:
 			for i in range(rng.randi_range(1, maxi(1, config.max_platforms)) if config.max_platforms > 0 else 0):
 				var length := rng.randi_range(2, 5)
@@ -35,14 +51,19 @@ static func build(request: AbyssRoomConstructionRequest, config: AbyssTerrainCon
 					for opening in req.route_openings.values():
 						if cell.distance_to(opening) < 2.0:
 							clear = false
-					if clear:
+					if clear and solid.get_cell_source_id(cell) == -1:
 						platforms.set_cell(cell, 0, Vector2i.RIGHT)
 		return room
-	for y in range(req.room_size.y):
-		for x in range(req.room_size.x):
-			solid.set_cell(Vector2i(x, y), 0, Vector2i.ZERO)
+	if boundary == null:
+		for y in range(req.room_size.y):
+			for x in range(req.room_size.x):
+				solid.set_cell(Vector2i(x, y), 0, Vector2i.ZERO)
 	var hub := req.room_size / 2 + Vector2i(rng.randi_range(-1, 1), rng.randi_range(-1, 1))
-	_brush(solid, hub, config.tunnel_width + int(rng.randf() < config.internal_openness), req.room_size)
+	# Preserve the random sequence for transition erosion, but carve a hub only
+	# when it serves an actual tunnel. Unconnected rock must not contain pockets.
+	var hub_width := config.tunnel_width + int(rng.randf() < config.internal_openness)
+	if not req.required_openings.is_empty():
+		_brush(solid, hub, hub_width, req.room_size)
 	var ids: Array = req.required_openings.keys()
 	ids.sort()
 	for id in ids:
@@ -58,7 +79,7 @@ static func build(request: AbyssRoomConstructionRequest, config: AbyssTerrainCon
 		solid.erase_cell(opening)
 	# Erode only faces touching known OPEN rooms. Wedges stay attached to the
 	# packed mass; no isolated rock is placed in the neighboring cavern.
-	for side in range(4):
+	for side in range(4) if boundary == null else []:
 		if not (req.neighbor_open_sides & (1 << side)):
 			continue
 		var limit := req.room_size.x if side % 2 == 0 else req.room_size.y
@@ -67,7 +88,8 @@ static func build(request: AbyssRoomConstructionRequest, config: AbyssTerrainCon
 			for d in range(depth):
 				var cell := Vector2i(offset, d if side == 0 else req.room_size.y - 1 - d) if side % 2 == 0 else Vector2i(req.room_size.x - 1 - d if side == 1 else d, offset)
 				solid.erase_cell(cell)
-	_remove_floating_rock(solid, req)
+	if boundary == null:
+		_remove_floating_rock(solid, req)
 	return room
 
 static func _brush(layer: TileMapLayer, center: Vector2i, width: int, size: Vector2i) -> void:

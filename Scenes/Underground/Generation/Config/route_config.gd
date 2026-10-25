@@ -29,8 +29,8 @@ extends Resource
 ## Side chunks may attach vertically within these bands instead of forming rows.
 @export_range(2, 12) var attachment_band_height: int = 4
 ## Tile indices along N/S edges and E/W edges respectively. Slot IDs stay stable.
-@export var horizontal_offsets: Vector2i = Vector2i(3, 8)
-@export var vertical_offsets: Vector2i = Vector2i(3, 8)
+@export var horizontal_offsets: Vector2i = Vector2i(6, 17)
+@export var vertical_offsets: Vector2i = Vector2i(6, 17)
 
 
 func is_valid(room_size: Vector2i) -> bool:

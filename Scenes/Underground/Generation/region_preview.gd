@@ -21,7 +21,11 @@ extends Node2D
 @export var template_registry: AbyssRoomTemplateRegistry = preload("res://Scenes/Underground/Rooms/example_registry.tres")
 @export var show_terrain: bool = false
 @export var terrain_configuration: AbyssTerrainConfig = AbyssTerrainConfig.new()
+var room_state: AbyssRoomState
 var _terrain: Node2D
+var _boundary: AbyssCavernBoundaryField
+@export var show_original_boundaries: bool = false
+@export var show_final_boundaries: bool = false
 var construction_statistics: Dictionary = {}
 var _construction_requests: Dictionary[Vector2i, AbyssRoomConstructionRequest] = {}
 var route_generator: AbyssRouteGenerator
@@ -41,7 +45,10 @@ func regenerate() -> void:
 	if is_instance_valid(_terrain):
 		remove_child(_terrain)
 		_terrain.free()
-	construction_statistics = {"authored": 0, "procedural": 0, "solid_tiles": 0, "platform_tiles": 0}
+	_boundary = null
+	construction_statistics = {"authored": 0, "procedural": 0, "solid_tiles": 0, "platform_tiles": 0, "conditional_tiles": 0}
+	if room_state == null:
+		room_state = GameController.abyss_room_state
 	_tiles.clear()
 	_construction_requests.clear()
 	if template_registry == null:
@@ -80,6 +87,7 @@ func regenerate() -> void:
 				for room in route_generator.get_chunk(Vector2i(cx, cy)).rooms:
 					_construction_requests[room.global_coords] = selector.select_room(route_generator, room.global_coords)
 	if show_terrain:
+		_boundary = AbyssCavernBoundaryField.new(route_generator, AbyssRoomTemplateSelector.new(template_registry, configuration.global_seed), terrain_configuration)
 		_terrain = Node2D.new()
 		_terrain.name = "PhysicalChunks"
 		# The debug canvas uses 8px tiles; physical content retains its 16px grid.
@@ -95,12 +103,16 @@ func regenerate() -> void:
 				_terrain.add_child(chunk)
 				for data in route_generator.get_chunk(coords).rooms:
 					var request: AbyssRoomConstructionRequest = _construction_requests[data.global_coords]
-					var room := AbyssRoomTerrainBuilder.build(request, terrain_configuration)
+					var room := AbyssRoomTerrainBuilder.build(request, terrain_configuration, _boundary, room_state)
 					chunk.add_child(room)
+					room.terrain_changed.connect(queue_redraw)
 					room.position -= chunk.position
 					var key := "authored" if request.method == AbyssRoomConstructionRequest.Method.AUTHORED else "procedural"
 					construction_statistics[key] += 1
 					construction_statistics.solid_tiles += room.get_node("Solid").get_used_cells().size()
+					var conditional := room.get_node_or_null("ConditionalWalls") as TileMapLayer
+					if conditional != null:
+						construction_statistics.conditional_tiles += conditional.get_used_cells().size()
 					construction_statistics.platform_tiles += room.get_node("Platforms").get_used_cells().size()
 		print("Abyss construction: ", construction_statistics)
 	_fit_preview()
@@ -156,6 +168,7 @@ func _draw() -> void:
 			else:
 				draw_line(start + Vector2(0, y * step.y), start + Vector2(extent.x, y * step.y), color, 1.0)
 
+	_draw_boundary_overlays()
 	_draw_routes()
 
 
@@ -197,6 +210,12 @@ func _draw_routes() -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
+			KEY_B:
+				show_original_boundaries = not show_original_boundaries
+				queue_redraw()
+			KEY_F:
+				show_final_boundaries = not show_final_boundaries
+				queue_redraw()
 			KEY_T:
 				show_terrain = not show_terrain
 				regenerate()
@@ -227,3 +246,35 @@ func _unhandled_input(event: InputEvent) -> void:
 			scale *= factor
 	if event is InputEventMouseMotion and event.button_mask & MOUSE_BUTTON_MASK_MIDDLE:
 		position += event.relative
+
+
+func _draw_boundary_overlays() -> void:
+	if show_original_boundaries and generator != null:
+		var step := configuration.room_size * TILE_PIXELS
+		for y in range(_first_room.y, _first_room.y + _room_count.y):
+			for x in range(_first_room.x, _first_room.x + _room_count.x):
+				var coords := Vector2i(x, y)
+				var room := generator.get_room(coords)
+				var origin := Vector2(coords * step)
+				if room.boundary_mask & 1:
+					draw_line(origin, origin + Vector2(step.x, 0), Color.CYAN, 2.0)
+				if room.boundary_mask & 8:
+					draw_line(origin, origin + Vector2(0, step.y), Color.CYAN, 2.0)
+	if show_final_boundaries and show_terrain and is_instance_valid(_terrain):
+		var occupied: Dictionary = {}
+		for chunk in _terrain.get_children():
+			for room in chunk.get_children():
+				var origin: Vector2i = room.construction_requirements.global_coords * configuration.room_size
+				for key in ["Solid", "ConditionalWalls", "BreakableWalls"]:
+					var layer := room.get_node_or_null(NodePath(key)) as TileMapLayer
+					if layer != null:
+						for cell in layer.get_used_cells():
+							occupied[origin + cell] = true
+		for cell in occupied:
+			var origin := Vector2(cell * TILE_PIXELS)
+			for side in range(4):
+				if occupied.has(cell + AbyssRegionGenerator.DIRECTIONS[side]):
+					continue
+				var a: Vector2 = [Vector2.ZERO, Vector2(TILE_PIXELS, 0), Vector2(TILE_PIXELS, TILE_PIXELS), Vector2(0, TILE_PIXELS)][side]
+				var b: Vector2 = [Vector2(TILE_PIXELS, 0), Vector2(TILE_PIXELS, TILE_PIXELS), Vector2(0, TILE_PIXELS), Vector2.ZERO][side]
+				draw_line(origin + a, origin + b, Color.GREEN_YELLOW, 1.0)

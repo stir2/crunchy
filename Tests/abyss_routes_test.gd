@@ -190,11 +190,11 @@ func _run() -> void:
 	custom.main_route_horizontal_wander = 0.0
 	custom.horizontal_offsets = Vector2i(2, 9)
 	custom.vertical_offsets = Vector2i(1, 10)
-	check(custom.is_valid(Vector2i(12, 12)), "Valid custom slots rejected")
+	check(custom.is_valid(AbyssRegionConfig.new().room_size), "Valid custom slots rejected")
 	var generator := AbyssRouteGenerator.new(AbyssRegionConfig.new(), custom)
 	for room in generator.get_chunk(Vector2i.ZERO).rooms:
 		for edge in room.required_connections:
-			check(edge.opening_tile == custom.opening_position(edge.side, edge.slot, Vector2i(12, 12)), "Custom opening ignored")
+			check(edge.opening_tile == custom.opening_position(edge.side, edge.slot, AbyssRegionConfig.new().room_size), "Custom opening ignored")
 	var changed_config := AbyssRegionConfig.new()
 	var original := AbyssRouteGenerator.new(changed_config, custom)
 	changed_config.global_seed += 37

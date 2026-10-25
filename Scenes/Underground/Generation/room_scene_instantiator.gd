@@ -1,7 +1,7 @@
 class_name AbyssRoomSceneInstantiator
 extends RefCounted
 ## Explicit geometry boundary; selection itself never instantiates anything.
-static func instantiate_authored(request: AbyssRoomConstructionRequest) -> AbyssAuthoredRoom:
+static func instantiate_authored(request: AbyssRoomConstructionRequest, state: AbyssRoomState = null) -> AbyssAuthoredRoom:
 	if request.method != AbyssRoomConstructionRequest.Method.AUTHORED or request.scene == null:
 		return null
 	var instance := request.scene.instantiate()
@@ -14,4 +14,5 @@ static func instantiate_authored(request: AbyssRoomConstructionRequest) -> Abyss
 		return null
 	room.construction_requirements = request.requirements
 	room.position = Vector2(request.requirements.global_coords * room.room_size * room.tile_pixels)
+	AbyssRoomContent.process(room,request,state)
 	return room

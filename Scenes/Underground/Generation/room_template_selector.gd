@@ -113,6 +113,10 @@ func select(request: AbyssRoomRequirements) -> AbyssRoomConstructionRequest:
 	var metadata: AbyssRoomTemplateMetadata = chosen[0]
 	var profile: AbyssRoomOpeningProfile = chosen[1]
 	result.method = AbyssRoomConstructionRequest.Method.AUTHORED
+	result.conditional_wall_probability = metadata.conditional_wall_probability
+	result.debug_conditional_walls = metadata.debug_conditional_walls
+	result.conditional_platform_probability = metadata.conditional_platform_probability
+	result.breakable_health = metadata.breakable_health
 	result.template_id = metadata.template_id
 	result.variant_id = profile.variant_id
 	result.scene = profile.scene if profile.scene != null else metadata.scene

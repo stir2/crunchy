@@ -9,7 +9,7 @@ enum Compatibility { OPEN, PACKED, TRANSITION }
 ## TRANSITION preserves the original OPEN/PACKED type; it is not a third noise type.
 @export var transition_base_region: AbyssRoomData.Region = AbyssRoomData.Region.PACKED
 @export var tile_pixels: int = 16
-@export var room_size: Vector2i = Vector2i(12, 12)
+@export var room_size: Vector2i = AbyssRegionConfig.DEFAULT_ROOM_SIZE
 ## Version the physical opening convention independently of template IDs.
 @export var opening_schema: StringName = &"abyss_slots_v1"
 ## Legacy union of supported side:slot IDs. Profiles are the authoritative
@@ -18,3 +18,12 @@ enum Compatibility { OPEN, PACKED, TRANSITION }
 @export var opening_combinations: Array[AbyssRoomOpeningProfile] = []
 @export_range(0.0, 1000.0, 0.1) var selection_weight: float = 1.0
 @export var compatibility_tags: Array[StringName] = []
+
+@export_group("Conditional Walls")
+## Independent inclusion probability for each painted four-connected group.
+@export_range(0.0, 1.0, 0.01) var conditional_wall_probability: float = 0.5
+@export var debug_conditional_walls: bool = false
+
+@export_group("Room Features")
+@export_range(0.0,1.0,0.01) var conditional_platform_probability: float = 0.5
+@export_range(0.1,1000.0,0.1) var breakable_health: float = 3.0

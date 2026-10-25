@@ -1,0 +1,4 @@
+class_name TransitionSpawnRequest
+extends RoomSpawnRequest
+var destination: StringName
+var logical_gate_id: StringName

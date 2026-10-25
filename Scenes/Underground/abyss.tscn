@@ -9,8 +9,8 @@
 [ext_resource type="Texture2D" uid="uid://cuonmh2315nks" path="res://Assets/Sprites/UI/button_pressed.png" id="7_btnpress"]
 [ext_resource type="Texture2D" uid="uid://dsso6fkauct5" path="res://Assets/Sprites/UI/button_disabled.png" id="8_btndis"]
 [ext_resource type="Script" uid="uid://cpry8ro8l5wwp" path="res://Scenes/Underground/Generation/region_preview.gd" id="9_preview"]
-[ext_resource type="Script" uid="uid://bxa4vfgduq7h" path="res://Scenes/Underground/Generation/region_config.gd" id="10_config"]
-[ext_resource type="Script" uid="uid://cire5kx3cof5u" path="res://Scenes/Underground/Generation/route_config.gd" id="11_routes"]
+[ext_resource type="Script" uid="uid://bxa4vfgduq7h" path="res://Scenes/Underground/Generation/Config/region_config.gd" id="10_config"]
+[ext_resource type="Script" uid="uid://cire5kx3cof5u" path="res://Scenes/Underground/Generation/Config/route_config.gd" id="11_routes"]
 
 [sub_resource type="Resource" id="Resource_generation"]
 script = ExtResource("10_config")
@@ -140,6 +140,7 @@ offset_bottom = 330.0
 text = "T: terrain / logical preview
 G: grid  O: openings  A: authored
 R: routes  Wheel: zoom  MMB: pan
+B: original edges  F: terrain edges
 REGIONS + LOGICAL ROUTES
 Cyan: OPEN
 Slate: PACKED

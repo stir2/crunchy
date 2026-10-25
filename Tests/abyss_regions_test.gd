@@ -72,20 +72,20 @@ func _run() -> void:
 	check(ratio > 0.24 and ratio < 0.36, "Default distribution outside approximate 70/30 target")
 	check(different > 100, "Seeds did not meaningfully change layout")
 	check(isolated < open_count * 0.01, "Too many isolated open rooms")
-	# Scene integration, filled 12x12 footprints, no collision, preview resizing.
+	# Scene integration, filled configured room footprints, no collision, preview resizing.
 	var scene := load("res://Scenes/Underground/abyss.tscn").instantiate() as Node2D
 	root.add_child(scene)
 	var preview := scene.get_node("RegionPreview")
 	var tiles := preview.get_node("ClassificationTiles") as TileMapLayer
-	check(tiles.get_used_cells().size() == 4 * 3 * 8 * 8 * 12 * 12, "Incorrect tile coverage")
+	check(tiles.get_used_cells().size() == 4 * 3 * 8 * 8 * preview.configuration.room_size.x * preview.configuration.room_size.y, "Incorrect tile coverage")
 	check(not tiles.collision_enabled and tiles.tile_set.get_physics_layers_count() == 0, "Debug collision enabled")
 	var before: AbyssRoomData = preview.generator.get_room(Vector2i(0, 4))
 	preview.preview_width_chunks = 5
 	preview.preview_height_chunks = 2
 	preview.regenerate()
 	check(before.region == preview.generator.get_room(Vector2i(0, 4)).region, "Preview dimensions affected layout")
-	for y in range(48, 60):
-		for x in range(12):
+	for y in range(4 * preview.configuration.room_size.y, 5 * preview.configuration.room_size.y):
+		for x in range(preview.configuration.room_size.x):
 			check(tiles.get_cell_atlas_coords(Vector2i(x, y)).x == (0 if before.region == AbyssRoomData.Region.OPEN else 1), "Room footprint mismatch")
 	scene.queue_free()
 	print("Abyss region tests: %s (%d failures)" % ["PASS" if failures == 0 else "FAIL", failures])

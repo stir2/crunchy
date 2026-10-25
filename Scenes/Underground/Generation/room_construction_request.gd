@@ -10,3 +10,11 @@ var template_id: StringName
 var variant_id: StringName
 var scene: PackedScene
 var reason: String = "No compatible authored template"
+
+var conditional_wall_probability: float = 0.5
+var debug_conditional_walls: bool = false
+
+var world_id: String = ""
+var difficulty: float = 1.0
+var conditional_platform_probability: float = 0.5
+var breakable_health: float = 3.0

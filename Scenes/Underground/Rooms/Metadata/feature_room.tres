@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="AbyssRoomTemplateMetadata" format=3]
+[ext_resource type="Script" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="1"]
+[ext_resource type="Script" path="res://Scenes/Underground/Generation/room_opening_profile.gd" id="2"]
+[ext_resource type="PackedScene" path="res://Scenes/Underground/Rooms/Examples/feature_room.tscn" id="3"]
+[sub_resource type="Resource" id="Profile"]
+script = ExtResource("2")
+open_sides = 15
+[resource]
+script = ExtResource("1")
+template_id = &"feature_room"
+display_name = "Room features laboratory"
+region = 0
+scene = ExtResource("3")
+opening_combinations = Array[ExtResource("2")]([SubResource("Profile")])

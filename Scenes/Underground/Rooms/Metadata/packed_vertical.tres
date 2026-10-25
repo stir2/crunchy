@@ -8,8 +8,8 @@
 script = ExtResource("1_h0ei5")
 openings = Array[StringName]([&"north:0", &"south:0"])
 opening_tiles = Dictionary[StringName, Vector2i]({
-&"north:0": Vector2i(3, 0),
-&"south:0": Vector2i(3, 11)
+&"north:0": Vector2i(6, 0),
+&"south:0": Vector2i(6, 23)
 })
 
 [resource]

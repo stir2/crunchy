@@ -11,4 +11,5 @@ registry = ExtResource("2")
 offset_left = 32.0
 offset_top = 24.0
 text = "ROOM TEMPLATE GALLERY — example connection combinations
-Open an Examples/*.tscn scene to paint its Solid, Platforms, or Decorations layers."
+Paint ConditionalWalls in Examples/open_cavern.tscn. N: change preview seed.
+Solid, Platforms, Decorations and markers remain editable normally."
