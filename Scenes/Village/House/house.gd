@@ -1,6 +1,7 @@
 extends Node2D
 
 const ABYSS_SCENE := "res://Scenes/Underground/abyss.tscn"
+const CUTSCENE_SCENE := "res://Scenes/Cutscene/toll_cutscene.tscn"
 
 enum RoomPanel { STAIRS = 0, DESK = 1, WINDOW = 2 }
 
@@ -73,6 +74,7 @@ func _ready() -> void:
 
 	set_panel(RoomPanel.DESK)
 	_refresh_top_hud()
+	VillageManager.check_next_refugee()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -254,8 +256,19 @@ func _on_victim_choice_requested(candidates: Array) -> void:
 
 func _on_night_resolved(report: Dictionary) -> void:
 	print("Night report: ", report)
+	if bool(report.get("wiped", false)):
+		return
 	# Re-open on the Desk panel each morning
 	set_panel(RoomPanel.DESK)
+	call_deferred("_transition_to_morning_cutscene")
+
+
+func _transition_to_morning_cutscene() -> void:
+	var main := get_tree().current_scene
+	if main != null and main.has_method("change_scene"):
+		main.change_scene(CUTSCENE_SCENE)
+	else:
+		get_tree().change_scene_to_file(CUTSCENE_SCENE)
 
 
 func _on_village_wiped() -> void:

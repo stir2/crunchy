@@ -1,0 +1,101 @@
+[gd_scene format=3 uid="uid://c6y78w2a4kdp3"]
+
+[ext_resource type="Script" uid="uid://ban8cp5gt5t2e" path="res://Scenes/Cutscene/toll_cutscene.gd" id="1_cutscene"]
+
+[node name="TollCutscene" type="Control" unique_id=1439978767]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_cutscene")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1195683389]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=480700397]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Housing" type="Control" parent="CenterContainer" unique_id=255152329]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 220)
+layout_mode = 2
+
+[node name="HousingBackground" type="ColorRect" parent="CenterContainer/Housing" unique_id=44376081]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.03, 0.03, 0.03, 1)
+
+[node name="TopBorder" type="ColorRect" parent="CenterContainer/Housing" unique_id=972696358]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 300.0
+offset_bottom = 2.0
+color = Color(0.25, 0.25, 0.25, 1)
+
+[node name="BottomBorder" type="ColorRect" parent="CenterContainer/Housing" unique_id=1137706655]
+unique_name_in_owner = true
+layout_mode = 0
+offset_top = 218.0
+offset_right = 300.0
+offset_bottom = 220.0
+color = Color(0.25, 0.25, 0.25, 1)
+
+[node name="Aperture" type="Control" parent="CenterContainer/Housing" unique_id=1410911818]
+unique_name_in_owner = true
+clip_contents = true
+anchors_preset = 0
+offset_left = 20.0
+offset_top = 10.0
+offset_right = 280.0
+offset_bottom = 210.0
+
+[node name="ReelsContainer" type="HBoxContainer" parent="CenterContainer/Housing/Aperture" unique_id=38931359]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="TopShadow" type="ColorRect" parent="CenterContainer/Housing" unique_id=2118108804]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 20.0
+offset_top = 10.0
+offset_right = 280.0
+offset_bottom = 46.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.65)
+
+[node name="BottomShadow" type="ColorRect" parent="CenterContainer/Housing" unique_id=1356229593]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 20.0
+offset_top = 174.0
+offset_right = 280.0
+offset_bottom = 210.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.65)
+
+[node name="ClickAudioPlayer" type="AudioStreamPlayer" parent="." unique_id=491070399]
+unique_name_in_owner = true

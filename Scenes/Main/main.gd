@@ -3,12 +3,13 @@ extends Node
 ## Switch scenes with: get_tree().current_scene.change_scene("res://Scenes/...tscn")
 
 const HOUSE_SCENE := "res://Scenes/Village/House/house.tscn"
+const CUTSCENE_SCENE := "res://Scenes/Cutscene/toll_cutscene.tscn"
 
 var active_scene: Node
 
 
 func _ready() -> void:
-	change_scene(HOUSE_SCENE)
+	change_scene(CUTSCENE_SCENE)
 
 
 func change_scene(path: String) -> void:
