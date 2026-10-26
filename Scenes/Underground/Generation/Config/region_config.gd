@@ -1,7 +1,7 @@
 class_name AbyssRegionConfig
 extends Resource
 ## Generation inputs only. Generators snapshot this resource on construction.
-@export var global_seed: int = 857632823493672366
+@export var global_seed: int = 8467567583787
 const DEFAULT_ROOM_SIZE := Vector2i(24, 24)
 @export var room_size: Vector2i = DEFAULT_ROOM_SIZE
 @export var chunk_size: Vector2i = Vector2i(8, 8)

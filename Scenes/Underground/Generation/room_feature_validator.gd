@@ -76,7 +76,12 @@ static func validate(room: AbyssAuthoredRoom, metadata: AbyssRoomTemplateMetadat
 			errors.append("Invalid marker spawn probability")
 		if not Rect2(Vector2.ZERO,Vector2(room.room_size * room.tile_pixels)).has_point(AbyssRoomContent.local_transform(marker,room).origin):
 			errors.append("Marker outside room: %s" % marker.marker_id)
-		if marker is EnemySpawnMarker:
+		if marker is CheckpointMarker or marker is LevelGateMarker or marker is KeyFragmentMarker:
+			var region := int(metadata.transition_base_region) if metadata.region == AbyssRoomTemplateMetadata.Compatibility.TRANSITION else int(metadata.region)
+			var expected := AbyssRoomData.Region.PACKED if marker is KeyFragmentMarker else AbyssRoomData.Region.OPEN
+			if region != expected:
+				errors.append("Special marker %s has incompatible room region" % marker.marker_id)
+		elif marker is EnemySpawnMarker:
 			if not is_finite(marker.difficulty_range.x) or not is_finite(marker.difficulty_range.y) or marker.difficulty_range.x > marker.difficulty_range.y or marker.depth_range.x > marker.depth_range.y:
 				errors.append("Invalid enemy difficulty/depth range")
 		elif marker is LootSpawnMarker:

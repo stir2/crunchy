@@ -312,3 +312,6 @@ scenes, exact opening combinations, registry registration, weighted deterministi
 selection, procedural fallback contract, gallery and tests. The route graph and
 region algorithm are unchanged. RegionPreview has an optional authored/fallback
 selection overlay; it does not build geometry into the generated abyss yet.
+
+Special-room placement, checkpoint APIs, fragment guarantees, level boundaries,
+and progression persistence are documented in [Progression foundations](../Progression/README.md).

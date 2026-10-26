@@ -21,7 +21,7 @@ func persistence_id() -> String:
 func _draw() -> void:
 	if not Engine.is_editor_hint() and not show_debug:
 		return
-	var colors := {&"enemy":Color.CORAL, &"loot":Color.GOLD, &"hazard":Color.MAGENTA, &"transition":Color.CYAN, &"interaction":Color.CORNFLOWER_BLUE, &"decoration":Color.LIME_GREEN}
+	var colors := {&"checkpoint":Color.CYAN, &"fragment":Color.GOLD, &"gate":Color.ORANGE_RED, &"enemy":Color.CORAL, &"loot":Color.GOLD, &"hazard":Color.MAGENTA, &"transition":Color.CYAN, &"interaction":Color.CORNFLOWER_BLUE, &"decoration":Color.LIME_GREEN}
 	var color: Color = colors.get(kind(), Color.WHITE)
 	draw_circle(Vector2.ZERO, 6, Color(color,0.35))
 	draw_rect(Rect2(-5,-5,10,10),color,false,1.5)

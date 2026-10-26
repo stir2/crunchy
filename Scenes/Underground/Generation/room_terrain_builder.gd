@@ -3,7 +3,13 @@ extends RefCounted
 ## Stateless construction. Every random choice belongs to the request's room seed.
 const TILES = preload("res://Assets/Tiles/room_placeholders.tres")
 
-static func build(request: AbyssRoomConstructionRequest, config: AbyssTerrainConfig, boundary: AbyssCavernBoundaryField = null, state: AbyssRoomState = null) -> AbyssAuthoredRoom:
+static func build(request: AbyssRoomConstructionRequest, config: AbyssTerrainConfig, boundary: AbyssCavernBoundaryField = null, state: AbyssRoomState = null, specials: AbyssSpecialRooms = null) -> AbyssAuthoredRoom:
+	var room := _build(request,config,boundary,state)
+	if room != null and specials != null:
+		AbyssSpecialRoomConstruction.apply(room,request,specials)
+	return room
+
+static func _build(request: AbyssRoomConstructionRequest, config: AbyssTerrainConfig, boundary: AbyssCavernBoundaryField = null, state: AbyssRoomState = null) -> AbyssAuthoredRoom:
 	if request.method == AbyssRoomConstructionRequest.Method.AUTHORED:
 		return AbyssRoomSceneInstantiator.instantiate_authored(request,state)
 	var room := AbyssAuthoredRoom.new()

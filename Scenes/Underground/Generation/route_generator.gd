@@ -1,6 +1,7 @@
 class_name AbyssRouteGenerator
 extends RefCounted
 ## Independent logical pass. Layout version 3 changes routes, never region noise.
+var progression: AbyssProgressionConfig
 var regions: AbyssRegionGenerator
 var _config: AbyssRegionConfig
 var _routes: AbyssRouteConfig
@@ -9,8 +10,9 @@ var _diagnostics: Dictionary = {}
 const DIRS = AbyssRegionGenerator.DIRECTIONS
 
 
-func _init(config: AbyssRegionConfig, routes: AbyssRouteConfig) -> void:
-	assert(config.is_valid() and routes.is_valid(config.room_size))
+func _init(config: AbyssRegionConfig, routes: AbyssRouteConfig, special: AbyssProgressionConfig = null) -> void:
+	assert(config.is_valid() and routes.is_valid(config.room_size) and (special == null or special.is_valid()))
+	progression = special.duplicate() as AbyssProgressionConfig if special != null else null
 	_config = config.duplicate() as AbyssRegionConfig
 	_routes = routes.duplicate() as AbyssRouteConfig
 	regions = AbyssRegionGenerator.new(_config)
@@ -44,20 +46,28 @@ func main_column(band: int) -> int:
 ## several adjacent columns in a row, but always finish with a downward contract.
 func main_chunks_for_band(band: int) -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
-	var start := main_column(band)
-	var finish := main_column(band + 1)
+	var start := _column(band, _routes.entrance_chunk_x)
+	var finish := _column(band + 1, _routes.entrance_chunk_x)
 	var direction := 1 if finish >= start else -1
 	for x in range(start, finish + direction, direction):
 		result.append(Vector2i(x, band))
 	return result
 
 
+func _column(band: int, reference_x: int) -> int:
+	if progression == null:
+		return main_column(band)
+	var level := floori(float(reference_x - progression.first_chunk_x) / progression.level_width_chunks) + 1
+	var start := progression.first_chunk_x + (level - 1) * progression.level_width_chunks
+	var local_start := progression.first_chunk_x
+	return start + clampi(main_column(band) - local_start, 0, progression.level_width_chunks - 1)
+
 func is_main_chunk(coords: Vector2i) -> bool:
-	return coords.x >= mini(main_column(coords.y), main_column(coords.y + 1)) and coords.x <= maxi(main_column(coords.y), main_column(coords.y + 1))
+	return coords.x >= mini(_column(coords.y, coords.x), _column(coords.y + 1, coords.x)) and coords.x <= maxi(_column(coords.y, coords.x), _column(coords.y + 1, coords.x))
 
 
-func entrance_for_band(band: int) -> Vector2i:
-	return Vector2i(main_column(band) * _config.chunk_size.x + _hash(Vector2i(0, band), 101) % _config.chunk_size.x, band * _config.chunk_size.y)
+func entrance_for_band(band: int, reference_x: int = 0) -> Vector2i:
+	return Vector2i(_column(band, reference_x) * _config.chunk_size.x + _hash(Vector2i(0, band), 101) % _config.chunk_size.x, band * _config.chunk_size.y)
 
 
 func entrance_room() -> Vector2i:
@@ -70,11 +80,11 @@ func entrance_room() -> Vector2i:
 ## reaches a main chunk without cycles even when the main corridor is moving.
 func parent_chunk(coords: Vector2i) -> Vector2i:
 	if is_main_chunk(coords):
-		var finish := main_column(coords.y + 1)
+		var finish := _column(coords.y + 1, coords.x)
 		return coords + (Vector2i(signi(finish - coords.x), 0) if coords.x != finish else Vector2i.DOWN)
 	var band := floori(float(coords.y) / _routes.attachment_band_height)
 	var hub_y := band * _routes.attachment_band_height + _hash(Vector2i(0, band), 191) % _routes.attachment_band_height
-	var hub_x := main_column(hub_y)
+	var hub_x := _column(hub_y, coords.x)
 	if coords.y != hub_y and (coords.x == hub_x or _hash(coords, 197) % 100 < 48):
 		return coords + Vector2i(0, signi(hub_y - coords.y))
 	return coords + Vector2i(signi(hub_x - coords.x), 0)
@@ -97,6 +107,8 @@ func boundary_contracts(coords: Vector2i) -> Array[Dictionary]:
 	var origin := coords * _config.chunk_size
 	for side in range(4):
 		var neighbor: Vector2i = coords + DIRS[side]
+		if progression != null and not progression.same_level(coords.x, neighbor.x):
+			continue
 		var canonical := coords if side == 1 or side == 2 else neighbor
 		var spine := _is_main_transition(coords, neighbor)
 		var tree := parent_chunk(coords) == neighbor or parent_chunk(neighbor) == coords
@@ -105,7 +117,7 @@ func boundary_contracts(coords: Vector2i) -> Array[Dictionary]:
 			continue
 		var a: Vector2i
 		if side % 2 == 0:
-			var column := entrance_for_band(maxi(coords.y, neighbor.y)).x - origin.x if spine else _hash(canonical, 233) % _config.chunk_size.x
+			var column := entrance_for_band(maxi(coords.y, neighbor.y), coords.x).x - origin.x if spine else _hash(canonical, 233) % _config.chunk_size.x
 			a = origin + Vector2i(column, 0 if side == 0 else _config.chunk_size.y - 1)
 		else:
 			a = origin + Vector2i(_config.chunk_size.x - 1 if side == 1 else 0, _hash(canonical, 239) % _config.chunk_size.y)
@@ -345,6 +357,8 @@ func get_chunk(coords: Vector2i) -> AbyssChunkData:
 	# Stage 5: validate the finite interior network (external contracts excluded).
 	assert(validate_chunk_layout(coords), "Disconnected chunk route network")
 	for room in chunk.rooms:
+		if progression != null:
+			room.level_number = progression.level_at_chunk(coords.x)
 		for direction in range(4):
 			var next := room.global_coords + DIRS[direction]
 			var id := _edge_id(room.global_coords, next)

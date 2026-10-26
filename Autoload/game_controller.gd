@@ -37,6 +37,7 @@ const BASE_STATS := {
 ## Persistent abyss mutations survive scene/chunk unloading and later descents.
 ## Save/load code can serialize/restore this store independently of generation.
 var abyss_room_state := AbyssRoomState.new()
+var abyss_progression_state := AbyssProgressionState.new()
 
 var day: int = 1
 var night_in_progress := false
@@ -179,6 +180,7 @@ func recover_from_death() -> void:
 
 ## Wipes run state. Call VillageManager.start_new_run() instead of this.
 func reset_run() -> void:
+	abyss_progression_state = AbyssProgressionState.new()
 	day = 1
 	night_in_progress = false
 	rations = STARTING_RATIONS

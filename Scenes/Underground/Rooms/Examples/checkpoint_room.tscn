@@ -1,0 +1,7 @@
+[gd_scene load_steps=3 format=3]
+[ext_resource type="PackedScene" path="res://Scenes/Underground/Rooms/Examples/open_cavern.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Underground/Rooms/Markers/checkpoint_marker.tscn" id="2"]
+[node name="CheckpointRoom" instance=ExtResource("1")]
+[node name="CheckpointHint" parent="ObjectMarkers" instance=ExtResource("2")]
+position = Vector2(160,160)
+marker_id = &"checkpoint_hint"

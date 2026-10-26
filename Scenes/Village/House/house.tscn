@@ -1,88 +1,88 @@
 [gd_scene format=3 uid="uid://dyl2qryv5kly3"]
 
-[ext_resource type="Script" path="res://Scenes/Village/House/house.gd" id="1_house"]
-[ext_resource type="Script" path="res://Scenes/Village/House/village_blueprint_panel.gd" id="2_blueprint"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/House/stairs.png" id="3_stairs"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/House/desk.png" id="4_desk"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/House/window.jpg" id="5_window"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/panel_parchment.png" id="6_parchment"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/ui_frame.png" id="7_uiframe"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/icon_close_x.png" id="8_closex"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/icon_soul.png" id="9_soul"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/icon_ration.png" id="10_ration"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/button_normal.png" id="11_btnnorm"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/button_hover.png" id="12_btnhover"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/button_pressed.png" id="13_btnpress"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/button_disabled.png" id="14_btndis"]
-[ext_resource type="Texture2D" path="res://Assets/Sprites/UI/icon_potion.png" id="15_potion"]
-
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_norm"]
-texture = ExtResource("11_btnnorm")
-texture_margin_left = 6.0
-texture_margin_top = 5.0
-texture_margin_right = 6.0
-texture_margin_bottom = 5.0
-content_margin_left = 12.0
-content_margin_top = 6.0
-content_margin_right = 12.0
-content_margin_bottom = 6.0
-
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_hover"]
-texture = ExtResource("12_btnhover")
-texture_margin_left = 6.0
-texture_margin_top = 5.0
-texture_margin_right = 6.0
-texture_margin_bottom = 5.0
-content_margin_left = 12.0
-content_margin_top = 6.0
-content_margin_right = 12.0
-content_margin_bottom = 6.0
-
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_press"]
-texture = ExtResource("13_btnpress")
-texture_margin_left = 6.0
-texture_margin_top = 5.0
-texture_margin_right = 6.0
-texture_margin_bottom = 5.0
-content_margin_left = 12.0
-content_margin_top = 6.0
-content_margin_right = 12.0
-content_margin_bottom = 6.0
+[ext_resource type="Script" uid="uid://kj8p8kh20ila" path="res://Scenes/Village/House/house.gd" id="1_house"]
+[ext_resource type="Script" uid="uid://gs04lspi2kv4" path="res://Scenes/Village/House/village_blueprint_panel.gd" id="2_blueprint"]
+[ext_resource type="Texture2D" uid="uid://c7naffjguwwl3" path="res://Assets/Sprites/House/stairs.png" id="3_stairs"]
+[ext_resource type="Texture2D" uid="uid://bvx5xk208jn7j" path="res://Assets/Sprites/House/desk.png" id="4_desk"]
+[ext_resource type="Texture2D" uid="uid://drcxyex06u2md" path="res://Assets/Sprites/House/window.jpg" id="5_window"]
+[ext_resource type="Texture2D" uid="uid://dpcmmn00u6hc0" path="res://Assets/Sprites/UI/panel_parchment.png" id="6_parchment"]
+[ext_resource type="Texture2D" uid="uid://dojwel3v7nq8w" path="res://Assets/Sprites/UI/ui_frame.png" id="7_uiframe"]
+[ext_resource type="Texture2D" uid="uid://bb883kx255jil" path="res://Assets/Sprites/UI/icon_close_x.png" id="8_closex"]
+[ext_resource type="Texture2D" uid="uid://dl5rdw2s30l7u" path="res://Assets/Sprites/UI/icon_soul.png" id="9_soul"]
+[ext_resource type="Texture2D" uid="uid://64y2a01hhawi" path="res://Assets/Sprites/UI/icon_ration.png" id="10_ration"]
+[ext_resource type="Texture2D" uid="uid://cimj5kjk1qvq3" path="res://Assets/Sprites/UI/button_normal.png" id="11_btnnorm"]
+[ext_resource type="Texture2D" uid="uid://bnnmiubwxnxdr" path="res://Assets/Sprites/UI/button_hover.png" id="12_btnhover"]
+[ext_resource type="Texture2D" uid="uid://cuonmh2315nks" path="res://Assets/Sprites/UI/button_pressed.png" id="13_btnpress"]
+[ext_resource type="Texture2D" uid="uid://dsso6fkauct5" path="res://Assets/Sprites/UI/button_disabled.png" id="14_btndis"]
+[ext_resource type="Texture2D" uid="uid://bgg37nqm36lv4" path="res://Assets/Sprites/UI/icon_potion.png" id="15_potion"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_dis"]
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
 texture = ExtResource("14_btndis")
 texture_margin_left = 6.0
 texture_margin_top = 5.0
 texture_margin_right = 6.0
 texture_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_hover"]
 content_margin_left = 12.0
 content_margin_top = 6.0
 content_margin_right = 12.0
 content_margin_bottom = 6.0
+texture = ExtResource("12_btnhover")
+texture_margin_left = 6.0
+texture_margin_top = 5.0
+texture_margin_right = 6.0
+texture_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_norm"]
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+texture = ExtResource("11_btnnorm")
+texture_margin_left = 6.0
+texture_margin_top = 5.0
+texture_margin_right = 6.0
+texture_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_press"]
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+texture = ExtResource("13_btnpress")
+texture_margin_left = 6.0
+texture_margin_top = 5.0
+texture_margin_right = 6.0
+texture_margin_bottom = 5.0
 
 [sub_resource type="Theme" id="Theme_house"]
 Button/colors/font_color = Color(0.14, 0.11, 0.08, 1)
+Button/colors/font_disabled_color = Color(0.48, 0.44, 0.4, 0.75)
 Button/colors/font_focus_color = Color(0.06, 0.05, 0.04, 1)
 Button/colors/font_hover_color = Color(0.06, 0.05, 0.04, 1)
 Button/colors/font_pressed_color = Color(0.02, 0.02, 0.02, 1)
-Button/colors/font_disabled_color = Color(0.48, 0.44, 0.4, 0.75)
 Button/styles/disabled = SubResource("StyleBoxTexture_btn_dis")
 Button/styles/focus = SubResource("StyleBoxTexture_btn_hover")
 Button/styles/hover = SubResource("StyleBoxTexture_btn_hover")
 Button/styles/normal = SubResource("StyleBoxTexture_btn_norm")
 Button/styles/pressed = SubResource("StyleBoxTexture_btn_press")
 
-[node name="house" type="Node2D"]
+[node name="house" type="Node2D" unique_id=139420749]
 script = ExtResource("1_house")
 
-[node name="Panels" type="Control" parent="."]
+[node name="Panels" type="Control" parent="." unique_id=424780698]
 custom_minimum_size = Vector2(1920, 1080)
 layout_mode = 3
 anchors_preset = 0
 offset_right = 1920.0
 offset_bottom = 1080.0
 
-[node name="StairsPanel" type="Control" parent="Panels"]
+[node name="StairsPanel" type="Control" parent="Panels" unique_id=392428037]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -91,7 +91,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="TextureRect" type="TextureRect" parent="Panels/StairsPanel"]
+[node name="TextureRect" type="TextureRect" parent="Panels/StairsPanel" unique_id=221826640]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -102,7 +102,7 @@ texture = ExtResource("3_stairs")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="CenterBox" type="VBoxContainer" parent="Panels/StairsPanel"]
+[node name="CenterBox" type="VBoxContainer" parent="Panels/StairsPanel" unique_id=1335643792]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -119,14 +119,14 @@ theme = SubResource("Theme_house")
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="DescendButton" type="Button" parent="Panels/StairsPanel/CenterBox"]
+[node name="DescendButton" type="Button" parent="Panels/StairsPanel/CenterBox" unique_id=652373542]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(380, 56)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "DESCEND INTO THE ABYSS"
 
-[node name="StairsTripsLabel" type="Label" parent="Panels/StairsPanel/CenterBox"]
+[node name="StairsTripsLabel" type="Label" parent="Panels/StairsPanel/CenterBox" unique_id=1637863667]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
@@ -134,7 +134,7 @@ theme_override_font_sizes/font_size = 18
 text = "Trips Remaining Today: 3 / 3"
 horizontal_alignment = 1
 
-[node name="DeskPanel" type="Control" parent="Panels"]
+[node name="DeskPanel" type="Control" parent="Panels" unique_id=1335313157]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -143,7 +143,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="TextureRect" type="TextureRect" parent="Panels/DeskPanel"]
+[node name="TextureRect" type="TextureRect" parent="Panels/DeskPanel" unique_id=124081555]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -154,7 +154,7 @@ texture = ExtResource("4_desk")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="CenterBox" type="VBoxContainer" parent="Panels/DeskPanel"]
+[node name="CenterBox" type="VBoxContainer" parent="Panels/DeskPanel" unique_id=707529403]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -170,14 +170,14 @@ grow_vertical = 2
 theme = SubResource("Theme_house")
 alignment = 1
 
-[node name="OpenBlueprintButton" type="Button" parent="Panels/DeskPanel/CenterBox"]
+[node name="OpenBlueprintButton" type="Button" parent="Panels/DeskPanel/CenterBox" unique_id=1318742974]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(380, 56)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "OPEN VILLAGE BLUEPRINT"
 
-[node name="WindowPanel" type="Control" parent="Panels"]
+[node name="WindowPanel" type="Control" parent="Panels" unique_id=1535310301]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -186,7 +186,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="TextureRect" type="TextureRect" parent="Panels/WindowPanel"]
+[node name="TextureRect" type="TextureRect" parent="Panels/WindowPanel" unique_id=1921896256]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -197,7 +197,7 @@ texture = ExtResource("5_window")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="WindowNotice" type="Label" parent="Panels/WindowPanel"]
+[node name="WindowNotice" type="Label" parent="Panels/WindowPanel" unique_id=1456783095]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -215,15 +215,15 @@ theme_override_font_sizes/font_size = 20
 text = "The monster looms beyond the valley, watching the village."
 horizontal_alignment = 1
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="UI" type="CanvasLayer" parent="." unique_id=1288256571]
 
-[node name="TopHUD" type="PanelContainer" parent="UI"]
+[node name="TopHUD" type="PanelContainer" parent="UI" unique_id=937686893]
 anchors_preset = 10
 anchor_right = 1.0
 offset_bottom = 54.0
 grow_horizontal = 2
 
-[node name="PaperBg" type="NinePatchRect" parent="UI/TopHUD"]
+[node name="PaperBg" type="NinePatchRect" parent="UI/TopHUD" unique_id=564300766]
 layout_mode = 2
 texture = ExtResource("6_parchment")
 patch_margin_left = 6
@@ -231,7 +231,7 @@ patch_margin_top = 6
 patch_margin_right = 6
 patch_margin_bottom = 6
 
-[node name="FrameBorder" type="NinePatchRect" parent="UI/TopHUD"]
+[node name="FrameBorder" type="NinePatchRect" parent="UI/TopHUD" unique_id=2036953022]
 layout_mode = 2
 texture = ExtResource("7_uiframe")
 patch_margin_left = 6
@@ -239,96 +239,96 @@ patch_margin_top = 6
 patch_margin_right = 6
 patch_margin_bottom = 6
 
-[node name="Margin" type="MarginContainer" parent="UI/TopHUD"]
+[node name="Margin" type="MarginContainer" parent="UI/TopHUD" unique_id=626480760]
 layout_mode = 2
 theme_override_constants/margin_left = 24
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 8
 
-[node name="HBox" type="HBoxContainer" parent="UI/TopHUD/Margin"]
+[node name="HBox" type="HBoxContainer" parent="UI/TopHUD/Margin" unique_id=2105722878]
 layout_mode = 2
 theme_override_constants/separation = 28
 alignment = 1
 
-[node name="TopDayLabel" type="Label" parent="UI/TopHUD/Margin/HBox"]
+[node name="TopDayLabel" type="Label" parent="UI/TopHUD/Margin/HBox" unique_id=227663414]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
 theme_override_font_sizes/font_size = 18
 text = "Day 1/10"
 
-[node name="TollBox" type="HBoxContainer" parent="UI/TopHUD/Margin/HBox"]
+[node name="TollBox" type="HBoxContainer" parent="UI/TopHUD/Margin/HBox" unique_id=551586481]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Icon" type="TextureRect" parent="UI/TopHUD/Margin/HBox/TollBox"]
+[node name="Icon" type="TextureRect" parent="UI/TopHUD/Margin/HBox/TollBox" unique_id=1430559005]
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
 texture = ExtResource("9_soul")
 stretch_mode = 3
 
-[node name="TopFleshLabel" type="Label" parent="UI/TopHUD/Margin/HBox/TollBox"]
+[node name="TopFleshLabel" type="Label" parent="UI/TopHUD/Margin/HBox/TollBox" unique_id=1211613037]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
 theme_override_font_sizes/font_size = 18
 text = "0 / 12 Flesh"
 
-[node name="RationsBox" type="HBoxContainer" parent="UI/TopHUD/Margin/HBox"]
+[node name="RationsBox" type="HBoxContainer" parent="UI/TopHUD/Margin/HBox" unique_id=1459372583]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Icon" type="TextureRect" parent="UI/TopHUD/Margin/HBox/RationsBox"]
+[node name="Icon" type="TextureRect" parent="UI/TopHUD/Margin/HBox/RationsBox" unique_id=1229750750]
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
 texture = ExtResource("10_ration")
 stretch_mode = 3
 
-[node name="TopRationsLabel" type="Label" parent="UI/TopHUD/Margin/HBox/RationsBox"]
+[node name="TopRationsLabel" type="Label" parent="UI/TopHUD/Margin/HBox/RationsBox" unique_id=47114009]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
 theme_override_font_sizes/font_size = 18
 text = "8 Rations"
 
-[node name="PotionsBox" type="HBoxContainer" parent="UI/TopHUD/Margin/HBox"]
+[node name="PotionsBox" type="HBoxContainer" parent="UI/TopHUD/Margin/HBox" unique_id=2079344981]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Icon" type="TextureRect" parent="UI/TopHUD/Margin/HBox/PotionsBox"]
+[node name="Icon" type="TextureRect" parent="UI/TopHUD/Margin/HBox/PotionsBox" unique_id=765993545]
 custom_minimum_size = Vector2(18, 18)
 layout_mode = 2
 texture = ExtResource("15_potion")
 stretch_mode = 3
 
-[node name="TopPotionsLabel" type="Label" parent="UI/TopHUD/Margin/HBox/PotionsBox"]
+[node name="TopPotionsLabel" type="Label" parent="UI/TopHUD/Margin/HBox/PotionsBox" unique_id=329298568]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
 theme_override_font_sizes/font_size = 18
 text = "0 Potions"
 
-[node name="TopTripsLabel" type="Label" parent="UI/TopHUD/Margin/HBox"]
+[node name="TopTripsLabel" type="Label" parent="UI/TopHUD/Margin/HBox" unique_id=542920864]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
 theme_override_font_sizes/font_size = 18
 text = "3/3 Trips"
 
-[node name="VSeparator" type="VSeparator" parent="UI/TopHUD/Margin/HBox"]
+[node name="VSeparator" type="VSeparator" parent="UI/TopHUD/Margin/HBox" unique_id=862934949]
 layout_mode = 2
 
-[node name="TopVitalsLabel" type="Label" parent="UI/TopHUD/Margin/HBox"]
+[node name="TopVitalsLabel" type="Label" parent="UI/TopHUD/Margin/HBox" unique_id=329431159]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.24, 0.20, 0.16, 1)
+theme_override_colors/font_color = Color(0.24, 0.2, 0.16, 1)
 theme_override_font_sizes/font_size = 16
 text = "Hearts: 3.0/3.0  |  Potions: 0  |  Stamina: 100/100  |  Village Health: 82%"
 horizontal_alignment = 2
 
-[node name="NavUI" type="Control" parent="UI"]
+[node name="NavUI" type="Control" parent="UI" unique_id=1211174550]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -338,7 +338,7 @@ grow_vertical = 2
 mouse_filter = 2
 theme = SubResource("Theme_house")
 
-[node name="LeftNavButton" type="Button" parent="UI/NavUI"]
+[node name="LeftNavButton" type="Button" parent="UI/NavUI" unique_id=1798808006]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 56)
 layout_mode = 1
@@ -353,7 +353,7 @@ grow_vertical = 2
 theme_override_font_sizes/font_size = 18
 text = "◄  STAIRS"
 
-[node name="RightNavButton" type="Button" parent="UI/NavUI"]
+[node name="RightNavButton" type="Button" parent="UI/NavUI" unique_id=819267853]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 56)
 layout_mode = 1
@@ -371,7 +371,7 @@ grow_vertical = 2
 theme_override_font_sizes/font_size = 18
 text = "WINDOW  ►"
 
-[node name="VillagePanel" type="MarginContainer" parent="UI"]
+[node name="VillagePanel" type="MarginContainer" parent="UI" unique_id=1255034939]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(1180, 720)
 anchors_preset = 8
@@ -388,7 +388,7 @@ grow_vertical = 2
 theme = SubResource("Theme_house")
 script = ExtResource("2_blueprint")
 
-[node name="PaperBg" type="NinePatchRect" parent="UI/VillagePanel"]
+[node name="PaperBg" type="NinePatchRect" parent="UI/VillagePanel" unique_id=1178962355]
 layout_mode = 2
 texture = ExtResource("6_parchment")
 patch_margin_left = 6
@@ -396,7 +396,7 @@ patch_margin_top = 6
 patch_margin_right = 6
 patch_margin_bottom = 6
 
-[node name="FrameBorder" type="NinePatchRect" parent="UI/VillagePanel"]
+[node name="FrameBorder" type="NinePatchRect" parent="UI/VillagePanel" unique_id=1611253386]
 layout_mode = 2
 texture = ExtResource("7_uiframe")
 patch_margin_left = 6
@@ -404,21 +404,21 @@ patch_margin_top = 6
 patch_margin_right = 6
 patch_margin_bottom = 6
 
-[node name="ContentMargin" type="MarginContainer" parent="UI/VillagePanel"]
+[node name="ContentMargin" type="MarginContainer" parent="UI/VillagePanel" unique_id=1882559314]
 layout_mode = 2
 theme_override_constants/margin_left = 28
 theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 28
 theme_override_constants/margin_bottom = 20
 
-[node name="VBox" type="VBoxContainer" parent="UI/VillagePanel/ContentMargin"]
+[node name="VBox" type="VBoxContainer" parent="UI/VillagePanel/ContentMargin" unique_id=136991972]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="HeaderRow" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox"]
+[node name="HeaderRow" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=477399882]
 layout_mode = 2
 
-[node name="TitleLabel" type="Label" parent="UI/VillagePanel/ContentMargin/VBox/HeaderRow"]
+[node name="TitleLabel" type="Label" parent="UI/VillagePanel/ContentMargin/VBox/HeaderRow" unique_id=1689865766]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
@@ -426,14 +426,14 @@ theme_override_font_sizes/font_size = 22
 text = "CHIEF'S DESK: VILLAGE BLUEPRINT & MANAGEMENT"
 horizontal_alignment = 1
 
-[node name="CloseXButton" type="TextureButton" parent="UI/VillagePanel/ContentMargin/VBox/HeaderRow"]
+[node name="CloseXButton" type="TextureButton" parent="UI/VillagePanel/ContentMargin/VBox/HeaderRow" unique_id=1122090927]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(20, 20)
 layout_mode = 2
 texture_normal = ExtResource("8_closex")
 stretch_mode = 3
 
-[node name="StatusLabel" type="Label" parent="UI/VillagePanel/ContentMargin/VBox"]
+[node name="StatusLabel" type="Label" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=663649823]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.28, 0.22, 0.16, 1)
@@ -441,89 +441,89 @@ theme_override_font_sizes/font_size = 14
 text = "Food Cost Tonight: 4 Rations  |  Daily Production: +0 Rations  |  Village Health: 82%"
 horizontal_alignment = 1
 
-[node name="HSeparator1" type="HSeparator" parent="UI/VillagePanel/ContentMargin/VBox"]
+[node name="HSeparator1" type="HSeparator" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=1349246211]
 layout_mode = 2
 
-[node name="BuildingsContainer" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox"]
+[node name="BuildingsContainer" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=1742481314]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 12
 
-[node name="HSeparator2" type="HSeparator" parent="UI/VillagePanel/ContentMargin/VBox"]
+[node name="HSeparator2" type="HSeparator" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=1567309720]
 layout_mode = 2
 
-[node name="RosterRow" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox"]
+[node name="RosterRow" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=46929772]
 custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="QueueBox" type="VBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow"]
+[node name="QueueBox" type="VBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow" unique_id=1699996060]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
-[node name="QueueTitle" type="Label" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/QueueBox"]
+[node name="QueueTitle" type="Label" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/QueueBox" unique_id=1923249962]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
 theme_override_font_sizes/font_size = 14
 text = "WORKER QUEUE (Unassigned Able Citizens)"
 
-[node name="QueueScroll" type="ScrollContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/QueueBox"]
+[node name="QueueScroll" type="ScrollContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/QueueBox" unique_id=1946562462]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="IdleWorkersContainer" type="VBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/QueueBox/QueueScroll"]
+[node name="IdleWorkersContainer" type="VBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/QueueBox/QueueScroll" unique_id=1956801593]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
-[node name="VSeparator" type="VSeparator" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow"]
+[node name="VSeparator" type="VSeparator" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow" unique_id=216501025]
 layout_mode = 2
 
-[node name="BumBox" type="VBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow"]
+[node name="BumBox" type="VBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow" unique_id=32649691]
 custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="BumTitle" type="Label" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/BumBox"]
+[node name="BumTitle" type="Label" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/BumBox" unique_id=1943695978]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
 theme_override_font_sizes/font_size = 14
 text = "BUM CORNER (Slackers & Meat Shields)"
 
-[node name="BumsScroll" type="ScrollContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/BumBox"]
+[node name="BumsScroll" type="ScrollContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/BumBox" unique_id=92618871]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="BumsContainer" type="VBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/BumBox/BumsScroll"]
+[node name="BumsContainer" type="VBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/BumBox/BumsScroll" unique_id=1097799857]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
-[node name="HSeparator3" type="HSeparator" parent="UI/VillagePanel/ContentMargin/VBox"]
+[node name="HSeparator3" type="HSeparator" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=1658054555]
 layout_mode = 2
 
-[node name="ButtonRow" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox"]
+[node name="ButtonRow" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=666051521]
 layout_mode = 2
 theme_override_constants/separation = 24
 alignment = 1
 
-[node name="SleepButton" type="Button" parent="UI/VillagePanel/ContentMargin/VBox/ButtonRow"]
+[node name="SleepButton" type="Button" parent="UI/VillagePanel/ContentMargin/VBox/ButtonRow" unique_id=1133368081]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(200, 44)
 layout_mode = 2
 text = "SLEEP (END DAY)"
 
-[node name="CloseButton" type="Button" parent="UI/VillagePanel/ContentMargin/VBox/ButtonRow"]
+[node name="CloseButton" type="Button" parent="UI/VillagePanel/ContentMargin/VBox/ButtonRow" unique_id=1879596582]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
 text = "STEP AWAY"
 
-[node name="RefugeeModal" type="MarginContainer" parent="UI"]
+[node name="RefugeeModal" type="MarginContainer" parent="UI" unique_id=1410879781]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(560, 260)
@@ -540,7 +540,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = SubResource("Theme_house")
 
-[node name="PaperBg" type="NinePatchRect" parent="UI/RefugeeModal"]
+[node name="PaperBg" type="NinePatchRect" parent="UI/RefugeeModal" unique_id=18394433]
 layout_mode = 2
 texture = ExtResource("6_parchment")
 patch_margin_left = 6
@@ -548,7 +548,7 @@ patch_margin_top = 6
 patch_margin_right = 6
 patch_margin_bottom = 6
 
-[node name="FrameBorder" type="NinePatchRect" parent="UI/RefugeeModal"]
+[node name="FrameBorder" type="NinePatchRect" parent="UI/RefugeeModal" unique_id=47667965]
 layout_mode = 2
 texture = ExtResource("7_uiframe")
 patch_margin_left = 6
@@ -556,28 +556,28 @@ patch_margin_top = 6
 patch_margin_right = 6
 patch_margin_bottom = 6
 
-[node name="ContentMargin" type="MarginContainer" parent="UI/RefugeeModal"]
+[node name="ContentMargin" type="MarginContainer" parent="UI/RefugeeModal" unique_id=188818704]
 layout_mode = 2
 theme_override_constants/margin_left = 28
 theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 28
 theme_override_constants/margin_bottom = 20
 
-[node name="VBox" type="VBoxContainer" parent="UI/RefugeeModal/ContentMargin"]
+[node name="VBox" type="VBoxContainer" parent="UI/RefugeeModal/ContentMargin" unique_id=816734742]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Title" type="Label" parent="UI/RefugeeModal/ContentMargin/VBox"]
+[node name="Title" type="Label" parent="UI/RefugeeModal/ContentMargin/VBox" unique_id=1014148720]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
 theme_override_font_sizes/font_size = 20
 text = "TRAVELER AT THE GATES"
 horizontal_alignment = 1
 
-[node name="HSeparator1" type="HSeparator" parent="UI/RefugeeModal/ContentMargin/VBox"]
+[node name="HSeparator1" type="HSeparator" parent="UI/RefugeeModal/ContentMargin/VBox" unique_id=409926985]
 layout_mode = 2
 
-[node name="RefugeeNameLabel" type="Label" parent="UI/RefugeeModal/ContentMargin/VBox"]
+[node name="RefugeeNameLabel" type="Label" parent="UI/RefugeeModal/ContentMargin/VBox" unique_id=2111945387]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.15, 0.4, 0.15, 1)
@@ -585,7 +585,7 @@ theme_override_font_sizes/font_size = 18
 text = "Traveler Name (Able Worker)"
 horizontal_alignment = 1
 
-[node name="RefugeeDescLabel" type="Label" parent="UI/RefugeeModal/ContentMargin/VBox"]
+[node name="RefugeeDescLabel" type="Label" parent="UI/RefugeeModal/ContentMargin/VBox" unique_id=561178571]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.28, 0.24, 0.2, 1)
@@ -594,34 +594,34 @@ text = "Able citizen. Can be trained in any hut to produce rations and combat pe
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="UpkeepNotice" type="Label" parent="UI/RefugeeModal/ContentMargin/VBox"]
+[node name="UpkeepNotice" type="Label" parent="UI/RefugeeModal/ContentMargin/VBox" unique_id=738703853]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.25, 0.25, 1)
 theme_override_font_sizes/font_size = 12
 text = "Accepting will increase daily food upkeep by +1 Ration."
 horizontal_alignment = 1
 
-[node name="HSeparator2" type="HSeparator" parent="UI/RefugeeModal/ContentMargin/VBox"]
+[node name="HSeparator2" type="HSeparator" parent="UI/RefugeeModal/ContentMargin/VBox" unique_id=2118710216]
 layout_mode = 2
 
-[node name="ButtonRow" type="HBoxContainer" parent="UI/RefugeeModal/ContentMargin/VBox"]
+[node name="ButtonRow" type="HBoxContainer" parent="UI/RefugeeModal/ContentMargin/VBox" unique_id=368091894]
 layout_mode = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="WelcomeRefugeeButton" type="Button" parent="UI/RefugeeModal/ContentMargin/VBox/ButtonRow"]
+[node name="WelcomeRefugeeButton" type="Button" parent="UI/RefugeeModal/ContentMargin/VBox/ButtonRow" unique_id=100043893]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(180, 42)
 layout_mode = 2
 text = "WELCOME IN"
 
-[node name="TurnAwayRefugeeButton" type="Button" parent="UI/RefugeeModal/ContentMargin/VBox/ButtonRow"]
+[node name="TurnAwayRefugeeButton" type="Button" parent="UI/RefugeeModal/ContentMargin/VBox/ButtonRow" unique_id=1961723278]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(140, 42)
 layout_mode = 2
 text = "TURN AWAY"
 
-[node name="SacrificeModal" type="MarginContainer" parent="UI"]
+[node name="SacrificeModal" type="MarginContainer" parent="UI" unique_id=1320280452]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(640, 440)
@@ -638,7 +638,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = SubResource("Theme_house")
 
-[node name="PaperBg" type="NinePatchRect" parent="UI/SacrificeModal"]
+[node name="PaperBg" type="NinePatchRect" parent="UI/SacrificeModal" unique_id=729739254]
 layout_mode = 2
 texture = ExtResource("6_parchment")
 patch_margin_left = 6
@@ -646,7 +646,7 @@ patch_margin_top = 6
 patch_margin_right = 6
 patch_margin_bottom = 6
 
-[node name="FrameBorder" type="NinePatchRect" parent="UI/SacrificeModal"]
+[node name="FrameBorder" type="NinePatchRect" parent="UI/SacrificeModal" unique_id=404452358]
 layout_mode = 2
 texture = ExtResource("7_uiframe")
 patch_margin_left = 6
@@ -654,28 +654,28 @@ patch_margin_top = 6
 patch_margin_right = 6
 patch_margin_bottom = 6
 
-[node name="ContentMargin" type="MarginContainer" parent="UI/SacrificeModal"]
+[node name="ContentMargin" type="MarginContainer" parent="UI/SacrificeModal" unique_id=400540019]
 layout_mode = 2
 theme_override_constants/margin_left = 28
 theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 28
 theme_override_constants/margin_bottom = 20
 
-[node name="VBox" type="VBoxContainer" parent="UI/SacrificeModal/ContentMargin"]
+[node name="VBox" type="VBoxContainer" parent="UI/SacrificeModal/ContentMargin" unique_id=105222856]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Title" type="Label" parent="UI/SacrificeModal/ContentMargin/VBox"]
+[node name="Title" type="Label" parent="UI/SacrificeModal/ContentMargin/VBox" unique_id=1218391722]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.65, 0.15, 0.15, 1)
 theme_override_font_sizes/font_size = 20
 text = "THE TOLL WAS SHORT — OFFER A SACRIFICE"
 horizontal_alignment = 1
 
-[node name="HSeparator1" type="HSeparator" parent="UI/SacrificeModal/ContentMargin/VBox"]
+[node name="HSeparator1" type="HSeparator" parent="UI/SacrificeModal/ContentMargin/VBox" unique_id=1127680369]
 layout_mode = 2
 
-[node name="Notice" type="Label" parent="UI/SacrificeModal/ContentMargin/VBox"]
+[node name="Notice" type="Label" parent="UI/SacrificeModal/ContentMargin/VBox" unique_id=1814773156]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.28, 0.22, 0.18, 1)
 theme_override_font_sizes/font_size = 13
@@ -683,14 +683,14 @@ text = "Your flesh tribute missed the quota by 25% or less. The monster grants a
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="HSeparator2" type="HSeparator" parent="UI/SacrificeModal/ContentMargin/VBox"]
+[node name="HSeparator2" type="HSeparator" parent="UI/SacrificeModal/ContentMargin/VBox" unique_id=1519472280]
 layout_mode = 2
 
-[node name="Scroll" type="ScrollContainer" parent="UI/SacrificeModal/ContentMargin/VBox"]
+[node name="Scroll" type="ScrollContainer" parent="UI/SacrificeModal/ContentMargin/VBox" unique_id=1726855746]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="SacrificeListContainer" type="VBoxContainer" parent="UI/SacrificeModal/ContentMargin/VBox/Scroll"]
+[node name="SacrificeListContainer" type="VBoxContainer" parent="UI/SacrificeModal/ContentMargin/VBox/Scroll" unique_id=96785168]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3

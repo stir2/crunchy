@@ -84,7 +84,10 @@ static func _process_markers(room: AbyssAuthoredRoom, request: AbyssRoomConstruc
 		spawn._initial_world_position = room.to_global(spawn.local_position)
 		var cell := Vector2i(floori(spawn.local_position.x / room.tile_pixels), floori(spawn.local_position.y / room.tile_pixels))
 		spawn.protected_route = protected.has(cell)
-		if spawn is EnemySpawnRequest:
+		if spawn is AbyssSpecialSpawnRequest:
+			spawn.selected = false
+			spawn.reason = "Progression placement hint; requires special-room planner"
+		elif spawn is EnemySpawnRequest:
 			var depth := maxi(0,request.requirements.global_coords.y)
 			spawn.eligible = request.difficulty >= spawn.difficulty_range.x and request.difficulty <= spawn.difficulty_range.y and depth >= spawn.depth_range.x and depth <= spawn.depth_range.y
 		elif spawn is LootSpawnRequest:

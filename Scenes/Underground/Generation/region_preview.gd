@@ -21,6 +21,10 @@ extends Node2D
 @export var template_registry: AbyssRoomTemplateRegistry = preload("res://Scenes/Underground/Rooms/example_registry.tres")
 @export var show_terrain: bool = false
 @export var terrain_configuration: AbyssTerrainConfig = AbyssTerrainConfig.new()
+@export var enable_progression: bool = true
+@export var progression_configuration: AbyssProgressionConfig = AbyssProgressionConfig.new()
+@export var show_special_rooms: bool = true
+var special_rooms: AbyssSpecialRooms
 var room_state: AbyssRoomState
 var _terrain: Node2D
 var _boundary: AbyssCavernBoundaryField
@@ -61,7 +65,11 @@ func regenerate() -> void:
 	if route_configuration == null or not route_configuration.is_valid(configuration.room_size):
 		push_error("Invalid abyss route configuration")
 		return
-	route_generator = AbyssRouteGenerator.new(configuration, route_configuration)
+	if enable_progression and (progression_configuration == null or not progression_configuration.is_valid()):
+		push_error("Invalid abyss progression configuration")
+		return
+	route_generator = AbyssRouteGenerator.new(configuration, route_configuration, progression_configuration if enable_progression else null)
+	special_rooms = AbyssSpecialRooms.new(route_generator,progression_configuration,GameController.abyss_progression_state) if enable_progression else null
 	generator = route_generator.regions
 	_tiles.tile_set = _make_debug_tileset()
 	_tiles.collision_enabled = false
@@ -103,7 +111,7 @@ func regenerate() -> void:
 				_terrain.add_child(chunk)
 				for data in route_generator.get_chunk(coords).rooms:
 					var request: AbyssRoomConstructionRequest = _construction_requests[data.global_coords]
-					var room := AbyssRoomTerrainBuilder.build(request, terrain_configuration, _boundary, room_state)
+					var room := AbyssRoomTerrainBuilder.build(request, terrain_configuration, _boundary, room_state, special_rooms)
 					chunk.add_child(room)
 					room.terrain_changed.connect(queue_redraw)
 					room.position -= chunk.position
@@ -170,6 +178,7 @@ func _draw() -> void:
 
 	_draw_boundary_overlays()
 	_draw_routes()
+	_draw_special_rooms()
 
 
 func _draw_routes() -> void:
@@ -278,3 +287,20 @@ func _draw_boundary_overlays() -> void:
 				var a: Vector2 = [Vector2.ZERO, Vector2(TILE_PIXELS, 0), Vector2(TILE_PIXELS, TILE_PIXELS), Vector2(0, TILE_PIXELS)][side]
 				var b: Vector2 = [Vector2(TILE_PIXELS, 0), Vector2(TILE_PIXELS, TILE_PIXELS), Vector2(0, TILE_PIXELS), Vector2.ZERO][side]
 				draw_line(origin + a, origin + b, Color.GREEN_YELLOW, 1.0)
+
+
+func _draw_special_rooms() -> void:
+	if not show_special_rooms or special_rooms == null:
+		return
+	var step := Vector2(configuration.room_size * TILE_PIXELS)
+	for y in range(_first_room.y,_first_room.y + _room_count.y):
+		for x in range(_first_room.x,_first_room.x + _room_count.x):
+			for definition in special_rooms.definitions_at(Vector2i(x,y)):
+				var color := Color.CYAN if definition.kind == "checkpoint" else (Color.GOLD if definition.kind == "fragment" else Color.ORANGE_RED)
+				var point := (Vector2(x,y)+Vector2(0.5,0.5))*step
+				draw_circle(point,step.x*0.15,color)
+				draw_string(ThemeDB.fallback_font,point,definition.kind,HORIZONTAL_ALIGNMENT_LEFT,-1,16,color)
+	for level in range(1,5):
+		var x := (progression_configuration.first_chunk_x + (level-1)*progression_configuration.level_width_chunks)*configuration.chunk_size.x
+		if x >= _first_room.x and x <= _first_room.x+_room_count.x:
+			draw_line(Vector2(x*step.x,_first_room.y*step.y),Vector2(x*step.x,(_first_room.y+_room_count.y)*step.y),Color.ORANGE_RED,3)

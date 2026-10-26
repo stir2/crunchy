@@ -3,6 +3,8 @@ extends RefCounted
 ## Generated layout only; future mutable gameplay state belongs elsewhere.
 enum Region { OPEN, PACKED }
 enum Boundary { NORTH = 1, EAST = 2, SOUTH = 4, WEST = 8 }
+## Zero denotes legacy/unbounded generation.
+var level_number: int = 0
 var global_coords: Vector2i
 var chunk_coords: Vector2i
 var raw_openness: float
@@ -27,7 +29,7 @@ func logical_neighbors() -> Array[Vector2i]:
 ## The required graph is a lower bound on connectivity, not a wall specification.
 func allows_open_adjacency(other: AbyssRoomData) -> bool:
 	var delta := other.global_coords - global_coords
-	return region == Region.OPEN and other.region == Region.OPEN and absi(delta.x) + absi(delta.y) == 1
+	return level_number == other.level_number and region == Region.OPEN and other.region == Region.OPEN and absi(delta.x) + absi(delta.y) == 1
 
 
 func is_transition() -> bool:
