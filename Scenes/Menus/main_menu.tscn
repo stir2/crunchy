@@ -1,0 +1,50 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scenes/Menus/main_menu.gd" id="1"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Buttons" type="VBoxContainer" parent="Center"]
+layout_mode = 2
+custom_minimum_size = Vector2(300, 0)
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Center/Buttons"]
+layout_mode = 2
+text = "CRUNCHY"
+horizontal_alignment = 1
+
+[node name="NewGameButton" type="Button" parent="Center/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "New Game"
+
+[node name="ContinueButton" type="Button" parent="Center/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Continue"
+
+[node name="QuitButton" type="Button" parent="Center/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Quit"
+
+[node name="StatusLabel" type="Label" parent="Center/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="NewGameDialog" type="ConfirmationDialog" parent="."]
+title = "New Game"
+dialog_text = "Start a new run? Your existing slot will be replaced the next time you save."

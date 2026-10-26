@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 GameController="*uid://bkbrdw0twq5kt"
 VillageManager="*res://Autoload/village_manager.gd"
 DebugMenu="*res://Autoload/debug_menu.gd"
+SaveManager="*res://Autoload/save_manager.gd"
 Dialogic="*uid://ds2q0uclmolvu"
 
 [dialogic]

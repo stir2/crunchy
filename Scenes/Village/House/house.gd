@@ -6,6 +6,10 @@ const CUTSCENE_SCENE := "res://Scenes/Cutscene/toll_cutscene.tscn"
 enum RoomPanel { STAIRS = 0, DESK = 1, WINDOW = 2 }
 
 var current_panel: RoomPanel = RoomPanel.DESK
+var sleep_dialog: ConfirmationDialog
+var ending_dialog: AcceptDialog
+var window_button: Button
+var _rumble: AudioStreamPlayer
 
 @onready var stairs_panel: Control = %StairsPanel
 @onready var desk_panel: Control = %DeskPanel
@@ -37,6 +41,7 @@ var current_panel: RoomPanel = RoomPanel.DESK
 
 
 func _ready() -> void:
+	_build_dialogs()
 	# Custom cursor
 	var cursor_tex: Texture2D = load("res://Assets/Sprites/UI/cursor.png")
 	if cursor_tex != null:
@@ -80,6 +85,7 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and village_panel.visible:
 		_close_blueprint()
+		get_viewport().set_input_as_handled()
 
 
 func set_panel(p: RoomPanel) -> void:
@@ -135,6 +141,12 @@ func _close_blueprint() -> void:
 
 
 func _descend() -> void:
+	if GameController.night_in_progress or refugee_modal.visible:
+		return
+	if GameController.is_day_10():
+		if GameController.monster_missing:
+			get_tree().current_scene.change_scene("res://Scenes/Boss/boss_arena.tscn")
+		return
 	var main := get_tree().current_scene
 	if not ResourceLoader.exists(ABYSS_SCENE) or not main.has_method("change_scene"):
 		print("Can't descend yet: abyss scene missing, or house not run through Main.")
@@ -146,8 +158,20 @@ func _descend() -> void:
 
 
 func _on_sleep_requested() -> void:
-	GameController.end_day()
+	if GameController.is_day_10() or GameController.night_in_progress or refugee_modal.visible:
+		return
+	var preview := VillageManager.night_preview()
+	sleep_dialog.dialog_text = "Flesh: %d / %d\nRations: %d\nExpected harvest: +%d\nExcess flesh bonus: +%d\nFood upkeep: %d (before any losses)\n\n%s\nSleep and end the day?" % [
+		preview.flesh, preview.quota, preview.rations, preview.expected_production,
+		preview.expected_bonus, preview.food_cost,
+		"The toll is covered." if preview.toll_met else "The monster will take a villager.",
+	]
+	sleep_dialog.popup_centered()
+
+
+func _confirm_sleep() -> void:
 	_close_blueprint()
+	GameController.end_day()
 
 
 func _refresh_top_hud() -> void:
@@ -171,7 +195,14 @@ func _refresh_panel_content() -> void:
 	if stairs_trips_label != null:
 		stairs_trips_label.text = "Trips Remaining Today: %d / %d" % [GameController.trips_left, GameController.TRIPS_PER_DAY]
 	if descend_btn != null:
-		descend_btn.disabled = GameController.trips_left <= 0
+		descend_btn.disabled = GameController.night_in_progress or (not GameController.monster_missing if GameController.is_day_10() else GameController.trips_left <= 0)
+		descend_btn.text = "Investigate the abyss" if GameController.is_day_10() else "DESCEND"
+	if window_button != null:
+		window_button.visible = GameController.is_day_10() and not GameController.monster_missing
+		if GameController.is_day_10():
+			$Panels/WindowPanel/WindowNotice.text = "The monster is gone. Something moved below the village." if GameController.monster_missing else "The toll was impossible. Look for the monster."
+	if village_panel != null:
+		village_panel.get_node("ContentMargin/VBox/ButtonRow/SleepButton").disabled = GameController.is_day_10() or GameController.night_in_progress
 
 
 func _on_refugee_waiting(candidate: Dictionary) -> void:
@@ -272,4 +303,59 @@ func _transition_to_morning_cutscene() -> void:
 
 
 func _on_village_wiped() -> void:
-	print("Village wiped: monster devours the Chief.")
+	_close_blueprint()
+	ending_dialog.dialog_text = "The village is empty. The monster takes the Chief.\nYour run ended on Day %d." % GameController.day
+	ending_dialog.get_ok_button().text = "Main Menu"
+	ending_dialog.confirmed.connect(_return_to_menu, CONNECT_ONE_SHOT)
+	ending_dialog.canceled.connect(_return_to_menu, CONNECT_ONE_SHOT)
+	ending_dialog.popup_centered()
+
+
+func _return_to_menu() -> void:
+	get_tree().current_scene.change_scene("res://Scenes/Menus/main_menu.tscn")
+
+
+func _build_dialogs() -> void:
+	sleep_dialog = ConfirmationDialog.new()
+	sleep_dialog.title = "Tonight's toll"
+	sleep_dialog.confirmed.connect(_confirm_sleep)
+	add_child(sleep_dialog)
+	ending_dialog = AcceptDialog.new()
+	ending_dialog.title = "Run status"
+	add_child(ending_dialog)
+	window_button = Button.new()
+	window_button.text = "Talk to the monster"
+	window_button.position = Vector2(760, 700)
+	window_button.size = Vector2(400, 60)
+	window_button.pressed.connect(_investigate_window)
+	window_panel = %WindowPanel
+	window_panel.add_child(window_button)
+	_rumble = AudioStreamPlayer.new()
+	add_child(_rumble)
+
+
+func _investigate_window() -> void:
+	GameController.monster_missing = true
+	_refresh_panel_content()
+	# A short low rumble, made in memory for the temporary scene.
+	var samples := PackedByteArray()
+	var rate := 22050
+	var duration := 2.0
+	samples.resize(int(rate * duration) * 2)
+	for i in samples.size() / 2:
+		var time := float(i) / rate
+		var envelope := sin(PI * time / duration)
+		var value := (sin(TAU * 38.0 * time) + sin(TAU * 53.0 * time) * 0.5) * envelope * 0.25
+		samples.encode_s16(i * 2, int(value * 32767.0))
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = rate
+	stream.data = samples
+	_rumble.stream = stream
+	_rumble.play()
+	var panels: Control = $Panels
+	var origin := panels.position
+	var shake := create_tween()
+	for i in 16:
+		shake.tween_property(panels, "position", origin + Vector2(6 if i % 2 == 0 else -6, 3 if i % 3 == 0 else -3), 0.07)
+	shake.tween_property(panels, "position", origin, 0.1)

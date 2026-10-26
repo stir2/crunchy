@@ -253,7 +253,7 @@ func poll_refugee() -> Dictionary:
 
 
 func accept_refugee() -> Villager:
-	if pending_refugees.is_empty():
+	if pending_refugees.is_empty() or population() >= config.max_population:
 		return null
 	var candidate: Dictionary = pending_refugees.pop_front()
 	return add_villager(candidate.get("name", ""), candidate.get("is_bum", false))
@@ -374,10 +374,13 @@ func to_dict() -> Dictionary:
 		"is_first_day": is_first_day,
 		"next_id": _next_id,
 		"used_names": _used_names.duplicate(),
+		"rng_state": str(rng.state),
 	}
 
 
 func load_dict(d: Dictionary) -> void:
+	if d.has("rng_state"):
+		rng.state = int(d["rng_state"])
 	villagers.clear()
 	for entry in d.get("villagers", []):
 		villagers.append(Villager.from_dict(entry))

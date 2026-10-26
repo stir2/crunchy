@@ -41,6 +41,7 @@ var abyss_progression_state := AbyssProgressionState.new()
 
 var day: int = 1
 var night_in_progress := false
+var monster_missing := false
 var trips_left: int = TRIPS_PER_DAY:
 	set(value):
 		trips_left = maxi(value, 0)
@@ -182,6 +183,8 @@ func recover_from_death() -> void:
 func reset_run() -> void:
 	abyss_progression_state = AbyssProgressionState.new()
 	day = 1
+	abyss_room_state = AbyssRoomState.new()
+	monster_missing = false
 	night_in_progress = false
 	rations = STARTING_RATIONS
 	potions = 0
@@ -200,7 +203,7 @@ func start_day() -> void:
 
 ## Called when the player sleeps at the desk. The last day has no toll.
 func end_day() -> void:
-	if night_in_progress or day > RUN_LENGTH:
+	if night_in_progress or day >= RUN_LENGTH:
 		return
 	night_in_progress = true
 	night_started.emit(day, flesh, current_quota())

@@ -24,6 +24,8 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if get_tree().paused:
+		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_EQUAL:
 			toggle()
@@ -36,6 +38,10 @@ func toggle() -> void:
 	else:
 		_refresh_values()
 		_panel.show()
+
+
+func close() -> void:
+	_panel.hide()
 
 
 func _build_ui() -> void:

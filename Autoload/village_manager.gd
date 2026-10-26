@@ -34,6 +34,7 @@ func new_game(seed_value: int = 0) -> void:
 		config = VillageConfig.new()
 	sim = VillageSim.new(config, seed_value)
 	_choosing = false
+	_toll = {}
 	GameController.village_health = sim.calc_village_health(true, true)
 	_sync_stats()
 	GameController.heal_to_full()
@@ -194,6 +195,8 @@ func get_save_data() -> Dictionary:
 
 
 func load_save_data(data: Dictionary) -> void:
+	_choosing = false
+	_toll = {}
 	sim.load_dict(data)
 	_sync_stats()
 	villagers_changed.emit()
