@@ -32,9 +32,12 @@ func toggle() -> void:
 	panel.show()
 	DebugMenu.close()
 	get_tree().paused = true
+	Dialogic.paused = true
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	%SaveButton.disabled = not SaveManager.can_save()
 	status_label.text = "" if SaveManager.can_save() else "Saving is available at home, after the night is resolved."
+	if DialogueManager.is_busy():
+		status_label.text = "Finish the conversation before saving."
 	%ResumeButton.grab_focus()
 
 
@@ -42,6 +45,7 @@ func resume() -> void:
 	leave_dialog.hide()
 	panel.hide()
 	get_tree().paused = false
+	Dialogic.paused = false
 	if get_tree().current_scene.active_path == "res://Scenes/Cutscene/toll_cutscene.tscn":
 		Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 

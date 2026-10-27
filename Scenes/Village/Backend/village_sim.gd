@@ -264,16 +264,6 @@ func dismiss_refugee() -> void:
 		pending_refugees.pop_front()
 
 
-func has_pending_refugee() -> bool:
-	return not pending_refugees.is_empty() and population() < config.max_population
-
-
-func arrive_refugee() -> Villager:
-	if pending_refugees.is_empty():
-		_queue_refugee_candidate()
-	return accept_refugee()
-
-
 func evaluate_toll(flesh: int, quota: int) -> Dictionary:
 	var met := flesh >= quota
 	var miss_ratio := 0.0

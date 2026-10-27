@@ -15,6 +15,10 @@ run/main_scene="res://Scenes/Main/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[audio]
+
+buses/default_bus_layout="uid://cs84ixkmtco0j"
+
 [autoload]
 
 GameController="*uid://bkbrdw0twq5kt"
@@ -22,12 +26,50 @@ VillageManager="*res://Autoload/village_manager.gd"
 DebugMenu="*res://Autoload/debug_menu.gd"
 SaveManager="*res://Autoload/save_manager.gd"
 Dialogic="*uid://ds2q0uclmolvu"
+DialogueManager="*res://Autoload/dialogue_manager.gd"
 
 [dialogic]
 
-directories/dch_directory={}
-directories/dtl_directory={}
-layout/style_directory={}
+directories/dch_directory={
+"Another villager": "res://Dialogue/Characters/Another villager.dch",
+"Chief": "res://Dialogue/Characters/Chief.dch",
+"Monster": "res://Dialogue/Characters/Monster.dch",
+"Villager": "res://Dialogue/Characters/Villager.dch"
+}
+directories/dtl_directory={
+"Monster/missing_monster": "res://Dialogue/Monster/missing_monster.dtl",
+"Monster/monster_early": "res://Dialogue/Monster/monster_early.dtl",
+"Monster/monster_late": "res://Dialogue/Monster/monster_late.dtl",
+"Monster/monster_middle": "res://Dialogue/Monster/monster_middle.dtl",
+"Monster/nothing_to_say": "res://Dialogue/Monster/nothing_to_say.dtl",
+"Rumours/closer": "res://Dialogue/Rumours/closer.dtl",
+"Rumours/cooking": "res://Dialogue/Rumours/cooking.dtl",
+"Rumours/doing_well": "res://Dialogue/Rumours/doing_well.dtl",
+"Rumours/food": "res://Dialogue/Rumours/food.dtl",
+"Rumours/home": "res://Dialogue/Rumours/home.dtl",
+"Rumours/nothing_else": "res://Dialogue/Rumours/nothing_else.dtl",
+"Rumours/starved": "res://Dialogue/Rumours/starved.dtl",
+"Rumours/taken": "res://Dialogue/Rumours/taken.dtl",
+"Rumours/work": "res://Dialogue/Rumours/work.dtl",
+"ancestors": "res://Dialogue/Monster/ancestors.dtl",
+"chief_blame": "res://Dialogue/Rumours/chief_blame.dtl",
+"chief_desk": "res://Dialogue/Rumours/chief_desk.dtl",
+"chief_family": "res://Dialogue/Rumours/chief_family.dtl",
+"day_10_morning": "res://Dialogue/Monster/day_10_morning.dtl",
+"descend_first": "res://Dialogue/Thoughts/descend_first.dtl",
+"descend_hurt": "res://Dialogue/Thoughts/descend_hurt.dtl",
+"descend_last": "res://Dialogue/Thoughts/descend_last.dtl",
+"manage_first": "res://Dialogue/Thoughts/manage_first.dtl",
+"manage_food": "res://Dialogue/Thoughts/manage_food.dtl",
+"manage_loss": "res://Dialogue/Thoughts/manage_loss.dtl",
+"taken_bum": "res://Dialogue/Rumours/taken_bum.dtl"
+}
+layout/style_directory={
+"": "res://Dialogue/window_style.tres",
+"Window": "res://Dialogue/window_style.tres"
+}
+layout/default_style="res://Dialogue/window_style.tres"
+layout/style_list=["res://Dialogue/window_style.tres"]
 
 [display]
 

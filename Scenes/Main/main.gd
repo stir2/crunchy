@@ -42,6 +42,7 @@ func change_scene(path: String) -> void:
 		push_error("change_scene: could not load %s" % path)
 		return
 	if active_scene != null:
+		DialogueManager.cancel()
 		remove_child(active_scene)
 		active_scene.queue_free()
 	active_path = path

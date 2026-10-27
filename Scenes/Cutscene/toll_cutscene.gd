@@ -14,12 +14,13 @@ const CELL_HEIGHT := 220.0
 const DIGIT_FONT_SIZE := 150
 
 const PRELUDE_TIME := 0.8
-const HOLD_TIME := 1.8
+const HOLD_TIME := 2.8
 const INFINITY_COUNT_TIME := 5.5 # 1 -> huge, accelerating
 const INFINITY_LAND_TIME := 1.6  # final brake onto the infinity symbol
 
 # --- audio tuning ---
-const SAMPLE_RATE := 44100
+const TICK_STREAM := preload("res://Assets/Audio/SFX/geiger_counter_tick.wav")
+const IMPACT_STREAM := preload("res://Assets/Audio/SFX/toll_impact.wav")
 const TICK_POOL := 6
 const TICK_MIN_INTERVAL_MS := 22 # caps the click rate so the frenzy stays a crackle, not mush
 const TICK_VOLUME_DB := -9.0
@@ -350,7 +351,7 @@ func _begin_hold() -> void:
 	if _phase == Phase.HOLD or _phase == Phase.DONE:
 		return
 	_phase = Phase.HOLD
-	# Hard, dread silence holding the number in darkness
+	# Hold the number while the impact fades into the dark.
 	await get_tree().create_timer(HOLD_TIME).timeout
 	if is_inside_tree():
 		_transition_to_house()
@@ -385,20 +386,8 @@ void fragment() {
 		rect.color = Color.WHITE
 
 
-# ---------------------------------------------------------------------------
-# Audio. Everything is synthesized so the cutscene works with no assets.
-# To use your own sounds, assign a stream to ClickAudioPlayer in the editor
-# (used for ticks); the impact is built in _make_impact().
-# ---------------------------------------------------------------------------
-
 func _build_audio() -> void:
-	var tick_streams: Array[AudioStream] = []
-	if click_audio_player.stream != null:
-		tick_streams.append(click_audio_player.stream)
-	else:
-		for i in 4:
-			tick_streams.append(_make_click(i))
-
+	click_audio_player.bus = &"Quota"
 	# Small pool so fast ticks overlap instead of cutting each other off
 	_tick_players.append(click_audio_player)
 	for i in TICK_POOL - 1:
@@ -407,12 +396,13 @@ func _build_audio() -> void:
 		add_child(p)
 		_tick_players.append(p)
 	for i in _tick_players.size():
-		_tick_players[i].stream = tick_streams[i % tick_streams.size()]
+		_tick_players[i].stream = TICK_STREAM
 		_tick_players[i].volume_db = TICK_VOLUME_DB
 
 	_impact_player = AudioStreamPlayer.new()
-	_impact_player.bus = click_audio_player.bus
-	_impact_player.stream = _make_impact()
+	_impact_player.bus = &"Quota"
+	_impact_player.stream = IMPACT_STREAM
+	_impact_player.pitch_scale = 0.85
 	_impact_player.volume_db = IMPACT_VOLUME_DB
 	add_child(_impact_player)
 
@@ -424,7 +414,7 @@ func _play_tick() -> void:
 	_last_tick_ms = now
 	var p := _tick_players[_tick_idx]
 	_tick_idx = (_tick_idx + 1) % _tick_players.size()
-	p.pitch_scale = randf_range(0.92, 1.08)
+	p.pitch_scale = randf_range(0.82, 0.94)
 	p.volume_db = TICK_VOLUME_DB + randf_range(-3.0, 0.0)
 	p.play()
 
@@ -432,98 +422,6 @@ func _play_tick() -> void:
 func _play_impact() -> void:
 	if _impact_player != null:
 		_impact_player.play()
-
-
-## Geiger-tube style click: a very short dry "tk" (damped high ring) with a tiny low body,
-## softened by a low-pass and a dark, empty-room echo. Four slightly different variants.
-func _make_click(seed_i: int) -> AudioStreamWAV:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 7919 * (seed_i + 1)
-	var n := int(SAMPLE_RATE * 0.30)
-	var buf := PackedFloat32Array()
-	buf.resize(n)
-	var f1 := rng.randf_range(2200.0, 3000.0)
-	var f2 := rng.randf_range(4300.0, 5400.0)
-	var f0 := rng.randf_range(190.0, 250.0)
-	for i in n:
-		var t := float(i) / SAMPLE_RATE
-		buf[i] = cos(TAU * f1 * t) * exp(-t * 1000.0) * 0.8 \
-			+ cos(TAU * f2 * t) * exp(-t * 1600.0) * 0.35 \
-			+ sin(TAU * f0 * t) * exp(-t * 300.0) * 0.35
-	_lowpass(buf, 0.5)
-	_comb_reverb(buf, [0.029, 0.043, 0.067], [0.30, 0.24, 0.18], 0.45)
-	return _to_wav(buf, 0.6)
-
-
-## Heavy latch: sub-bass thud falling in pitch, a dull body thump and a few dark metallic
-## partials, with a long cold echo. Deliberately nothing like the tick.
-func _make_impact() -> AudioStreamWAV:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 424242
-	var n := int(SAMPLE_RATE * 1.6)
-	var buf := PackedFloat32Array()
-	buf.resize(n)
-	var partials := [[418.0, 24.0, 0.30], [697.0, 32.0, 0.22], [1133.0, 44.0, 0.16], [1769.0, 60.0, 0.10]]
-	var phase := 0.0
-	var noise_lp := 0.0
-	for i in n:
-		var t := float(i) / SAMPLE_RATE
-		phase += TAU * (36.0 + 90.0 * exp(-t * 16.0)) / SAMPLE_RATE
-		var v := sin(phase) * exp(-t * 4.0)
-		noise_lp += 0.12 * ((rng.randf() * 2.0 - 1.0) - noise_lp)
-		v += noise_lp * exp(-t * 90.0) * 1.4
-		var attack := 1.0 - exp(-t * 3000.0)
-		for p in partials:
-			v += cos(TAU * p[0] * t) * exp(-t * p[1]) * p[2] * attack
-		buf[i] = v
-	_lowpass(buf, 0.3)
-	_comb_reverb(buf, [0.071, 0.103, 0.139, 0.181], [0.50, 0.46, 0.40, 0.34], 0.35)
-	return _to_wav(buf, 0.95)
-
-
-func _lowpass(buf: PackedFloat32Array, a: float) -> void:
-	var y := 0.0
-	for i in buf.size():
-		y += a * (buf[i] - y)
-		buf[i] = y
-
-
-func _comb_reverb(buf: PackedFloat32Array, delays: Array, gains: Array, damp: float) -> void:
-	var n := buf.size()
-	var dry := buf.duplicate()
-	for k in delays.size():
-		var d := int(float(delays[k]) * SAMPLE_RATE)
-		var g: float = gains[k]
-		var comb := PackedFloat32Array()
-		comb.resize(n)
-		var lp := 0.0
-		for i in n:
-			var fb := 0.0
-			if i >= d:
-				lp += damp * (comb[i - d] - lp)
-				fb = lp * g
-			comb[i] = dry[i] + fb
-		for i in n:
-			buf[i] += comb[i] - dry[i]
-
-
-func _to_wav(buf: PackedFloat32Array, peak: float) -> AudioStreamWAV:
-	var n := buf.size()
-	var m := 0.0001
-	for x in buf:
-		m = maxf(m, absf(x))
-	var data := PackedByteArray()
-	data.resize(n * 2)
-	for i in n:
-		var fade := minf(1.0, float(n - i) / (n * 0.1)) # no click at the very end
-		var v := clampf(buf[i] / m * peak * fade, -1.0, 1.0)
-		data.encode_s16(i * 2, int(v * 32767.0))
-	var wav := AudioStreamWAV.new()
-	wav.format = AudioStreamWAV.FORMAT_16_BITS
-	wav.mix_rate = SAMPLE_RATE
-	wav.stereo = false
-	wav.data = data
-	return wav
 
 
 func _transition_to_house() -> void:

@@ -17,7 +17,6 @@ extends Resource
 
 @export_group("Toll")
 @export_range(0.0, 1.0) var choose_threshold := 0.25
-@export var quota_table := PackedInt32Array([12, 18, 25, 40, 48, 58, 70, 84, 98, 0])
 
 @export_group("Village health weights")
 @export var weight_alive := 0.35

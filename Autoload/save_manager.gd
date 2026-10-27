@@ -10,8 +10,9 @@ var save_path := SAVE_PATH
 
 func can_save() -> bool:
 	var main := get_tree().current_scene
-	return main != null and main.get("active_path") == "res://Scenes/Village/House/house.tscn" \
+	return (main != null and main.get("active_path") == "res://Scenes/Village/House/house.tscn"
 		and not GameController.night_in_progress and VillageManager.get_population() > 0
+		and not DialogueManager.is_busy())
 
 
 func has_save() -> bool:
@@ -33,6 +34,7 @@ func save_game() -> bool:
 		"abyss": GameController.abyss_room_state.serialize(),
 		"progression": GameController.abyss_progression_state.serialize(),
 		"monster_missing": GameController.monster_missing,
+		"window_history": GameController.window_history.duplicate(),
 	}
 	# Write beside the slot first so a failed write leaves the old save intact.
 	var file := FileAccess.open(save_path + ".tmp", FileAccess.WRITE)
@@ -66,6 +68,7 @@ func load_game() -> bool:
 	GameController.abyss_room_state = state
 	GameController.abyss_progression_state = progression
 	GameController.monster_missing = data["monster_missing"]
+	GameController.window_history = data.get("window_history", {}).duplicate()
 	return true
 
 
@@ -83,6 +86,11 @@ func _read_save() -> Dictionary:
 		return {}
 	if not value.get("monster_missing") is bool:
 		return {}
+	if not value.get("window_history", {}) is Dictionary:
+		return {}
+	for key in value.get("window_history", {}):
+		if not key is String or not value.window_history[key] is bool:
+			return {}
 	if not value.get("progression") is String:
 		return {}
 	var game: Dictionary = value["game"]

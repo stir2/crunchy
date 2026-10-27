@@ -24,7 +24,7 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if get_tree().paused:
+	if get_tree().paused or DialogueManager.is_busy():
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_EQUAL:

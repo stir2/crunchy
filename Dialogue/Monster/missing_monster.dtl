@@ -1,0 +1,9 @@
+Chief: All right. What was that supposed to mean?
+[wait time="0.8" hide_text="true"]
+[i]It's gone.[/i]
+Chief: Hello?
+[wait time="1.2" hide_text="true"]
+[signal arg="window_rumble"]
+[wait time="2.2" hide_text="true"]
+Chief: Shit.
+[i]That came from the stairs.[/i]

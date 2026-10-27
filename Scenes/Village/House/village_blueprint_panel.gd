@@ -5,36 +5,24 @@ extends MarginContainer
 signal closed
 signal sleep_requested
 
+var _button_styles: Dictionary = {}
+
 @onready var status_label: Label = %StatusLabel
 @onready var buildings_container: HBoxContainer = %BuildingsContainer
 @onready var idle_workers_container: VBoxContainer = %IdleWorkersContainer
 @onready var bums_container: VBoxContainer = %BumsContainer
-@onready var close_x_button: TextureButton = %CloseXButton
 @onready var close_button: Button = %CloseButton
 @onready var sleep_button: Button = %SleepButton
 
 
 func _ready() -> void:
-	close_x_button.pressed.connect(_on_close_pressed)
-	close_button.pressed.connect(_on_close_pressed)
-	sleep_button.pressed.connect(_on_sleep_pressed)
+	close_button.pressed.connect(closed.emit)
+	sleep_button.pressed.connect(sleep_requested.emit)
 
 	VillageManager.villagers_changed.connect(refresh)
 	VillageManager.buildings_changed.connect(refresh)
-	GameController.rations_changed.connect(_on_rations_changed)
+	GameController.rations_changed.connect(refresh.unbind(1))
 	refresh()
-
-
-func _on_rations_changed(_r: int) -> void:
-	refresh()
-
-
-func _on_close_pressed() -> void:
-	closed.emit()
-
-
-func _on_sleep_pressed() -> void:
-	sleep_requested.emit()
 
 
 func refresh() -> void:
@@ -46,12 +34,13 @@ func refresh() -> void:
 
 
 func _refresh_status_banner() -> void:
-	var pop := VillageManager.get_population()
-	var prod := VillageManager.sim.production() if VillageManager.sim != null else 0
+	var preview := VillageManager.night_preview()
+	var pop: int = preview.food_cost
+	var prod: int = preview.expected_production
 	var net_change := prod - pop
 	var net_str := ("+%d" % net_change) if net_change >= 0 else ("%d" % net_change)
 
-	status_label.text = "Tonight's Food Upkeep: %d Rations   |   Daily Harvest: +%d Rations (Net: %s)   |   Village Health: %d%%" % [
+	status_label.text = "Food: %d/night   |   Harvest: +%d (Net: %s)   |   Village health: %d%%" % [
 		pop,
 		prod,
 		net_str,
@@ -113,27 +102,13 @@ func _create_building_card(b: BuildingData) -> Control:
 	info.add_theme_font_size_override("font_size", 12)
 	vbox.add_child(info)
 
-	# Perk description box
-	var perk_panel := PanelContainer.new()
-	var perk_bg := StyleBoxFlat.new()
-	perk_bg.bg_color = Color(0.90, 0.86, 0.78, 0.85)
-	perk_bg.border_color = Color(0.70, 0.62, 0.52, 0.7)
-	perk_bg.set_border_width_all(1)
-	perk_bg.set_corner_radius_all(4)
-	perk_bg.content_margin_left = 6
-	perk_bg.content_margin_right = 6
-	perk_bg.content_margin_top = 4
-	perk_bg.content_margin_bottom = 4
-	perk_panel.add_theme_stylebox_override("panel", perk_bg)
-
 	var perk := Label.new()
 	perk.text = _format_building_perk(b)
 	perk.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	perk.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	perk.add_theme_font_size_override("font_size", 11)
 	perk.add_theme_color_override("font_color", Color(0.28, 0.24, 0.20, 1))
-	perk_panel.add_child(perk)
-	vbox.add_child(perk_panel)
+	vbox.add_child(perk)
 
 	# Workers list
 	var workers_box := VBoxContainer.new()
@@ -218,7 +193,7 @@ func _format_building_perk(b: BuildingData) -> String:
 		&"farmer":
 			return "+15 Max Stamina & +10% Regen per worker"
 		&"tailor":
-			return "+8% Speed & Drip per worker"
+			return "+8% Speed per worker"
 		_:
 			return ""
 
@@ -282,57 +257,36 @@ func _refresh_roster() -> void:
 	var bums := VillageManager.get_bums()
 	if bums.is_empty():
 		var empty_lbl := Label.new()
-		empty_lbl.text = "No bums in village."
+		empty_lbl.text = "No bums."
 		empty_lbl.add_theme_font_size_override("font_size", 12)
 		empty_lbl.add_theme_color_override("font_color", Color(0.45, 0.40, 0.35, 1))
 		bums_container.add_child(empty_lbl)
 	else:
 		for b: Villager in bums:
 			var lbl := Label.new()
-			lbl.text = "• %s [Bum] — Refuses to work. Eats 1 Ration/night. Sacrificial meat shield." % b.display_name
+			lbl.text = "• %s — Doesn't work. Uses 1 Ration/night." % b.display_name
 			lbl.add_theme_color_override("font_color", Color(0.55, 0.20, 0.20, 1))
 			lbl.add_theme_font_size_override("font_size", 12)
 			bums_container.add_child(lbl)
 
 
 func _apply_compact_button_style(btn: Button) -> void:
-	var sb_norm := StyleBoxTexture.new()
-	sb_norm.texture = load("res://Assets/Sprites/UI/button_normal.png")
-	sb_norm.texture_margin_left = 6.0
-	sb_norm.texture_margin_right = 6.0
-	sb_norm.texture_margin_top = 5.0
-	sb_norm.texture_margin_bottom = 5.0
-	sb_norm.content_margin_left = 6.0
-	sb_norm.content_margin_right = 6.0
-	sb_norm.content_margin_top = 2.0
-	sb_norm.content_margin_bottom = 2.0
-
-	var sb_hov := StyleBoxTexture.new()
-	sb_hov.texture = load("res://Assets/Sprites/UI/button_hover.png")
-	sb_hov.texture_margin_left = 6.0
-	sb_hov.texture_margin_right = 6.0
-	sb_hov.texture_margin_top = 5.0
-	sb_hov.texture_margin_bottom = 5.0
-	sb_hov.content_margin_left = 6.0
-	sb_hov.content_margin_right = 6.0
-	sb_hov.content_margin_top = 2.0
-	sb_hov.content_margin_bottom = 2.0
-
-	var sb_dis := StyleBoxTexture.new()
-	sb_dis.texture = load("res://Assets/Sprites/UI/button_disabled.png")
-	sb_dis.texture_margin_left = 6.0
-	sb_dis.texture_margin_right = 6.0
-	sb_dis.texture_margin_top = 5.0
-	sb_dis.texture_margin_bottom = 5.0
-	sb_dis.content_margin_left = 6.0
-	sb_dis.content_margin_right = 6.0
-	sb_dis.content_margin_top = 2.0
-	sb_dis.content_margin_bottom = 2.0
-
-	btn.add_theme_stylebox_override("normal", sb_norm)
-	btn.add_theme_stylebox_override("hover", sb_hov)
-	btn.add_theme_stylebox_override("focus", sb_hov)
-	btn.add_theme_stylebox_override("disabled", sb_dis)
+	if _button_styles.is_empty():
+		for state in ["normal", "hover", "disabled"]:
+			var style := StyleBoxTexture.new()
+			style.texture = load("res://Assets/Sprites/UI/button_%s.png" % state)
+			style.texture_margin_left = 6
+			style.texture_margin_right = 6
+			style.texture_margin_top = 5
+			style.texture_margin_bottom = 5
+			style.content_margin_left = 6
+			style.content_margin_right = 6
+			style.content_margin_top = 2
+			style.content_margin_bottom = 2
+			_button_styles[state] = style
+	for state in _button_styles:
+		btn.add_theme_stylebox_override(state, _button_styles[state])
+	btn.add_theme_stylebox_override("focus", _button_styles["hover"])
 	btn.add_theme_color_override("font_color", Color(0.14, 0.11, 0.08, 1))
 	btn.add_theme_color_override("font_hover_color", Color(0.04, 0.04, 0.04, 1))
 	btn.add_theme_color_override("font_disabled_color", Color(0.50, 0.46, 0.42, 0.7))
