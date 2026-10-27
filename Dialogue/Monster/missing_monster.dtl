@@ -5,5 +5,5 @@ Chief: Hello?
 [wait time="1.2" hide_text="true"]
 [signal arg="window_rumble"]
 [wait time="2.2" hide_text="true"]
-Chief: Shit.
+Chief: [shake rate=10 level=2][b]Shit.[/b][/shake]
 [i]That came from the stairs.[/i]

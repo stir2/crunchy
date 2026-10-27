@@ -82,7 +82,11 @@ func _ready() -> void:
 	VillageManager.night_resolved.connect(_on_night_resolved)
 	VillageManager.village_wiped.connect(_on_village_wiped)
 
-	set_panel(RoomPanel.DESK)
+	var start_panel := RoomPanel.DESK
+	if GameController.return_to_stairs:
+		GameController.return_to_stairs = false
+		start_panel = RoomPanel.STAIRS
+	set_panel(start_panel)
 	_refresh_top_hud()
 	if GameController.is_day_10():
 		call_deferred("_start_day_10")
@@ -162,6 +166,7 @@ func _descend() -> void:
 		return
 	if GameController.is_day_10():
 		if GameController.monster_missing:
+			GameController.return_to_stairs = true
 			get_tree().current_scene.change_scene("res://Scenes/Boss/boss_arena.tscn")
 		return
 	var main := get_tree().current_scene
@@ -222,11 +227,8 @@ func _refresh_panel_content() -> void:
 	if window_button != null:
 		window_button.visible = not GameController.is_day_10() and not talking
 		listen_button.visible = not GameController.is_day_10() and not talking
-		$Panels/WindowPanel/WindowNotice.visible = not talking
 		window_button.disabled = talking or GameController.night_in_progress
 		listen_button.disabled = talking or GameController.night_in_progress
-		if GameController.is_day_10():
-			$Panels/WindowPanel/WindowNotice.text = "Investigate the abyss stairs." if GameController.monster_missing else ""
 	if village_panel != null:
 		village_panel.get_node("ContentMargin/VBox/ButtonRow/SleepButton").disabled = talking or GameController.is_day_10() or GameController.night_in_progress
 

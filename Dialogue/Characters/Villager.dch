@@ -2,8 +2,10 @@
 "@path": "res://addons/dialogic/Resources/character.gd",
 "@subpath": NodePath(""),
 &"_translation_id": "",
-&"color": Color(1, 1, 1, 1),
-&"custom_info": {},
+&"color": Color(0.68, 0.76, 0.61, 1),
+&"custom_info": {
+&"prefix": "[color=#aebe9c][b]Villager:[/b][/color] "
+},
 &"default_portrait": "",
 &"description": "",
 &"display_name": "Villager",

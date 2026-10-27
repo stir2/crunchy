@@ -42,6 +42,7 @@ var abyss_progression_state := AbyssProgressionState.new()
 var day: int = 1
 var night_in_progress := false
 var monster_missing := false
+var return_to_stairs := false
 var window_history: Dictionary = {}
 var trips_left: int = TRIPS_PER_DAY:
 	set(value):
@@ -186,6 +187,7 @@ func reset_run() -> void:
 	day = 1
 	abyss_room_state = AbyssRoomState.new()
 	monster_missing = false
+	return_to_stairs = false
 	window_history.clear()
 	night_in_progress = false
 	rations = STARTING_RATIONS

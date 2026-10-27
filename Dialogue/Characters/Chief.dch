@@ -2,8 +2,10 @@
 "@path": "res://addons/dialogic/Resources/character.gd",
 "@subpath": NodePath(""),
 &"_translation_id": "",
-&"color": Color(1, 1, 1, 1),
-&"custom_info": {},
+&"color": Color(0.79, 0.72, 0.57, 1),
+&"custom_info": {
+&"prefix": "[color=#c9b88f][b]Chief:[/b][/color] "
+},
 &"default_portrait": "",
 &"description": "",
 &"display_name": "Chief",

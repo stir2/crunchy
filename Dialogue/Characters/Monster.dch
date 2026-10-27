@@ -2,8 +2,10 @@
 "@path": "res://addons/dialogic/Resources/character.gd",
 "@subpath": NodePath(""),
 &"_translation_id": "",
-&"color": Color(1, 1, 1, 1),
-&"custom_info": {},
+&"color": Color(0.82, 0.55, 0.49, 1),
+&"custom_info": {
+&"prefix": "[color=#d18c7d][b]Monster:[/b][/color] "
+},
 &"default_portrait": "",
 &"description": "",
 &"display_name": "Monster",
