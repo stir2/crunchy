@@ -96,7 +96,10 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and village_panel.visible:
-		_close_blueprint()
+		if village_panel.assignment_target != &"":
+			village_panel._cancel_assignment()
+		else:
+			_close_blueprint()
 		get_viewport().set_input_as_handled()
 
 
@@ -230,7 +233,7 @@ func _refresh_panel_content() -> void:
 		window_button.disabled = talking or GameController.night_in_progress
 		listen_button.disabled = talking or GameController.night_in_progress
 	if village_panel != null:
-		village_panel.get_node("ContentMargin/VBox/ButtonRow/SleepButton").disabled = talking or GameController.is_day_10() or GameController.night_in_progress
+		village_panel.sleep_button.disabled = talking or GameController.is_day_10() or GameController.night_in_progress
 
 
 func _on_refugee_waiting(candidate: Dictionary) -> void:

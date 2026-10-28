@@ -1,0 +1,109 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://bb0o3k6oyaq3u"]
+
+[ext_resource type="Texture2D" uid="uid://crxh01e77hymj" path="res://SpriteSheets/chiefIdle_100x100_24fps.png" id="1_idle"]
+
+[sub_resource type="AtlasTexture" id="Frame_0"]
+atlas = ExtResource("1_idle")
+region = Rect2(0, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="Frame_1"]
+atlas = ExtResource("1_idle")
+region = Rect2(100, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="Frame_2"]
+atlas = ExtResource("1_idle")
+region = Rect2(200, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="Frame_3"]
+atlas = ExtResource("1_idle")
+region = Rect2(300, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="Frame_4"]
+atlas = ExtResource("1_idle")
+region = Rect2(400, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="Frame_5"]
+atlas = ExtResource("1_idle")
+region = Rect2(500, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="Frame_6"]
+atlas = ExtResource("1_idle")
+region = Rect2(600, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="Frame_7"]
+atlas = ExtResource("1_idle")
+region = Rect2(700, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="Frame_8"]
+atlas = ExtResource("1_idle")
+region = Rect2(800, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="Frame_9"]
+atlas = ExtResource("1_idle")
+region = Rect2(900, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="Frame_10"]
+atlas = ExtResource("1_idle")
+region = Rect2(1000, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="Frame_11"]
+atlas = ExtResource("1_idle")
+region = Rect2(1100, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="Frame_12"]
+atlas = ExtResource("1_idle")
+region = Rect2(1200, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="Frame_13"]
+atlas = ExtResource("1_idle")
+region = Rect2(1300, 0, 100, 100)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Frame_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame_6")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame_7")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame_8")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame_9")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame_10")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame_11")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame_12")
+}, {
+"duration": 1.0,
+"texture": SubResource("Frame_13")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 24.0
+}]
