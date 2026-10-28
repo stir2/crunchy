@@ -53,7 +53,7 @@ func get_buildings() -> Array[BuildingData]:
 			{"free_potions": 1.0}, PackedInt32Array([8, 16])))
 		_default_buildings.append(BuildingData.make(
 			&"blacksmith", "Blacksmith", "damage", 2,
-			{"stun_seconds": 0.15}, PackedInt32Array([8, 16])))
+			{}, PackedInt32Array([8, 16])))
 		_default_buildings.append(BuildingData.make(
 			&"farmer", "Farmer", "max_stamina", 15,
 			{"stamina_regen_pct": 10.0}, PackedInt32Array([8, 16])))

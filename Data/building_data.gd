@@ -7,7 +7,7 @@ extends Resource
 # GameController stat this building raises per worker ("" for none).
 @export var stat_key: String = ""
 @export var bonus_per_worker: int = 0
-# Other per-worker effects ("free_potions", "stun_seconds").
+# Other per-worker effects ("free_potions", "stamina_regen_pct").
 @export var extras_per_worker: Dictionary = {}
 # Rations to go from level n to n+1. Index 0 is level 1 to 2.
 @export var upgrade_costs: PackedInt32Array = PackedInt32Array()

@@ -407,7 +407,7 @@ func _worker_info(worker: Villager) -> String:
 func _format_building_perk(building: BuildingData) -> String:
 	match building.id:
 		&"apothecary": return "+1 heart and +1 daily potion per worker."
-		&"blacksmith": return "+2 damage and +0.15s cleaver stun per worker."
+		&"blacksmith": return "+2 damage per worker."
 		&"farmer": return "+15 max stamina and +10% regen per worker."
 		&"tailor": return "+8% speed per worker."
 	return ""
@@ -535,7 +535,7 @@ func _refresh_chief() -> void:
 			base = 100.0
 			unit = "%"
 		_add_stat_bar(captions[i], base, bonus, base + maximum_bonus, unit)
-	_chief.add_child(_label("Stamina regen: +%.0f%%\nCleaver stun: +%.2fs\nDaily potions: +%d" % [VillageManager.get_effect("stamina_regen_pct"), VillageManager.get_effect("stun_seconds"), int(VillageManager.get_effect("free_potions"))], 22))
+	_chief.add_child(_label("Stamina regen: +%.0f%%\nDaily potions: +%d" % [VillageManager.get_effect("stamina_regen_pct"), int(VillageManager.get_effect("free_potions"))], 22))
 
 
 func _add_stat_bar(caption: String, base: float, bonus: float, maximum: float, unit: String) -> void:
