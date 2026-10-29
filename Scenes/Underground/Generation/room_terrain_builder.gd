@@ -18,12 +18,12 @@ static func _build(request: AbyssRoomConstructionRequest, config: AbyssTerrainCo
 	room.tile_pixels = req.tile_pixels
 	room.construction_requirements = req
 	room.position = Vector2(req.global_coords * req.room_size * req.tile_pixels)
-	for layer_name in ["Solid", "Platforms", "Decorations"]:
+	for layer_name in ["Solid", "Platforms", "Decorations", "Hazards"]:
 		var layer := TileMapLayer.new()
 		layer.name = layer_name
 		layer.tile_set = TILES
 		layer.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		layer.collision_enabled = layer_name != "Decorations"
+		layer.collision_enabled = layer_name not in ["Decorations", "Hazards"]
 		room.add_child(layer)
 	var solid := room.get_node("Solid") as TileMapLayer
 	var platforms := room.get_node("Platforms") as TileMapLayer

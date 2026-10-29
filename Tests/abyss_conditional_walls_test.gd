@@ -149,10 +149,10 @@ func run() -> void:
 	var gallery: Node = load("res://Scenes/Underground/Rooms/example_gallery.tscn").instantiate()
 	root.add_child(gallery)
 	var preview_seed: int = gallery.preview_seed
-	var next_seed := InputEventKey.new()
-	next_seed.keycode = KEY_N
+	var next_seed := InputEventAction.new()
+	next_seed.action = &"Preview Next Seed"
 	next_seed.pressed = true
-	gallery._unhandled_key_input(next_seed)
+	gallery._unhandled_input(next_seed)
 	check(gallery.preview_seed == preview_seed + 1 and gallery.get_child_count() == 2, "Gallery seed preview failed or leaked old cards")
 	gallery.free()
 	print("Conditional walls: 256 seeds, %d/16 combinations, group inclusion counts %s, physics and route guards verified; %d failures" % [patterns.size(),counts,failures])

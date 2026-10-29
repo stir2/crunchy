@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="AbyssRoomTemplateMetadata" format=3 uid="uid://ce0o86lco4tmv"]
+
+[ext_resource type="Script" uid="uid://dnt0nogb0yx73" path="res://Scenes/Underground/Generation/room_opening_profile.gd" id="1_argut"]
+[ext_resource type="PackedScene" path="res://Scenes/Underground/Rooms/Examples/feature_room.tscn" id="2_ho14k"]
+[ext_resource type="Script" uid="uid://ck5jir3ntl07j" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="3_xr614"]
+
+[resource]
+script = ExtResource("3_xr614")
+template_id = &"feature_room"
+display_name = "Room features laboratory"
+scene = ExtResource("2_ho14k")
+region = 0
+supported_openings = Array[StringName]([&""])
+opening_combinations = Array[ExtResource("1_argut")]([])

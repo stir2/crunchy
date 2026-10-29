@@ -24,8 +24,8 @@ func regenerate() -> void:
 			entries.append_array(service.definitions_at(Vector2i(x,y)))
 	queue_redraw()
 	print("Special overview seed=",configuration.global_seed," checkpoints=",entries.filter(func(d: Dictionary) -> bool: return d.kind == "checkpoint").size()," fragments=",entries.filter(func(d: Dictionary) -> bool: return d.kind == "fragment").size()," gates=",entries.filter(func(d: Dictionary) -> bool: return d.kind == "gate").size())
-func _unhandled_key_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_N:
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("Preview Next Seed"):
 		configuration.global_seed += 1
 		regenerate()
 func _draw() -> void:

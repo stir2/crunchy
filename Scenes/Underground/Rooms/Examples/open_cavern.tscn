@@ -6,8 +6,6 @@
 [node name="OpenCavern" type="Node2D" unique_id=753023175]
 script = ExtResource("1_gw3xw")
 reserved_route_rects = Array[Rect2i]([Rect2i(11, 1, 2, 22), Rect2i(1, 11, 22, 2)])
-required_support_rects = null
-breakable_group_ids = null
 
 [node name="Solid" type="TileMapLayer" parent="." unique_id=695473181]
 texture_filter = 1
@@ -72,3 +70,9 @@ position = Vector2(8, 104)
 
 [node name="west_1" type="Marker2D" parent="OpeningGuides" unique_id=2050172999]
 position = Vector2(8, 280)
+
+[node name="Hazards" type="TileMapLayer" parent="."]
+texture_filter = 1
+tile_set = ExtResource("2_8nuqp")
+collision_enabled = false
+z_index = 1

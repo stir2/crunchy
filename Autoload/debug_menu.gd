@@ -1,5 +1,5 @@
 extends CanvasLayer
-## Developer debug menu toggled with the '=' key.
+## Developer debug menu toggled through Input Map: Debug Menu (default =).
 ## Lets you inspect and modify all core variables in real time.
 
 var _panel: PanelContainer
@@ -24,10 +24,9 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_EQUAL:
-			toggle()
-			get_viewport().set_input_as_handled()
+	if event.is_action_pressed("Debug Menu"):
+		toggle()
+		get_viewport().set_input_as_handled()
 
 
 func toggle() -> void:

@@ -54,3 +54,16 @@ func climbable_layers() -> Array[TileMapLayer]:
 
 func destroy_breakable_group(identity: String) -> bool:
 	return breakables != null and breakables.destroy_group(identity)
+
+
+## Query hazard definitions without individual tile nodes or a per-frame scan.
+## Position is in world pixels; hazard_type is TileSet custom data (e.g. "spike").
+func hazard_type_at(world_position: Vector2) -> StringName:
+	var layer := get_node_or_null("Hazards") as TileMapLayer
+	if layer == null:
+		return &""
+	var cell := layer.local_to_map(layer.to_local(world_position))
+	var data := layer.get_cell_tile_data(cell)
+	if data == null or layer.tile_set.get_custom_data_layer_by_name("hazard_type") < 0:
+		return &""
+	return StringName(data.get_custom_data("hazard_type"))

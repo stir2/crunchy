@@ -216,44 +216,38 @@ func _draw_routes() -> void:
 						draw_circle(tile * TILE_PIXELS, 5.0, Color("ff5555"))
 
 
-func _unhandled_key_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo:
-		match event.keycode:
-			KEY_B:
-				show_original_boundaries = not show_original_boundaries
-				queue_redraw()
-			KEY_F:
-				show_final_boundaries = not show_final_boundaries
-				queue_redraw()
-			KEY_T:
-				show_terrain = not show_terrain
-				regenerate()
-			KEY_G:
-				show_room_grid = not show_room_grid
-				queue_redraw()
-			KEY_O:
-				show_packed_openings = not show_packed_openings
-				queue_redraw()
-			KEY_R:
-				var enabled := not show_main_route
-				show_main_route = enabled
-				show_access_routes = enabled
-				show_branches = enabled
-				show_reconnections = enabled
-				queue_redraw()
-			KEY_A:
-				show_template_selection = not show_template_selection
-				regenerate()
-
-
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
-		if event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			var factor := 1.2 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1.0 / 1.2
-			var anchor: Vector2 = event.position
-			position = anchor + (position - anchor) * factor
-			scale *= factor
-	if event is InputEventMouseMotion and event.button_mask & MOUSE_BUTTON_MASK_MIDDLE:
+	if event.is_action_pressed("Preview Original Boundaries"):
+		show_original_boundaries = not show_original_boundaries
+		queue_redraw()
+	elif event.is_action_pressed("Preview Final Boundaries"):
+		show_final_boundaries = not show_final_boundaries
+		queue_redraw()
+	elif event.is_action_pressed("Preview Toggle Terrain"):
+		show_terrain = not show_terrain
+		regenerate()
+	elif event.is_action_pressed("Preview Room Grid"):
+		show_room_grid = not show_room_grid
+		queue_redraw()
+	elif event.is_action_pressed("Preview Openings"):
+		show_packed_openings = not show_packed_openings
+		queue_redraw()
+	elif event.is_action_pressed("Preview Routes"):
+		var enabled := not show_main_route
+		show_main_route = enabled
+		show_access_routes = enabled
+		show_branches = enabled
+		show_reconnections = enabled
+		queue_redraw()
+	elif event.is_action_pressed("Preview Templates"):
+		show_template_selection = not show_template_selection
+		regenerate()
+	elif event.is_action_pressed("Preview Zoom In") or event.is_action_pressed("Preview Zoom Out"):
+		var factor := 1.2 if event.is_action_pressed("Preview Zoom In") else 1.0 / 1.2
+		var anchor := get_viewport().get_mouse_position()
+		position = anchor + (position - anchor) * factor
+		scale *= factor
+	if event is InputEventMouseMotion and Input.is_action_pressed("Preview Pan"):
 		position += event.relative
 
 

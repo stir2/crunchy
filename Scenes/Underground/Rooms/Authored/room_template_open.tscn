@@ -1,0 +1,75 @@
+[gd_scene format=3 uid="uid://b8y3jlipn4tmw"]
+
+[ext_resource type="Script" uid="uid://bg8lhs2k6oonn" path="res://Scenes/Underground/Rooms/authored_room.gd" id="1_njaqf"]
+[ext_resource type="TileSet" uid="uid://dsxrhc8fbe5le" path="res://Assets/Tiles/room_placeholders.tres" id="2_wylhf"]
+
+[node name="PackedCorner" type="Node2D" unique_id=247041278]
+script = ExtResource("1_njaqf")
+
+[node name="Solid" type="TileMapLayer" parent="." unique_id=1033750265]
+texture_filter = 1
+tile_set = ExtResource("2_wylhf")
+
+[node name="Platforms" type="TileMapLayer" parent="." unique_id=925235512]
+texture_filter = 1
+tile_set = ExtResource("2_wylhf")
+
+[node name="Decorations" type="TileMapLayer" parent="." unique_id=931767075]
+texture_filter = 1
+tile_map_data = PackedByteArray(0, 0, 12, 0, 4, 0, 0, 0, 2, 0, 0, 0, 0, 0)
+tile_set = ExtResource("2_wylhf")
+collision_enabled = false
+
+[node name="ConditionalWalls" type="TileMapLayer" parent="." unique_id=1615024523]
+modulate = Color(1, 0.75, 0.45, 1)
+texture_filter = 1
+tile_set = ExtResource("2_wylhf")
+
+[node name="Climbables" type="TileMapLayer" parent="." unique_id=1353094748]
+texture_filter = 1
+tile_set = ExtResource("2_wylhf")
+
+[node name="ConditionalPlatforms" type="TileMapLayer" parent="." unique_id=1150046332]
+texture_filter = 1
+tile_set = ExtResource("2_wylhf")
+
+[node name="BreakableWalls" type="TileMapLayer" parent="." unique_id=965683818]
+texture_filter = 1
+tile_set = ExtResource("2_wylhf")
+
+[node name="ObjectMarkers" type="Node2D" parent="." unique_id=1189828966]
+
+[node name="RoomCenter" type="Marker2D" parent="ObjectMarkers" unique_id=1610016240]
+position = Vector2(192, 192)
+
+[node name="OpeningGuides" type="Node2D" parent="." unique_id=1400682792]
+
+[node name="north_0" type="Marker2D" parent="OpeningGuides" unique_id=1737815896]
+position = Vector2(104, 8)
+
+[node name="north_1" type="Marker2D" parent="OpeningGuides" unique_id=1802115511]
+position = Vector2(280, 8)
+
+[node name="east_0" type="Marker2D" parent="OpeningGuides" unique_id=1404949088]
+position = Vector2(376, 104)
+
+[node name="east_1" type="Marker2D" parent="OpeningGuides" unique_id=1413186602]
+position = Vector2(376, 280)
+
+[node name="south_0" type="Marker2D" parent="OpeningGuides" unique_id=1842275955]
+position = Vector2(104, 376)
+
+[node name="south_1" type="Marker2D" parent="OpeningGuides" unique_id=254361577]
+position = Vector2(280, 376)
+
+[node name="west_0" type="Marker2D" parent="OpeningGuides" unique_id=2102061590]
+position = Vector2(8, 104)
+
+[node name="west_1" type="Marker2D" parent="OpeningGuides" unique_id=852724074]
+position = Vector2(8, 280)
+
+[node name="Hazards" type="TileMapLayer" parent="."]
+texture_filter = 1
+tile_set = ExtResource("2_wylhf")
+collision_enabled = false
+z_index = 1
