@@ -8,6 +8,7 @@
 script = ExtResource("1_test")
 
 [node name="Background" type="Polygon2D" parent="." unique_id=657944320]
+position = Vector2(0, 2)
 color = Color(0.055, 0.075, 0.12, 1)
 polygon = PackedVector2Array(-300, -500, 2700, -500, 2700, 900, -300, 900)
 

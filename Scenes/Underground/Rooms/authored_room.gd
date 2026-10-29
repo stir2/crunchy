@@ -8,6 +8,8 @@ extends Node2D
 	set(value):
 		show_editor_guides = value
 		queue_redraw()
+
+@export_group("Advanced")
 ## Optional tile-space rectangles reserved for navigation. Editor guides are cyan.
 @export var reserved_route_rects: Array[Rect2i] = []:
 	set(value):

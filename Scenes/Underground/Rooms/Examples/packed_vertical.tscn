@@ -38,6 +38,12 @@ tile_set = ExtResource("2_b3ob5")
 texture_filter = 1
 tile_set = ExtResource("2_b3ob5")
 
+[node name="Hazards" type="TileMapLayer" parent="."]
+texture_filter = 1
+tile_set = ExtResource("2_b3ob5")
+collision_enabled = false
+z_index = 1
+
 [node name="ObjectMarkers" type="Node2D" parent="." unique_id=149868834]
 
 [node name="RoomCenter" type="Marker2D" parent="ObjectMarkers" unique_id=1682832282]
@@ -68,9 +74,3 @@ position = Vector2(8, 104)
 
 [node name="west_1" type="Marker2D" parent="OpeningGuides" unique_id=566257327]
 position = Vector2(8, 280)
-
-[node name="Hazards" type="TileMapLayer" parent="."]
-texture_filter = 1
-tile_set = ExtResource("2_b3ob5")
-collision_enabled = false
-z_index = 1
