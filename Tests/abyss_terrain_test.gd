@@ -139,12 +139,12 @@ func run() -> void:
 	for chunk in preview._terrain.get_children():
 		for room in chunk.get_children():
 			check(chunk.position + room.position == Vector2(room.construction_requirements.global_coords * config.room_size * 16), "Chunk-local room misplaced")
-	var toggle := InputEventKey.new()
-	toggle.keycode = KEY_T
+	var toggle := InputEventAction.new()
+	toggle.action = &"Preview Toggle Terrain"
 	toggle.pressed = true
-	preview._unhandled_key_input(toggle)
+	preview._unhandled_input(toggle)
 	check(preview.get_child_count() == 1 and preview._tiles.visible, "Logical toggle failed")
-	preview._unhandled_key_input(toggle)
+	preview._unhandled_input(toggle)
 	check(preview._terrain.get_child_count() == 2 and not preview._tiles.visible, "Terrain toggle failed")
 	abyss.free()
 	print("Physical terrain: ", stats, "; failures: ", failures)

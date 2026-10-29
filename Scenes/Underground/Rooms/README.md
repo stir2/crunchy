@@ -39,11 +39,22 @@ architecture examples with one-cell slot apertures, not traversal-tested rooms.
    Resource of type `AbyssRoomTemplateMetadata`.
 3. Set a unique `template_id`, display name, scene, region, room dimensions and tile scale,
    selection weight, optional compatibility tags and opening schema.
-4. Expand `opening_combinations`. Each `AbyssRoomOpeningProfile` describes one
-   **fixed, physically authored combination**, with a unique `variant_id`, exact
-   opening IDs and `opening_tiles`. The optional scene override supplies different
-   geometry for another combination; an omitted override uses metadata.scene.
-   Do not list hypothetical combinations that the scene cannot physically satisfy.
+4. Expand **Connections** in the metadata Inspector and tick the eight checkboxes
+   (`north:0`, `north:1`, `east:0`, `east:1`, `south:0`, `south:1`, `west:0`,
+   `west:1`) to match the openings you painted. Tile coordinates are filled in
+   automatically from the central route defaults and metadata room dimensions.
+   These are one exact combination, not permission to select arbitrary subsets.
+   The legacy Supported Openings array and coordinate dictionary are hidden;
+   existing resources retain their saved data. A new metadata resource already
+   contains a default profile, including when all eight boxes are unchecked.
+   **Advanced:** `opening_combinations` still supports separate scene variants.
+   The metadata checkboxes edit its first profile; each additional profile also
+   exposes connection checkboxes. Use the metadata checkboxes for configured
+   room dimensions; standalone profile checkboxes use the default room size.
+   Each variant must describe its actual scene geometry. Full-open transition
+   faces still use the profile's `open_sides` flags; OPEN rooms require all four.
+   Changing central route offsets later still requires repainting old scenes;
+   existing saved coordinates are deliberately preserved for compatibility checks.
 5. Use the existing IDs `north:0`, `north:1`, `east:0`, `east:1`, `south:0`,
    `south:1`, `west:0`, `west:1`. With the current route configuration, N/S slots
    are tile X indices 6 and 17; E/W slots are Y indices 6 and 17. Face coordinates
@@ -281,3 +292,22 @@ preservation. Existing terrain snapshots also include the new layer.
 See [ROOM_FEATURES.md](ROOM_FEATURES.md) for climbables, conditional platforms,
 breakable group health/persistence, six extensible placement marker types, the
 standalone feature laboratory, save interfaces, and the changed-file manifest.
+
+
+## Placeholder spike tiles
+
+Select the **Hazards** TileMapLayer in a room scene and paint the spike tile from
+shared `room_placeholders.tres`: source **0**, atlas coordinate **(6, 0)**.
+The upward-facing spikes occupy one 16×16 cell. Use the tile painting rotation
+or flip tools for other orientations. Keep supporting floors on **Solid**;
+Hazards is separate and has solid collision disabled. Existing tile IDs are unchanged.
+The base, authored templates and example rooms include the empty layer; no spikes
+are added automatically. Older custom scenes can add a TileMapLayer named `Hazards`,
+assign the shared TileSet, and disable Collision Enabled.
+
+Spikes have `hazard_type = "spike"` custom data. Constructed authored rooms retain
+the painted layer unchanged. `room.hazard_type_at(world_position)` exposes the
+cell's hazard type for future gameplay integration; it returns an empty StringName
+outside hazards. This is an artwork/data placeholder, with no damage, hit detection,
+or death behavior. Validation checks tile bounds, layer settings and protected
+route areas. Do not paint spikes across reserved routes or required openings.

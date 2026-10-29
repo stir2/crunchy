@@ -65,7 +65,7 @@ func _rebuild() -> void:
 	_cards.add_child(label)
 
 
-func _unhandled_key_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_N:
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("Preview Next Seed"):
 		preview_seed += 1
 		_rebuild()

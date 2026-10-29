@@ -9,7 +9,7 @@ extends Resource
 ## Hard symmetric main-route envelope around the entrance (not level boundaries).
 @export_range(0, 32) var main_route_max_horizontal_drift: int = 6
 @export_range(0.0, 1.0) var branching_probability: float = 0.45
-@export_range(0.0, 1.0) var reconnection_probability: float = 0.09
+@export_range(0.0, 1.0) var reconnection_probability: float = 0.12
 @export_range(1, 32) var branch_min_length: int = 3
 @export_range(1, 32) var branch_max_length: int = 10
 ## Legacy API: branch_length remains an alias for the maximum growth budget.

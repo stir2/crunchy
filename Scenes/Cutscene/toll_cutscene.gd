@@ -253,7 +253,7 @@ func _exit_tree() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event.is_action_pressed("ui_accept") \
-			or (event is InputEventMouseButton and event.pressed)):
+			or event.is_action_pressed("Cutscene Skip")):
 		return
 	match _phase:
 		Phase.PRELUDE, Phase.SPINNING:

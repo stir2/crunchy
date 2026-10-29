@@ -55,6 +55,26 @@ static func validate(room: AbyssAuthoredRoom, metadata: AbyssRoomTemplateMetadat
 				var other := room.get_node_or_null(NodePath(other_key)) as TileMapLayer
 				if other_key != key and other != null and other.get_cell_source_id(cell) != -1:
 					errors.append("%s overlaps %s at %s" % [key,other_key,cell])
+	# Hazard artwork is independent of blocking terrain and future damage logic.
+	var hazards := room.get_node_or_null("Hazards") as TileMapLayer
+	if hazards != null:
+		if hazards.tile_set == null:
+			errors.append("Hazards requires a TileSet")
+		else:
+			if hazards.collision_enabled:
+				errors.append("Hazards must disable solid collision")
+			if hazards.tile_set.tile_size != Vector2i.ONE * room.tile_pixels or hazards.position != Vector2.ZERO or hazards.scale != Vector2.ONE or not is_zero_approx(hazards.rotation):
+				errors.append("Hazards requires matching tiles and identity transform")
+			for cell in hazards.get_used_cells():
+				if not bounds.has_point(cell):
+					errors.append("Hazard tile outside room: %s" % cell)
+				if protected.has(cell):
+					errors.append("Hazard overlaps protected opening/route: %s" % cell)
+				var data := hazards.get_cell_tile_data(cell)
+				if data == null or hazards.tile_set.get_custom_data_layer_by_name("hazard_type") < 0:
+					errors.append("Hazards requires hazard_type custom data")
+				elif String(data.get_custom_data("hazard_type")).is_empty():
+					errors.append("Paint hazard tiles on Hazards, not ordinary terrain: %s" % cell)
 	var breakable := room.get_node_or_null("BreakableWalls") as TileMapLayer
 	if breakable != null:
 		var ids: Dictionary = {}

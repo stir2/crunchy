@@ -60,7 +60,7 @@ func _refresh() -> void:
 func _process(delta: float) -> void:
 	if not is_instance_valid(room):
 		return
-	var axis := Vector2(float(Input.is_physical_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_LEFT)),float(Input.is_physical_key_pressed(KEY_DOWN)) - float(Input.is_physical_key_pressed(KEY_UP)))
+	var axis := Vector2(Input.get_axis("Move Left", "Move Right"), Input.get_axis("Move Up", "Move Down"))
 	probe.position += axis * 120 * delta
 	var detected: bool = AbyssClimbableTiles.sample(room.climbable_layers(),probe.global_position).climbable
 	probe.color = Color.LIME_GREEN if detected else Color.CORAL
@@ -69,38 +69,36 @@ func _process(delta: float) -> void:
 		_message = "Entered climbable region" if detected else "Exited climbable region"
 		_refresh()
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
-		if event.button_index == MOUSE_BUTTON_LEFT:
-			room.damage_breakable_at(get_global_mouse_position(),1)
-			_refresh()
-		elif event.button_index == MOUSE_BUTTON_RIGHT:
-			probe.global_position = get_global_mouse_position()
-	if not event is InputEventKey or not event.pressed or event.echo:
-		return
-	match event.keycode:
-		KEY_N:
-			preview_seed += 1
+	if event.is_action_pressed("Preview Damage"):
+		room.damage_breakable_at(get_global_mouse_position(),1)
+		_refresh()
+	elif event.is_action_pressed("Preview Place Probe"):
+		probe.global_position = get_global_mouse_position()
+	elif event.is_action_pressed("Preview Next Seed"):
+		preview_seed += 1
+		_rebuild()
+	elif event.is_action_pressed("Preview Regenerate"):
+		_rebuild()
+	elif event.is_action_pressed("Preview Clear State"):
+		state = AbyssRoomState.new()
+		_rebuild()
+	elif event.is_action_pressed("Preview Collect Loot") or event.is_action_pressed("Preview Activate Interaction"):
+		var collecting: bool = event.is_action_pressed("Preview Collect Loot")
+		var kind: StringName = &"loot" if collecting else &"interaction"
+		for spawn in room.spawn_requests:
+			if spawn.should_spawn() and spawn.kind == kind:
+				spawn.record_status("collected" if collecting else "activated")
+		_refresh()
+	elif event.is_action_pressed("Preview Save State"):
+		var file := FileAccess.open("user://room_feature_state.json",FileAccess.WRITE)
+		if file != null:
+			file.store_string(state.serialize())
+			_message = "Saved user://room_feature_state.json"
+		_refresh()
+	elif event.is_action_pressed("Preview Load State"):
+		if FileAccess.file_exists("user://room_feature_state.json"):
+			_message = "State restore result: %s" % state.restore(FileAccess.get_file_as_string("user://room_feature_state.json"))
 			_rebuild()
-		KEY_R:
-			_rebuild()
-		KEY_K:
-			state = AbyssRoomState.new()
-			_rebuild()
-		KEY_L, KEY_I:
-			for spawn in room.spawn_requests:
-				if spawn.should_spawn() and ((event.keycode == KEY_L and spawn.kind == &"loot") or (event.keycode == KEY_I and spawn.kind == &"interaction")):
-					spawn.record_status("collected" if event.keycode == KEY_L else "activated")
-			_refresh()
-		KEY_F5:
-			var file := FileAccess.open("user://room_feature_state.json",FileAccess.WRITE)
-			if file != null:
-				file.store_string(state.serialize())
-				_message = "Saved user://room_feature_state.json"
-			_refresh()
-		KEY_F9:
-			if FileAccess.file_exists("user://room_feature_state.json"):
-				_message = "State restore result: %s" % state.restore(FileAccess.get_file_as_string("user://room_feature_state.json"))
-				_rebuild()
 func _destroyed(_id: String, _cells: Array, point: Vector2) -> void:
 	var flash := Polygon2D.new()
 	flash.polygon = PackedVector2Array([Vector2(-12,0),Vector2(0,-12),Vector2(12,0),Vector2(0,12)])
