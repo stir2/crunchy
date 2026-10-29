@@ -65,6 +65,9 @@ func load_game() -> bool:
 	GameController.night_in_progress = false
 	for key in data["game"]:
 		GameController.set(key, int(data["game"][key]))
+	# Old saves have no hunger or settlement-day fields.
+	if not data["village"].has("current_day"):
+		VillageManager.sim.current_day = maxi(0, GameController.day - 1)
 	GameController.abyss_room_state = state
 	GameController.abyss_progression_state = progression
 	GameController.monster_missing = data["monster_missing"]
@@ -120,6 +123,12 @@ func _valid_village(data: Dictionary) -> bool:
 		return false
 	if data.villagers.is_empty() or data.villagers.size() > VillageManager.config.max_population:
 		return false
+	for field in ["hunger", "current_day"]:
+		if data.has(field):
+			var number: Variant = data[field]
+			var maximum: int = VillageManager.config.hunger_threshold if field == "hunger" else 10
+			if not (number is int or number is float) or not is_finite(float(number)) or number != int(number) or number < 0 or number > maximum:
+				return false
 	var ids: Array = []
 	var counts := {}
 	for building: BuildingData in VillageManager.get_buildings():

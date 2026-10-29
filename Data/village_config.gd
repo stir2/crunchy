@@ -15,6 +15,11 @@ extends Resource
 @export var bonus_rations_per_excess_flesh := 0.25
 @export var bonus_rations_cap := 4
 
+@export_group("Wellbeing and hunger")
+@export_range(1, 14) var staffing_target := 4
+@export_range(1, 9) var mourning_nights := 3
+@export_range(2, 6) var hunger_threshold := 3
+
 @export_group("Toll")
 @export_range(0.0, 1.0) var choose_threshold := 0.25
 
@@ -50,14 +55,14 @@ func get_buildings() -> Array[BuildingData]:
 	if _default_buildings.is_empty():
 		_default_buildings.append(BuildingData.make(
 			&"apothecary", "Apothecary", "max_health", 2,
-			{"free_potions": 1.0}, PackedInt32Array([8, 16])))
+			{"free_potions": 1.0}, PackedInt32Array([6, 12])))
 		_default_buildings.append(BuildingData.make(
 			&"blacksmith", "Blacksmith", "damage", 2,
-			{}, PackedInt32Array([8, 16])))
+			{}, PackedInt32Array([6, 12])))
 		_default_buildings.append(BuildingData.make(
 			&"farmer", "Farmer", "max_stamina", 15,
-			{"stamina_regen_pct": 10.0}, PackedInt32Array([8, 16])))
+			{"stamina_regen_pct": 10.0}, PackedInt32Array([6, 12])))
 		_default_buildings.append(BuildingData.make(
 			&"tailor", "Tailor", "speed", 8,
-			{}, PackedInt32Array([8, 16])))
+			{}, PackedInt32Array([6, 12])))
 	return _default_buildings

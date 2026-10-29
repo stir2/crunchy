@@ -12,6 +12,8 @@ var building_levels: Dictionary = {}
 var fallen: Array[Dictionary] = []
 var pending_refugees: Array[Dictionary] = []
 var is_first_day := true
+var hunger := 0
+var current_day := 0
 var _next_id := 1
 var _used_names: Array[String] = []
 
@@ -222,15 +224,22 @@ func bonus_rations_for(flesh: int, quota: int) -> int:
 	return mini(int(excess * config.bonus_rations_per_excess_flesh), config.bonus_rations_cap)
 
 
-func calc_village_health(fed: bool, nobody_died: bool) -> int:
+func calc_village_health(_fed: bool, nobody_died: bool) -> int:
 	var pop := population()
 	if pop <= 0:
 		return 0
 	var alive_score := clampf(float(pop) / float(config.healthy_population), 0.0, 1.0)
-	var employed_score := float(employed_count()) / float(pop)
+	var employed_score := clampf(float(employed_count()) / float(config.staffing_target), 0.0, 1.0)
+	var recent_losses := 0
+	for loss in fallen:
+		if int(loss.day) > current_day - config.mourning_nights and int(loss.day) <= current_day:
+			recent_losses += 1
+	var peace_score := maxf(0.0, 1.0 - 0.5 * recent_losses)
+	if not nobody_died:
+		peace_score = minf(peace_score, 0.5)
 	var score := config.weight_alive * alive_score + config.weight_employed * employed_score
-	score += config.weight_fed * (1.0 if fed else 0.0)
-	score += config.weight_no_deaths * (1.0 if nobody_died else 0.0)
+	score += config.weight_fed * (1.0 - float(hunger) / float(config.hunger_threshold))
+	score += config.weight_no_deaths * peace_score
 	var total := config.weight_alive + config.weight_employed + config.weight_fed + config.weight_no_deaths
 	return clampi(roundi(100.0 * score / total), 0, 100)
 
@@ -279,6 +288,7 @@ func evaluate_toll(flesh: int, quota: int) -> Dictionary:
 func settle_night(day: int, flesh: int, quota: int, rations: int, toll_met: bool,
 		taken_id: int) -> Dictionary:
 	is_first_day = false
+	current_day = day
 	var report := {
 		"day": day, "flesh": flesh, "quota": quota, "toll_met": toll_met,
 		"taken": "", "produced": 0, "bonus": 0, "upkeep": 0, "starved": "", "fed": true,
@@ -308,12 +318,16 @@ func settle_night(day: int, flesh: int, quota: int, rations: int, toll_met: bool
 	var starved := ""
 
 	if fed:
-		rations -= upkeep
+		hunger = maxi(0, hunger - 2)
 	else:
-		rations = 0
+		var severity := 2 if (upkeep - rations) * 2 >= upkeep else 1
+		hunger = mini(config.hunger_threshold, hunger + severity)
+	rations = maxi(0, rations - upkeep)
+	if hunger >= config.hunger_threshold:
 		var victim := remove_villager(random_villager_id(), &"starved", day)
 		if victim != null:
 			starved = victim.display_name
+		hunger = 1
 
 	report["produced"] = produced
 	report["bonus"] = bonus
@@ -362,6 +376,8 @@ func to_dict() -> Dictionary:
 		"fallen": fallen.duplicate(true),
 		"pending_refugees": refs,
 		"is_first_day": is_first_day,
+		"hunger": hunger,
+		"current_day": current_day,
 		"next_id": _next_id,
 		"used_names": _used_names.duplicate(),
 		"rng_state": str(rng.state),
@@ -369,6 +385,8 @@ func to_dict() -> Dictionary:
 
 
 func load_dict(d: Dictionary) -> void:
+	hunger = clampi(int(d.get("hunger", 0)), 0, config.hunger_threshold)
+	current_day = maxi(0, int(d.get("current_day", 0)))
 	if d.has("rng_state"):
 		rng.state = int(d["rng_state"])
 	villagers.clear()
