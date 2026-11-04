@@ -1,11 +1,11 @@
 [gd_scene format=3 uid="uid://bkwrdhxyioatx"]
 
 [ext_resource type="Script" uid="uid://cn7ncsey2v8wj" path="res://Scenes/Player/player.gd" id="1_player"]
-[ext_resource type="SpriteFrames" path="res://Scenes/Player/chief_sprite_frames.tres" id="2_visual"]
+[ext_resource type="SpriteFrames" uid="uid://baovfy282yni3" path="res://Scenes/Player/chief_sprite_frames.tres" id="2_visual"]
 [ext_resource type="Script" uid="uid://bn2xj43ljagvu" path="res://Scenes/Player/player_hurtbox.gd" id="3_hurtbox"]
 [ext_resource type="Script" uid="uid://ditw61ejfdaak" path="res://Scenes/Player/player_dash_visuals.gd" id="4_dash_visuals"]
-
-[ext_resource type="Script" path="res://Scenes/Player/player_animation.gd" id="5_animation"]
+[ext_resource type="Script" uid="uid://bpafenme6orer" path="res://Scenes/Player/player_animation.gd" id="5_animation"]
+[ext_resource type="Script" path="res://Scenes/Player/player_movement_effects.gd" id="6_effects"]
 
 [sub_resource type="RectangleShape2D" id="Rectangle_player"]
 resource_local_to_scene = true
@@ -73,3 +73,6 @@ script = ExtResource("3_hurtbox")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox" unique_id=215238445]
 shape = SubResource("Rectangle_hurtbox")
+
+[node name="MovementEffects" type="Node2D" parent="."]
+script = ExtResource("6_effects")

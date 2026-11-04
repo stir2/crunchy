@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="AbyssRoomTemplateMetadata" format=3 uid="uid://cdvl4rqvpgo7r"]
+
+[ext_resource type="Script" uid="uid://dnt0nogb0yx73" path="res://Scenes/Underground/Generation/room_opening_profile.gd" id="1_n3asp"]
+[ext_resource type="Script" uid="uid://ck5jir3ntl07j" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="2_1564j"]
+[ext_resource type="PackedScene" uid="uid://dgjb3donib4wb" path="res://Scenes/Underground/Rooms/Authored/Packed/room_halls.tscn" id="2_d126l"]
+
+[sub_resource type="Resource" id="Resource_d126l"]
+script = ExtResource("1_n3asp")
+openings = Array[StringName]([&"east:0", &"west:1"])
+opening_tiles = Dictionary[StringName, Vector2i]({
+&"east:0": Vector2i(23, 6),
+&"west:1": Vector2i(0, 17)
+})
+
+[resource]
+script = ExtResource("2_1564j")
+template_id = &"halls"
+display_name = "halls"
+scene = ExtResource("2_d126l")
+opening_combinations = Array[ExtResource("1_n3asp")]([SubResource("Resource_d126l")])
+metadata/_custom_type_script = "uid://ck5jir3ntl07j"

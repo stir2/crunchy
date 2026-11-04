@@ -1,6 +1,8 @@
 class_name AbyssRouteConfig
 extends Resource
-## Coordinate-derived contracts and bounded winding graph growth; no geometry.
+## Coordinate-derived contracts and bounded winding graph growth.
+## Every slot is a fixed three-tile aperture centered on its saved coordinate.
+const OPENING_WIDTH: int = 3
 @export var opening_schema: StringName = &"abyss_slots_v1"
 @export var entrance_chunk_x: int = 0
 ## In chunk columns/rows. Zero wander reproduces a single-column descent.
@@ -47,10 +49,10 @@ func is_valid(room_size: Vector2i) -> bool:
 		and attachment_band_height >= 2
 		and branching_probability >= 0 and branching_probability <= 1
 		and reconnection_probability >= 0 and reconnection_probability <= 1
-		and horizontal_offsets.x >= 0 and horizontal_offsets.x < horizontal_offsets.y
-		and horizontal_offsets.y < room_size.x
-		and vertical_offsets.x >= 0 and vertical_offsets.x < vertical_offsets.y
-		and vertical_offsets.y < room_size.y
+		and horizontal_offsets.x >= 2 and horizontal_offsets.x < horizontal_offsets.y
+		and horizontal_offsets.y < room_size.x - 2
+		and vertical_offsets.x >= 2 and vertical_offsets.x < vertical_offsets.y
+		and vertical_offsets.y < room_size.y - 2
 	)
 
 
@@ -67,3 +69,25 @@ func opening_position(side: int, slot: int, size: Vector2i) -> Vector2i:
 
 static func opening_id(side: int, slot: int) -> StringName:
 	return StringName(["north", "east", "south", "west"][side] + ":" + str(slot))
+
+
+## The same span is used by authored validation and procedural construction.
+static func opening_cells(id: StringName, center: Vector2i) -> Array[Vector2i]:
+	var tangent := Vector2i.RIGHT if String(id).get_slice(":", 0) in ["north", "south"] else Vector2i.DOWN
+	var cells: Array[Vector2i] = []
+	var radius: int = OPENING_WIDTH >> 1
+	for offset in range(-radius, radius + 1):
+		cells.append(center + tangent * offset)
+	return cells
+
+
+static func contains_opening(openings: Dictionary, cell: Vector2i) -> bool:
+	for id: StringName in openings:
+		var center: Vector2i = openings[id]
+		var delta := cell - center
+		if String(id).get_slice(":", 0) in ["north", "south"]:
+			if delta.y == 0 and absi(delta.x) <= (OPENING_WIDTH >> 1):
+				return true
+		elif delta.x == 0 and absi(delta.y) <= (OPENING_WIDTH >> 1):
+			return true
+	return false

@@ -13,7 +13,7 @@ is no longer used by any script.
 | Jump | Existing binding | Player jumping |
 | Attack | Existing binding | Reserved player attack |
 | Action | Existing Shift binding | Player dash |
-| Interact | Left mouse | Hovered/picked village hotspot |
+| Interact | Left mouse | Reserved interaction action; current village uses UI buttons |
 | Debug Menu | = | Global developer menu |
 | Player Test Ledge / Dash / Drop | F1 / F2 / F3 | Movement lab shortcuts |
 | Preview Next Seed | N | Room gallery / feature lab / progression overview |
@@ -33,14 +33,14 @@ is no longer used by any script.
 | Preview Templates | A | Abyss template-selection overlay |
 | Preview Zoom In / Out | Wheel up / down | Abyss preview zoom |
 | Preview Pan | Middle mouse hold | Abyss preview pan |
-| Cutscene Skip | Mouse buttons / wheel | Toll cutscene, alongside ui_accept/ui_cancel |
+| Cutscene Skip | Mouse buttons / wheel | Toll cutscene, alongside ui_accept; Escape opens the pause menu |
 
 Actions sharing default bindings are used in separate scene contexts. Event
 handlers use `is_action_pressed()` (without key repeat); held movement uses
 `get_axis()` and pan uses `is_action_pressed()`. Physical cursor coordinates and
 mouse-motion deltas remain event data. Native Godot Control button/focus handling
-and cursor display settings are unchanged. A keyboard/controller Interact binding
-activates the currently hovered house hotspot too.
+and cursor display settings are unchanged. The current house uses native Control buttons rather than the older hovered
+hotspot system.
 
 Existing automated tests now inject named actions, and no longer require Dash to
 be bound to a particular physical Shift key. Tests were not executed for this

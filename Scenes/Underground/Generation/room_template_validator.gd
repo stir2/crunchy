@@ -56,7 +56,10 @@ static func validate(metadata: AbyssRoomTemplateMetadata) -> PackedStringArray:
 				var on_side := (side == 0 and cell.y == 0) or (side == 1 and cell.x == size.x - 1) or (side == 2 and cell.y == size.y - 1) or (side == 3 and cell.x == 0)
 				if not slot in ["0", "1"] or not on_side or not Rect2i(Vector2i.ZERO, size).has_point(cell):
 					errors.append("Invalid opening ID/coordinate: %s" % id)
-				holes[cell] = true
+				for opening_cell in AbyssRouteConfig.opening_cells(id, cell):
+					if not Rect2i(Vector2i.ZERO, size).has_point(opening_cell) or (opening_cell.x in [0, size.x - 1] and opening_cell.y in [0, size.y - 1]):
+						errors.append("Opening span outside room: %s" % id)
+					holes[opening_cell] = true
 			for side in range(4):
 				if profile.open_sides & (1 << side):
 					var limit := metadata.room_size.x if side % 2 == 0 else metadata.room_size.y

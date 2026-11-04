@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="AbyssRoomTemplateMetadata" format=3 uid="uid://dgiwwlvyxawrn"]
+
+[ext_resource type="Script" uid="uid://dnt0nogb0yx73" path="res://Scenes/Underground/Generation/room_opening_profile.gd" id="1_je61c"]
+[ext_resource type="PackedScene" uid="uid://dh88867ahoqkw" path="res://Scenes/Underground/Rooms/Authored/Packed/room_pump.tscn" id="2_8lpvs"]
+[ext_resource type="Script" uid="uid://ck5jir3ntl07j" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="2_i2wty"]
+
+[sub_resource type="Resource" id="Resource_8lpvs"]
+script = ExtResource("1_je61c")
+openings = Array[StringName]([&"north:0", &"west:1", &"east:1"])
+opening_tiles = Dictionary[StringName, Vector2i]({
+&"east:1": Vector2i(23, 17),
+&"north:0": Vector2i(6, 0),
+&"west:1": Vector2i(0, 17)
+})
+
+[resource]
+script = ExtResource("2_i2wty")
+template_id = &"pump"
+display_name = "pump"
+scene = ExtResource("2_8lpvs")
+opening_combinations = Array[ExtResource("1_je61c")]([SubResource("Resource_8lpvs")])
+metadata/_custom_type_script = "uid://ck5jir3ntl07j"

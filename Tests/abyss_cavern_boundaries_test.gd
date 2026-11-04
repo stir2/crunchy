@@ -96,8 +96,9 @@ func run() -> void:
 		var solid := room.get_node("Solid") as TileMapLayer
 		var heavy_room := AbyssRoomTerrainBuilder.build(request, strong, strong_field)
 		var heavy_solid := heavy_room.get_node("Solid") as TileMapLayer
-		for opening in request.requirements.route_openings.values():
-			check(heavy_solid.get_cell_source_id(opening) == -1, "High warp blocked required opening")
+		for id in request.requirements.route_openings:
+			for opening in AbyssRouteConfig.opening_cells(id, request.requirements.route_openings[id]):
+				check(heavy_solid.get_cell_source_id(opening) == -1, "High warp blocked required opening span")
 		heavy_room.free()
 		var cells := solid.get_used_cells()
 		cells.sort()
@@ -149,7 +150,7 @@ func run() -> void:
 						continue
 					var other := selector.select_room(generator, coord + AbyssRegionGenerator.DIRECTIONS[side])
 					if request.requirements.region == AbyssRoomData.Region.PACKED and other.requirements.region == AbyssRoomData.Region.PACKED:
-						check(solid.get_cell_source_id(local) != -1 or request.requirements.required_openings.values().has(local), "Undeclared packed hole")
+						check(solid.get_cell_source_id(local) != -1 or AbyssRouteConfig.contains_opening(request.requirements.required_openings, local), "Undeclared packed hole")
 					if request.requirements.region == AbyssRoomData.Region.OPEN and other.requirements.region == AbyssRoomData.Region.OPEN:
 						check(solid.get_cell_source_id(local) == -1, "Open-open wall")
 					seams += 1

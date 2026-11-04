@@ -1,0 +1,157 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://ci8rlfvgosdhx"]
+
+[ext_resource type="Texture2D" uid="uid://dseenmtyy22hi" path="res://Assets/Sprites/Particles/fxSmokeJumpUp_100x100_24fps.png" id="jump"]
+[ext_resource type="Texture2D" uid="uid://301af76lkchm" path="res://Assets/Sprites/Particles/fxSmokeJumpLand_100x100_24fps.png" id="land"]
+
+[sub_resource type="AtlasTexture" id="jump_0"]
+atlas = ExtResource("jump")
+region = Rect2(0, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="jump_1"]
+atlas = ExtResource("jump")
+region = Rect2(100, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="jump_2"]
+atlas = ExtResource("jump")
+region = Rect2(200, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="jump_3"]
+atlas = ExtResource("jump")
+region = Rect2(300, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="jump_4"]
+atlas = ExtResource("jump")
+region = Rect2(400, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="jump_5"]
+atlas = ExtResource("jump")
+region = Rect2(500, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="jump_6"]
+atlas = ExtResource("jump")
+region = Rect2(600, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="jump_7"]
+atlas = ExtResource("jump")
+region = Rect2(700, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="jump_8"]
+atlas = ExtResource("jump")
+region = Rect2(800, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="jump_9"]
+atlas = ExtResource("jump")
+region = Rect2(900, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="land_0"]
+atlas = ExtResource("land")
+region = Rect2(0, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="land_1"]
+atlas = ExtResource("land")
+region = Rect2(100, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="land_2"]
+atlas = ExtResource("land")
+region = Rect2(200, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="land_3"]
+atlas = ExtResource("land")
+region = Rect2(300, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="land_4"]
+atlas = ExtResource("land")
+region = Rect2(400, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="land_5"]
+atlas = ExtResource("land")
+region = Rect2(500, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="land_6"]
+atlas = ExtResource("land")
+region = Rect2(600, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="land_7"]
+atlas = ExtResource("land")
+region = Rect2(700, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="land_8"]
+atlas = ExtResource("land")
+region = Rect2(800, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="land_9"]
+atlas = ExtResource("land")
+region = Rect2(900, 0, 100, 100)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("jump_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("jump_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("jump_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("jump_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("jump_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("jump_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("jump_6")
+}, {
+"duration": 1.0,
+"texture": SubResource("jump_7")
+}, {
+"duration": 1.0,
+"texture": SubResource("jump_8")
+}, {
+"duration": 1.0,
+"texture": SubResource("jump_9")
+}],
+"loop": 0,
+"name": &"jump",
+"speed": 24.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("land_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("land_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("land_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("land_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("land_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("land_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("land_6")
+}, {
+"duration": 1.0,
+"texture": SubResource("land_7")
+}, {
+"duration": 1.0,
+"texture": SubResource("land_8")
+}, {
+"duration": 1.0,
+"texture": SubResource("land_9")
+}],
+"loop": 0,
+"name": &"land",
+"speed": 24.0
+}]

@@ -37,7 +37,13 @@ static func _build(request: AbyssRoomConstructionRequest, config: AbyssTerrainCo
 					solid.set_cell(cell, 0, Vector2i.ZERO)
 	if req.region == AbyssRoomData.Region.OPEN:
 		# Preserve open-room route interiors after adding boundary formations.
-		for opening in req.route_openings.values():
+		for id in req.route_openings:
+			var opening: Vector2i = req.route_openings[id]
+			var side := ["north", "east", "south", "west"].find(String(id).get_slice(":", 0))
+			var inward: Vector2i = -AbyssRegionGenerator.DIRECTIONS[side]
+			for cell in AbyssRouteConfig.opening_cells(id, opening):
+				for depth in range(3):
+					solid.erase_cell(cell + inward * depth)
 			var point: Vector2i = opening
 			var center := req.room_size / 2
 			while point != center:
@@ -82,7 +88,10 @@ static func _build(request: AbyssRoomConstructionRequest, config: AbyssTerrainCo
 		_line(solid, point, bend, config.tunnel_width, req.room_size, rng)
 		_line(solid, bend, hub, config.tunnel_width, req.room_size, rng)
 		_brush(solid, opening + inward, config.tunnel_width, req.room_size)
-		solid.erase_cell(opening)
+		# Clear all three boundary tiles and a short throat into the tunnel.
+		for cell in AbyssRouteConfig.opening_cells(id, opening):
+			for depth in range(3):
+				solid.erase_cell(cell + inward * depth)
 	# Erode only faces touching known OPEN rooms. Wedges stay attached to the
 	# packed mass; no isolated rock is placed in the neighboring cavern.
 	for side in range(4) if boundary == null else []:

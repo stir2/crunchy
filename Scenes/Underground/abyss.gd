@@ -32,6 +32,7 @@ func _on_stamina_changed(current: int, max_sta: int) -> void:
 
 
 func _on_return_pressed() -> void:
+	GameController.return_to_stairs = true
 	var main := get_tree().current_scene
 	if main != null and main.has_method("change_scene"):
 		main.change_scene(HOUSE_SCENE)

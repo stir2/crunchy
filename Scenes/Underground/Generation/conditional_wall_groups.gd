@@ -43,6 +43,8 @@ static func reserved_cells(room: AbyssAuthoredRoom, req: AbyssRoomRequirements) 
 			continue
 		for depth in range(3):
 			_reserve_neighborhood(reserved, point - AbyssRegionGenerator.DIRECTIONS[side] * depth)
+	if not room.protect_interior_routes:
+		return reserved
 	# Reserve a deterministic tree of existing empty paths between ports. This
 	# protects baseline tile connectivity, not movement-aware traversal validity.
 	if not ports.is_empty():

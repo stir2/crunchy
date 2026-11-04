@@ -104,7 +104,7 @@ func run() -> void:
 					var cell := Vector2i(x, y)
 					if req.region == AbyssRoomData.Region.OPEN:
 						check(not AbyssRoomTemplateValidator._has_collision(solid, cell) and not AbyssRoomTemplateValidator._has_collision(platforms, cell), "Open room enclosed")
-					elif not req.required_openings.values().has(cell):
+					elif not AbyssRouteConfig.contains_opening(req.required_openings, cell):
 						var touches_open := (y == 0 and req.neighbor_open_sides & 1) or (x == req.room_size.x - 1 and req.neighbor_open_sides & 2) or (y == req.room_size.y - 1 and req.neighbor_open_sides & 4) or (x == 0 and req.neighbor_open_sides & 8)
 						if not touches_open:
 							check(AbyssRoomTemplateValidator._has_solid_collision(solid, cell), "Unintended packed boundary hole")

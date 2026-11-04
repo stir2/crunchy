@@ -24,6 +24,8 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if get_tree().paused or DialogueManager.is_busy():
+		return
 	if event.is_action_pressed("Debug Menu"):
 		toggle()
 		get_viewport().set_input_as_handled()
@@ -35,6 +37,10 @@ func toggle() -> void:
 	else:
 		_refresh_values()
 		_panel.show()
+
+
+func close() -> void:
+	_panel.hide()
 
 
 func _build_ui() -> void:

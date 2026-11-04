@@ -4,7 +4,26 @@ Run `player_test.tscn` with **F6**. A/D or Left/Right moves; Space jumps; releas
 Space early shortens the jump. **Hold Action (currently Shift)** to charge a horizontal dash; release to launch. More charge
 means more speed and duration, with automatic launch at full charge.
 Falling resets to Spawn. Your current movement tuning is preserved.
+Press **Move Down** while descending to immediately reach at least **600 px/s**
+downward speed. **Fast Fall Speed** under Jumping controls this minimum (0 disables
+the boost). Normal gravity continues; holding Down does not stack impulses, and
+releasing it retains the momentum. Holding Down before descent activates fast fall
+when falling starts. Rising jumps, grounded movement, and suspended dash/charge
+motion are unchanged.
 See [charged dash and jump grace](CHARGED_DASH.md) for state/timing details.
+
+Jump takeoff and landing play the supplied smoke sheets from
+`Assets/Sprites/Particles/` as ten-frame, 24 FPS bursts. They stay at the world
+position of the player's feet, finish once, and remove themselves. Jump dust
+starts at takeoff after anticipation; landing dust starts on downward contact.
+Respawning clears active bursts.
+
+The movement lab's Camera2D uses `player_landing_camera.gd` for a brief impact
+shake above **550 px/s downward speed**, reaching at most **3 pixels** for a hard
+landing and settling over **0.14 seconds**. Tune these values on Camera2D in the
+Inspector. The reusable player emits `jumped`, `landed(impact_speed)`, and
+`movement_reset` signals; other player cameras can use the same camera script.
+The shake changes only camera offset and resets on respawn.
 
 ## Scene hierarchy and exact dimensions
 
@@ -18,6 +37,7 @@ Player (CharacterBody2D, player.gd; origin at feet)
 ├── AttackPivot (0, -18)
 │   └── AttackHitbox (Area2D, inactive)
 │       └── CollisionShape2D — disabled, no assigned shape
+├── MovementEffects (player_movement_effects.gd; temporary world-space smoke)
 └── ClimbDetector (Area2D, inactive; position (0, -18))
     └── CollisionShape2D — disabled reserved extent
 ```

@@ -1,0 +1,130 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Dialogue/UI/subtitle_layer.gd" id="1_layer"]
+[ext_resource type="Script" path="res://addons/dialogic/Modules/Text/node_dialog_text.gd" id="2_text"]
+[ext_resource type="Script" path="res://addons/dialogic/Modules/Text/node_next_indicator.gd" id="4_next"]
+[ext_resource type="FontFile" path="res://addons/dialogic/Example Assets/Fonts/Roboto-Regular.ttf" id="5_regular"]
+[ext_resource type="FontFile" path="res://addons/dialogic/Example Assets/Fonts/Roboto-Italic.ttf" id="6_italic"]
+[ext_resource type="FontFile" path="res://addons/dialogic/Example Assets/Fonts/Roboto-Bold.ttf" id="7_bold"]
+[ext_resource type="Script" path="res://addons/dialogic/Modules/Text/node_type_sound.gd" id="8_type_sound"]
+[ext_resource type="AudioStream" path="res://addons/dialogic/Example Assets/sound-effects/typing1.wav" id="9_type_1"]
+[ext_resource type="AudioStream" path="res://addons/dialogic/Example Assets/sound-effects/typing2.wav" id="10_type_2"]
+[ext_resource type="AudioStream" path="res://addons/dialogic/Example Assets/sound-effects/typing3.wav" id="11_type_3"]
+[ext_resource type="AudioStream" path="res://addons/dialogic/Example Assets/sound-effects/typing4.wav" id="12_type_4"]
+[ext_resource type="AudioStream" path="res://addons/dialogic/Example Assets/sound-effects/typing5.wav" id="13_type_5"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_frame"]
+bg_color = Color(0.025, 0.025, 0.03, 0.93)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.29, 0.26, 1)
+
+[node name="SubtitleLayer" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_layer")
+
+[node name="Subtitles" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Frame" type="Panel" parent="Subtitles"]
+layout_mode = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBox_frame")
+
+[node name="Content" type="Control" parent="Subtitles"]
+layout_mode = 0
+offset_left = 300.0
+offset_top = 1000.0
+offset_right = 1620.0
+offset_bottom = 1044.0
+mouse_filter = 2
+
+[node name="DialogText" type="RichTextLabel" parent="Subtitles/Content" node_paths=PackedStringArray("textbox_root")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 48.0
+offset_top = 6.0
+offset_right = -48.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+theme_override_colors/default_color = Color(0.94, 0.925, 0.875, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/shadow_offset_y = 2
+theme_override_constants/line_separation = 2
+theme_override_fonts/normal_font = ExtResource("5_regular")
+theme_override_fonts/bold_font = ExtResource("7_bold")
+theme_override_fonts/italics_font = ExtResource("6_italic")
+theme_override_fonts/bold_italics_font = ExtResource("6_italic")
+theme_override_font_sizes/normal_font_size = 24
+theme_override_font_sizes/bold_font_size = 24
+theme_override_font_sizes/italics_font_size = 24
+theme_override_font_sizes/bold_italics_font_size = 24
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+visible_characters_behavior = 1
+vertical_alignment = 1
+script = ExtResource("2_text")
+alignment = 1
+textbox_root = NodePath("../..")
+
+[node name="DialogicNode_TypeSounds" type="AudioStreamPlayer" parent="Subtitles/Content/DialogText"]
+volume_db = -4.0
+script = ExtResource("8_type_sound")
+sounds = Array[AudioStream]([ExtResource("9_type_1"), ExtResource("10_type_2"), ExtResource("11_type_3"), ExtResource("12_type_4"), ExtResource("13_type_5")])
+play_every_character = 2
+pitch_variance = 0.07
+
+[node name="NextIndicator" type="Control" parent="Subtitles/Content"]
+custom_minimum_size = Vector2(36, 0)
+layout_mode = 1
+anchors_preset = 10
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -46.0
+offset_right = -10.0
+offset_top = -18.0
+offset_bottom = 18.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("4_next")
+animation = 2
+texture = null
+
+[node name="Hint" type="Label" parent="Subtitles/Content/NextIndicator"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.62, 0.63, 0.58, 1)
+theme_override_fonts/font = ExtResource("5_regular")
+theme_override_font_sizes/font_size = 36
+text = "▶"
+horizontal_alignment = 1
+vertical_alignment = 1

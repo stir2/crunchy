@@ -27,7 +27,8 @@ moving a marker does not automatically change the geometry or metadata.
 The example library contains a packed horizontal tunnel, vertical tunnel,
 north/east corner, open cavern with a small hand-placed platform, and a packed
 transition room with a fully open west face and an east slot-0 exit. These are
-architecture examples with one-cell slot apertures, not traversal-tested rooms.
+architecture examples, not traversal-tested rooms. Older single-cell apertures
+need repainting to meet the current three-tile connection contract.
 
 ## Add a room through the Inspector
 
@@ -43,6 +44,11 @@ architecture examples with one-cell slot apertures, not traversal-tested rooms.
    (`north:0`, `north:1`, `east:0`, `east:1`, `south:0`, `south:1`, `west:0`,
    `west:1`) to match the openings you painted. Tile coordinates are filled in
    automatically from the central route defaults and metadata room dimensions.
+   Each checked connection means a **three-tile opening**, centered on its slot.
+   Slot 0 spans indices **5–7**; slot 1 spans **16–18**. For north/south,
+   these are X indices; for east/west, Y indices. Paint all three boundary
+   tiles clear and leave enough interior clearance for the player. No width
+   property or additional metadata is needed; the saved coordinate stays the center.
    These are one exact combination, not permission to select arbitrary subsets.
    The legacy Supported Openings array and coordinate dictionary are hidden;
    existing resources retain their saved data. A new metadata resource already
@@ -311,3 +317,18 @@ cell's hazard type for future gameplay integration; it returns an empty StringNa
 outside hazards. This is an artwork/data placeholder, with no damage, hit detection,
 or death behavior. Validation checks tile bounds, layer settings and protected
 route areas. Do not paint spikes across reserved routes or required openings.
+
+
+## Preview the authored rooms
+
+Run `Scenes/Underground/abyss.tscn` to inspect generated terrain. The overview
+uses `Rooms/authored_registry.tres`, containing halls, blons, pump, catch,
+and the open cavern example. The original example registry remains available.
+Player movement can be tested separately in `Scenes/Player/player_test.tscn`.
+
+The four custom rooms disable **Advanced → Protect Interior Routes** so their
+conditional and breakable interiors remain as authored. Entrance throats and
+explicit Reserved Route Rects are still protected. Other rooms retain their
+existing protection behavior. Catch's south opening is capped to three tiles;
+the conditional platform at (7, 3) is now a permanent platform to preserve its
+north entrance clearance.

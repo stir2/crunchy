@@ -7,7 +7,6 @@
 [ext_resource type="Texture2D" uid="uid://drcxyex06u2md" path="res://Assets/Sprites/House/window.jpg" id="5_window"]
 [ext_resource type="Texture2D" uid="uid://dpcmmn00u6hc0" path="res://Assets/Sprites/UI/panel_parchment.png" id="6_parchment"]
 [ext_resource type="Texture2D" uid="uid://dojwel3v7nq8w" path="res://Assets/Sprites/UI/ui_frame.png" id="7_uiframe"]
-[ext_resource type="Texture2D" uid="uid://bb883kx255jil" path="res://Assets/Sprites/UI/icon_close_x.png" id="8_closex"]
 [ext_resource type="Texture2D" uid="uid://dl5rdw2s30l7u" path="res://Assets/Sprites/UI/icon_soul.png" id="9_soul"]
 [ext_resource type="Texture2D" uid="uid://64y2a01hhawi" path="res://Assets/Sprites/UI/icon_ration.png" id="10_ration"]
 [ext_resource type="Texture2D" uid="uid://cimj5kjk1qvq3" path="res://Assets/Sprites/UI/button_normal.png" id="11_btnnorm"]
@@ -197,23 +196,27 @@ texture = ExtResource("5_window")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="WindowNotice" type="Label" parent="Panels/WindowPanel" unique_id=1456783095]
+[node name="WindowActions" type="VBoxContainer" parent="Panels/WindowPanel"]
 layout_mode = 1
-anchors_preset = 7
 anchor_left = 0.5
-anchor_top = 1.0
+anchor_top = 0.65
 anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -300.0
-offset_top = -100.0
-offset_right = 300.0
-offset_bottom = -60.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
-theme_override_font_sizes/font_size = 20
-text = "The monster looms beyond the valley, watching the village."
-horizontal_alignment = 1
+anchor_bottom = 0.65
+offset_left = -200.0
+offset_right = 200.0
+theme_override_constants/separation = 12
+
+[node name="TalkMonsterButton" type="Button" parent="Panels/WindowPanel/WindowActions"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(400, 48)
+text = "Talk to the monster"
+
+[node name="ListenOutsideButton" type="Button" parent="Panels/WindowPanel/WindowActions"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(400, 48)
+text = "Listen outside"
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1288256571]
 
@@ -325,7 +328,6 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.24, 0.2, 0.16, 1)
 theme_override_font_sizes/font_size = 16
-text = "Hearts: 3.0/3.0  |  Potions: 0  |  Stamina: 100/100  |  Village Health: 82%"
 horizontal_alignment = 2
 
 [node name="NavUI" type="Control" parent="UI" unique_id=1211174550]
@@ -371,157 +373,15 @@ grow_vertical = 2
 theme_override_font_sizes/font_size = 18
 text = "WINDOW  ►"
 
-[node name="VillagePanel" type="MarginContainer" parent="UI" unique_id=1255034939]
+[node name="VillagePanel" type="Control" parent="UI"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(1180, 720)
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -590.0
-offset_top = -360.0
-offset_right = 590.0
-offset_bottom = 360.0
+layout_mode = 0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = SubResource("Theme_house")
 script = ExtResource("2_blueprint")
-
-[node name="PaperBg" type="NinePatchRect" parent="UI/VillagePanel" unique_id=1178962355]
-layout_mode = 2
-texture = ExtResource("6_parchment")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
-
-[node name="FrameBorder" type="NinePatchRect" parent="UI/VillagePanel" unique_id=1611253386]
-layout_mode = 2
-texture = ExtResource("7_uiframe")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
-
-[node name="ContentMargin" type="MarginContainer" parent="UI/VillagePanel" unique_id=1882559314]
-layout_mode = 2
-theme_override_constants/margin_left = 28
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 28
-theme_override_constants/margin_bottom = 20
-
-[node name="VBox" type="VBoxContainer" parent="UI/VillagePanel/ContentMargin" unique_id=136991972]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="HeaderRow" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=477399882]
-layout_mode = 2
-
-[node name="TitleLabel" type="Label" parent="UI/VillagePanel/ContentMargin/VBox/HeaderRow" unique_id=1689865766]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
-theme_override_font_sizes/font_size = 22
-text = "CHIEF'S DESK: VILLAGE BLUEPRINT & MANAGEMENT"
-horizontal_alignment = 1
-
-[node name="CloseXButton" type="TextureButton" parent="UI/VillagePanel/ContentMargin/VBox/HeaderRow" unique_id=1122090927]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(20, 20)
-layout_mode = 2
-texture_normal = ExtResource("8_closex")
-stretch_mode = 3
-
-[node name="StatusLabel" type="Label" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=663649823]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.28, 0.22, 0.16, 1)
-theme_override_font_sizes/font_size = 14
-text = "Food Cost Tonight: 4 Rations  |  Daily Production: +0 Rations  |  Village Health: 82%"
-horizontal_alignment = 1
-
-[node name="HSeparator1" type="HSeparator" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=1349246211]
-layout_mode = 2
-
-[node name="BuildingsContainer" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=1742481314]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 12
-
-[node name="HSeparator2" type="HSeparator" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=1567309720]
-layout_mode = 2
-
-[node name="RosterRow" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=46929772]
-custom_minimum_size = Vector2(0, 160)
-layout_mode = 2
-theme_override_constants/separation = 20
-
-[node name="QueueBox" type="VBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow" unique_id=1699996060]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 4
-
-[node name="QueueTitle" type="Label" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/QueueBox" unique_id=1923249962]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
-theme_override_font_sizes/font_size = 14
-text = "WORKER QUEUE (Unassigned Able Citizens)"
-
-[node name="QueueScroll" type="ScrollContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/QueueBox" unique_id=1946562462]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="IdleWorkersContainer" type="VBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/QueueBox/QueueScroll" unique_id=1956801593]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 4
-
-[node name="VSeparator" type="VSeparator" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow" unique_id=216501025]
-layout_mode = 2
-
-[node name="BumBox" type="VBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow" unique_id=32649691]
-custom_minimum_size = Vector2(400, 0)
-layout_mode = 2
-theme_override_constants/separation = 4
-
-[node name="BumTitle" type="Label" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/BumBox" unique_id=1943695978]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
-theme_override_font_sizes/font_size = 14
-text = "BUM CORNER (Slackers & Meat Shields)"
-
-[node name="BumsScroll" type="ScrollContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/BumBox" unique_id=92618871]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="BumsContainer" type="VBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox/RosterRow/BumBox/BumsScroll" unique_id=1097799857]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 4
-
-[node name="HSeparator3" type="HSeparator" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=1658054555]
-layout_mode = 2
-
-[node name="ButtonRow" type="HBoxContainer" parent="UI/VillagePanel/ContentMargin/VBox" unique_id=666051521]
-layout_mode = 2
-theme_override_constants/separation = 24
-alignment = 1
-
-[node name="SleepButton" type="Button" parent="UI/VillagePanel/ContentMargin/VBox/ButtonRow" unique_id=1133368081]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(200, 44)
-layout_mode = 2
-text = "SLEEP (END DAY)"
-
-[node name="CloseButton" type="Button" parent="UI/VillagePanel/ContentMargin/VBox/ButtonRow" unique_id=1879596582]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(160, 44)
-layout_mode = 2
-text = "STEP AWAY"
 
 [node name="RefugeeModal" type="MarginContainer" parent="UI" unique_id=1410879781]
 unique_name_in_owner = true
@@ -590,7 +450,6 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.28, 0.24, 0.2, 1)
 theme_override_font_sizes/font_size = 13
-text = "Able citizen. Can be trained in any hut to produce rations and combat perks."
 horizontal_alignment = 1
 autowrap_mode = 2
 
@@ -598,7 +457,7 @@ autowrap_mode = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.25, 0.25, 1)
 theme_override_font_sizes/font_size = 12
-text = "Accepting will increase daily food upkeep by +1 Ration."
+text = "+1 Ration of food each night."
 horizontal_alignment = 1
 
 [node name="HSeparator2" type="HSeparator" parent="UI/RefugeeModal/ContentMargin/VBox" unique_id=2118710216]
@@ -679,7 +538,7 @@ layout_mode = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(0.28, 0.22, 0.18, 1)
 theme_override_font_sizes/font_size = 13
-text = "Your flesh tribute missed the quota by 25% or less. The monster grants a bitter mercy: the Chief must choose who is offered to the beast tonight."
+text = "The toll was close. Choose who the monster takes."
 horizontal_alignment = 1
 autowrap_mode = 2
 

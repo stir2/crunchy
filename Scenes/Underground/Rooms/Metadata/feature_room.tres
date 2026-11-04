@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://ck5jir3ntl07j" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="1"]
 [ext_resource type="Script" uid="uid://dnt0nogb0yx73" path="res://Scenes/Underground/Generation/room_opening_profile.gd" id="2"]
-[ext_resource type="PackedScene" path="res://Scenes/Underground/Rooms/Examples/feature_room.tscn" id="3"]
+[ext_resource type="PackedScene" uid="uid://cf4sgjpdl0yi2" path="res://Scenes/Underground/Rooms/Examples/feature_room.tscn" id="3"]
 
 [sub_resource type="Resource" id="Profile"]
 script = ExtResource("2")

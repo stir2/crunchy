@@ -10,6 +10,8 @@ extends Node2D
 		queue_redraw()
 
 @export_group("Advanced")
+## Disable for deliberately authored interiors; entrance throats stay protected.
+@export var protect_interior_routes: bool = true
 ## Optional tile-space rectangles reserved for navigation. Editor guides are cyan.
 @export var reserved_route_rects: Array[Rect2i] = []:
 	set(value):

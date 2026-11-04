@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://b5u6h6xk3wa45" path="res://Scenes/Player/player_test.gd" id="1_test"]
 [ext_resource type="PackedScene" uid="uid://bkwrdhxyioatx" path="res://Scenes/Player/player.tscn" id="2_player"]
 [ext_resource type="TileSet" uid="uid://dsxrhc8fbe5le" path="res://Assets/Tiles/room_placeholders.tres" id="3_tiles"]
+[ext_resource type="Script" uid="uid://xfnfrsukp2l0" path="res://Scenes/Player/player_landing_camera.gd" id="4_landing_camera"]
 
 [node name="PlayerTest" type="Node2D" unique_id=1120936063]
 script = ExtResource("1_test")
@@ -27,7 +28,6 @@ position = Vector2(96, 304)
 
 [node name="Player" parent="." unique_id=1416720264 instance=ExtResource("2_player")]
 position = Vector2(96, 304)
-jump_velocity = -480.0
 jump_horizontal_boost = 0.0
 jump_charge_frames = 5
 
@@ -37,6 +37,7 @@ limit_left = -80
 limit_top = -180
 limit_right = 2520
 limit_bottom = 600
+script = ExtResource("4_landing_camera")
 
 [node name="DashSpawn" type="Marker2D" parent="." unique_id=1037672223]
 position = Vector2(1776, 288)

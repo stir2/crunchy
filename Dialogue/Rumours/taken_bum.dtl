@@ -1,0 +1,5 @@
+Villager: Where's {DialogueManager.lost_name}? They aren't near the fountain, all drunk this morn-
+Villager: Oh...
+"Another villager": We'd sit out here talking about whatever came to mind.
+"Another villager": {DialogueManager.lost_fact}
+"Another villager": Come on. I'll walk with you today.

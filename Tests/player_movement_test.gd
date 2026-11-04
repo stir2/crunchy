@@ -231,7 +231,7 @@ func run() -> void:
 	check(crossed_gap and landed_after_gap, "Player failed to cross and land beyond the test gap")
 	release_inputs()
 
-	# Up/Down/Attack are reserved and must not move the player or enable a hitbox.
+	# Up/Attack remain reserved; Down must not move a grounded player.
 	await place(Vector2(240, 320))
 	var resting_position: Vector2 = player.position
 	for action in ["Move Up", "Move Down", "Attack"]:

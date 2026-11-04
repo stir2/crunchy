@@ -16,9 +16,11 @@ extends CharacterBody2D
 @export_range(0, 60) var wall_momentum_frames: int = 12
 @export_range(0.0, 1.0, 0.05) var wall_momentum_retention: float = 0.75
 
-@export_group("Jumping")
-@export_range(-1000.0, -1.0, 1.0) var jump_velocity: float = -450.0
-@export_range(0.0, 5.0, 0.05) var gravity_multiplier: float = 1.0
+@export_group("Jumpiang")
+@export_range(-1000.0, -1.0, 1.0) var jump_velocity: float = -470
+@export_range(0.0, 5.0, 0.05) var gravity_multiplier: float = 1.3
+## Holding Move Down during descent immediately raises fall speed to this minimum.
+@export_range(0.0, 2000.0, 10.0) var fast_fall_speed: float = 200.0
 @export_range(0.0, 1.0, 0.05) var jump_release_multiplier: float = 0.6
 ## One horizontal impulse at takeoff, added to the momentum saved during charge.
 @export_range(0.0, 300.0, 5.0) var jump_horizontal_boost: float = 30.0
@@ -43,6 +45,9 @@ extends CharacterBody2D
 enum MovementState { NORMAL, DASH_CHARGING, DASHING, RECOVERY }
 signal movement_state_changed(state: MovementState)
 signal jump_charge_changed(charging: bool)
+signal jumped
+signal landed(impact_speed: float)
+signal movement_reset
 
 var movement_state: MovementState = MovementState.NORMAL
 var coyote_frames_remaining: int = 0
@@ -241,6 +246,8 @@ func edge_position_is_clear(body_transform: Transform2D) -> bool:
 func apply_gravity(delta: float) -> void:
 	if not is_on_floor() and not _jump_started_this_tick:
 		# Uses the project's gravity settings (and any future gravity areas).
+		if velocity.y > 0.0 and Input.is_action_pressed("Move Down"):
+			velocity.y = maxf(velocity.y, fast_fall_speed)
 		velocity += get_gravity() * gravity_multiplier * delta
 
 
@@ -327,6 +334,7 @@ func launch_jump() -> void:
 	_ground_jump_available = false
 	_jump_started_this_tick = true
 	jump_charge_changed.emit(false)
+	jumped.emit()
 
 
 func handle_jump() -> void:
@@ -345,6 +353,8 @@ func update_floor_transitions(floor_before: bool, vertical_speed: float, state_f
 		coyote_frames_remaining = 0
 		if not floor_before:
 			dash_available = true # Actual collision landing, never coyote/buffer input.
+			if _floor_history_valid and vertical_speed > 0.0:
+				landed.emit(vertical_speed)
 	elif floor_before and not is_on_floor():
 		# Only ordinary horizontal departure seeds grace. Jumps, dash phases,
 		# and external nonzero vertical launches do not grant it.
@@ -516,6 +526,7 @@ func reset_movement() -> void:
 	_ignore_jump_until_release = Input.is_action_pressed("Jump")
 	_ignore_dash_until_release = Input.is_action_pressed("Action")
 	set_movement_state(MovementState.NORMAL, 0)
+	movement_reset.emit()
 
 
 func update_facing_direction() -> void:
