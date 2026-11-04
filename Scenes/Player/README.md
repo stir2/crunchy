@@ -4,7 +4,7 @@ Run `player_test.tscn` with **F6**. A/D or Left/Right moves; Space jumps; releas
 Space early shortens the jump. **Hold Action (currently Shift)** to charge a horizontal dash; release to launch. More charge
 means more speed and duration, with automatic launch at full charge.
 Falling resets to Spawn. Your current movement tuning is preserved.
-Press **Move Down** while descending to immediately reach at least **600 px/s**
+Press **Move Down** while descending to immediately reach the configured minimum
 downward speed. **Fast Fall Speed** under Jumping controls this minimum (0 disables
 the boost). Normal gravity continues; holding Down does not stack impulses, and
 releasing it retains the momentum. Holding Down before descent activates fast fall

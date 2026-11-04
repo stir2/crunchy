@@ -47,10 +47,12 @@ func run() -> void:
 	registry = load("res://Scenes/Underground/Rooms/example_registry.tres")
 	var selector := AbyssRoomTemplateSelector.new(registry, 12345)
 	check(selector.registration_errors.is_empty(), "Example registration failed: %s" % selector.registration_errors)
+	var authored_registry: AbyssRoomTemplateRegistry = load("res://Scenes/Underground/Rooms/authored_registry.tres")
+	check(AbyssRoomTemplateSelector.new(authored_registry, 12345).registration_errors.is_empty(), "Authored room registration failed")
 	var cases := [
 		[["west:0", "east:0"], AbyssRoomData.Region.PACKED, 0, "packed_horizontal"],
 		[["north:0", "south:0"], AbyssRoomData.Region.PACKED, 0, "packed_vertical"],
-		[["north:0", "east:0"], AbyssRoomData.Region.PACKED, 0, "packed_corner"],
+		[["north:0", "west:0"], AbyssRoomData.Region.PACKED, 0, "blons"],
 		[["north:1", "east:0", "west:1"], AbyssRoomData.Region.OPEN, 15, "open_cavern"],
 		[["west:0", "east:0"], AbyssRoomData.Region.PACKED, 8, "transition_west"]]
 	for data in cases:
@@ -202,5 +204,5 @@ func run() -> void:
 	var gallery: Node = load("res://Scenes/Underground/Rooms/example_gallery.tscn").instantiate()
 	root.add_child(gallery)
 	gallery.queue_free()
-	print("Room templates: five examples validated; weighted b selection %d/1000; seed changes %d; generated chunk %d authored / %d fallback; %d failures" % [b_count, seed_changes, authored, fallback_count, failures])
+	print("Room templates: five gallery rooms and authored registry validated; weighted b selection %d/1000; seed changes %d; generated chunk %d authored / %d fallback; %d failures" % [b_count, seed_changes, authored, fallback_count, failures])
 	quit(0 if failures == 0 else 1)

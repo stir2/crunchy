@@ -24,11 +24,12 @@ the region preview's 8-pixel debug tiles are a separate visualization scale.
 The root draws room bounds only in the editor. Opening guides are references;
 moving a marker does not automatically change the geometry or metadata.
 
-The example library contains a packed horizontal tunnel, vertical tunnel,
-north/east corner, open cavern with a small hand-placed platform, and a packed
+The example registry contains a packed horizontal tunnel, vertical tunnel,
+the authored north/west corner room **blons**, an open cavern with a small hand-placed platform, and a packed
 transition room with a fully open west face and an east slot-0 exit. These are
-architecture examples, not traversal-tested rooms. Older single-cell apertures
-need repainting to meet the current three-tile connection contract.
+architecture examples, not traversal-tested rooms. The horizontal, vertical and
+transition examples use three-tile apertures and clear entrance throats. The deleted
+packed-corner example is not recreated; its retained legacy metadata is unregistered.
 
 ## Add a room through the Inspector
 
@@ -220,15 +221,17 @@ noise settings, classifications, graph edges and slot IDs are unchanged.
 Existing tile layouts were expanded into real cells, without scaling the room
 or TileMapLayer nodes: solid formations expanded in both axes, platforms expanded
 horizontally and were repositioned vertically, decorations were repositioned,
-and marker guides were moved. Boundary apertures were restored to one cell at
-the declared slots. Local edits in the corner and transition examples were used
-as migration inputs. The gallery displays scenes at native tile size.
+and marker guides were moved. That migration initially restored one-cell apertures;
+the current connection contract replaces those with three-tile spans centered on
+the same slots. Local edits in the corner and transition examples were used as
+migration inputs. The gallery displays scenes at native tile size.
 
 This changes physical world positions, room extents, and tile layouts. Existing
 12x12 tile-coordinate or pixel-coordinate save data must be versioned/regenerated
 or explicitly migrated; do not load it unchanged into the 24x24 world. Stable room
-coordinate IDs and the logical graph retain their meanings. Tunnel interiors are
-larger, but the one-cell boundary aperture clearance limitation remains.
+coordinate IDs and the logical graph retain their meanings. Current boundary
+apertures span three tiles, matching the larger player's dimensions; complete
+platformer traversal is still not guaranteed.
 
 This checkout already includes Milestone 3B physical construction. The dimension
 migration adds no construction features and leaves that builder unchanged. The

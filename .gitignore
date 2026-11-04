@@ -10,3 +10,8 @@ Thumbs.db
 # Local save files (the game normally stores these outside the project).
 /save.json
 /menu_save_test.json
+
+# Required dialogue dependency; keep machine-local editor addons out of commits.
+!/addons/
+/addons/*
+!/addons/dialogic/

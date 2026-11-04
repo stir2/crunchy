@@ -143,7 +143,8 @@ opening slots at both endpoints. Connections expose side (N/E/S/W = 0/1/2/3),
 slot (0/1), stable `side:slot` ID, local tile index, neighbor, and edge kind.
 Packed endpoints list their required openings; OPEN endpoints do not imply
 walls or physical doors. The same tangential tile index is used on opposing
-edges. Tile positions represent one-cell markers, not aperture width/geometry.
+edges. Tile positions mark the centers of fixed three-tile apertures; construction
+and validation expand them using `AbyssRouteConfig.opening_cells()`.
 Changing offsets changes the physical contract; version `opening_schema` with
 that change and match it in future templates.
 

@@ -16,7 +16,7 @@ extends CharacterBody2D
 @export_range(0, 60) var wall_momentum_frames: int = 12
 @export_range(0.0, 1.0, 0.05) var wall_momentum_retention: float = 0.75
 
-@export_group("Jumpiang")
+@export_group("Jumping")
 @export_range(-1000.0, -1.0, 1.0) var jump_velocity: float = -470
 @export_range(0.0, 5.0, 0.05) var gravity_multiplier: float = 1.3
 ## Holding Move Down during descent immediately raises fall speed to this minimum.

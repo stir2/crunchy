@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="2_ww0ww"]
 [ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/packed_horizontal.tres" id="3_0w1ml"]
 [ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/packed_vertical.tres" id="4_fla7t"]
-[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/packed_corner.tres" id="5_7j1mt"]
+[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/n0-w0-[blons].tres" id="5_7j1mt"]
 [ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/open_cavern.tres" id="6_l4iyj"]
 [ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/transition_west.tres" id="7_tkeh5"]
 
