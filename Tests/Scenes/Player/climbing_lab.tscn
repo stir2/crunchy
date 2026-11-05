@@ -1,0 +1,57 @@
+[gd_scene format=3 uid="uid://dek4gtrpwjf4x"]
+
+[ext_resource type="Script" uid="uid://18cstvrb7fvq" path="res://Tests/Scenes/Player/climbing_lab.gd" id="1"]
+[ext_resource type="TileSet" uid="uid://dsxrhc8fbe5le" path="res://Assets/Tiles/room_placeholders.tres" id="2"]
+
+[sub_resource type="RectangleShape2D" id="Floor"]
+size = Vector2(736, 32)
+
+[sub_resource type="RectangleShape2D" id="Wall"]
+size = Vector2(12, 784)
+
+[node name="ClimbingSection" type="Node2D" unique_id=2121397862]
+script = ExtResource("1")
+
+[node name="Background" type="Polygon2D" parent="." unique_id=1369265849]
+z_index = -1
+color = Color(0.055, 0.075, 0.12, 1)
+polygon = PackedVector2Array(-160, -880, 576, -880, 576, 64, -160, 64)
+
+[node name="Floor" type="StaticBody2D" parent="." unique_id=120987918]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Floor" unique_id=302353037]
+position = Vector2(208, 16)
+shape = SubResource("Floor")
+
+[node name="Art" type="Polygon2D" parent="Floor" unique_id=349474865]
+color = Color(0.27, 0.31, 0.35, 1)
+polygon = PackedVector2Array(-160, 0, 576, 0, 576, 32, -160, 32)
+
+[node name="ShaftLeft" type="StaticBody2D" parent="." unique_id=241501297]
+position = Vector2(302, -392)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ShaftLeft" unique_id=1869786465]
+shape = SubResource("Wall")
+
+[node name="Art" type="Polygon2D" parent="ShaftLeft" unique_id=1596511991]
+color = Color(0.27, 0.31, 0.35, 1)
+polygon = PackedVector2Array(-6, -392, 6, -392, 6, 392, -6, 392)
+
+[node name="ShaftRight" type="StaticBody2D" parent="." unique_id=2037528351]
+position = Vector2(354, -392)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ShaftRight" unique_id=1280940491]
+shape = SubResource("Wall")
+
+[node name="Art" type="Polygon2D" parent="ShaftRight" unique_id=2113412626]
+color = Color(0.27, 0.31, 0.35, 1)
+polygon = PackedVector2Array(-6, -392, 6, -392, 6, 392, -6, 392)
+
+[node name="Climbables" type="TileMapLayer" parent="." unique_id=1223546986]
+texture_filter = 1
+tile_set = ExtResource("2")
+collision_enabled = false
+
+[node name="Platforms" type="TileMapLayer" parent="." unique_id=1975430585]
+texture_filter = 1
+tile_set = ExtResource("2")

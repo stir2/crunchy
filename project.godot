@@ -277,6 +277,8 @@ Interact={
 2d_physics/layer_2="Player Body"
 2d_physics/layer_3="Player Hurtbox"
 2d_physics/layer_4="Damage Areas"
+2d_physics/layer_5="Player Attacks"
+2d_physics/layer_6="Enemy Hurtboxes"
 
 [rendering]
 

@@ -15,3 +15,6 @@ Thumbs.db
 !/addons/
 /addons/*
 !/addons/dialogic/
+
+# Keep local Markdown documentation out of the shared repository.
+*.[mM][dD]

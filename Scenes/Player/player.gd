@@ -17,16 +17,16 @@ extends CharacterBody2D
 @export_range(0.0, 1.0, 0.05) var wall_momentum_retention: float = 0.75
 
 @export_group("Jumping")
-@export_range(-1000.0, -1.0, 1.0) var jump_velocity: float = -470
+@export_range(-1000.0, -1.0, 1.0) var jump_velocity: float = -500
 @export_range(0.0, 5.0, 0.05) var gravity_multiplier: float = 1.3
 ## Holding Move Down during descent immediately raises fall speed to this minimum.
-@export_range(0.0, 2000.0, 10.0) var fast_fall_speed: float = 200.0
+@export_range(0.0, 2000.0, 10.0) var fast_fall_speed: float = 210.0
 @export_range(0.0, 1.0, 0.05) var jump_release_multiplier: float = 0.6
 ## One horizontal impulse at takeoff, added to the momentum saved during charge.
 @export_range(0.0, 300.0, 5.0) var jump_horizontal_boost: float = 30.0
 
 ## Fixed anticipation delay, not a strength charge. Zero makes takeoff immediate.
-@export_range(0, 15) var jump_charge_frames: int = 6
+@export_range(0, 15) var jump_charge_frames: int = 0
 @export_range(0, 60) var coyote_frames: int = 6
 @export_range(0, 60) var jump_buffer_frames: int = 6
 
@@ -38,7 +38,7 @@ extends CharacterBody2D
 @export_range(0, 120) var dash_cooldown_frames: int = 12
 ## Existing speed/duration are the fully charged maximums.
 @export_range(0.0, 2000.0, 10.0) var dash_speed: float = 500.0
-@export_range(0.0, 2000.0, 10.0) var dash_min_speed: float = 380.0
+@export_range(0.0, 2000.0, 10.0) var dash_min_speed: float = 370.0
 @export_range(1, 120) var dash_min_duration_frames: int = 4
 @export_range(0.0, 5000.0, 10.0) var dash_recovery_deceleration: float = 1800.0
 
@@ -79,13 +79,26 @@ var _immediate_jump_press: bool = false
 var _floor_history_valid: bool = false
 var _ignore_jump_until_release: bool = false
 var _ignore_dash_until_release: bool = false
+var _buffered_dash_start_tick: int = -1
 
 @onready var visuals: Node2D = $Visuals
 @onready var attack_pivot: Node2D = $AttackPivot
+@onready var combat: Node = $CombatController
+@onready var health: HealthComponent = $Health
+@onready var damage: PlayerDamageController = $DamageController
+@onready var stamina: StaminaComponent = $Stamina
+@onready var climbing: PlayerClimbing = $ClimbingController
 
 
 func _physics_process(delta: float) -> void:
+	refresh_input_release_guards()
 	_dash_cooldown_started_this_tick = false
+	damage.begin_physics_tick()
+	if damage.is_dead():
+		return # Preserve remaining stamina; sleeping will restore it explicitly.
+	if combat.begin_physics_tick():
+		stamina.advance(delta, true)
+		return # Local combat freeze preserves velocity, floor history and timers.
 	var floor_before: bool = is_on_floor() and _floor_history_valid
 	var had_coyote: bool = coyote_frames_remaining > 0
 	var had_wall_momentum: bool = wall_momentum_frames_remaining > 0
@@ -94,13 +107,22 @@ func _physics_process(delta: float) -> void:
 	_jump_started_this_tick = false
 	update_jump_charge()
 	update_jump_timers()
-	try_start_dash()
+	climbing.begin_physics_tick()
+	if movement_state == MovementState.DASH_CHARGING or movement_state == MovementState.DASHING:
+		combat.try_start_attack() # Attack can interrupt an already-running dash phase.
+	try_start_dash(combat.consume_buffered_dash())
+	var climbing_for_motion: bool = climbing.is_climbing()
 	var state_for_motion: MovementState = movement_state
 	match state_for_motion:
 		MovementState.NORMAL:
 			# Commit before steering/friction, preserving the incoming speed.
 			try_jump()
-			if not is_jump_movement_paused() and not _jump_started_this_tick:
+			combat.try_start_attack()
+			if climbing.is_climbing():
+				climbing.apply_motion(delta)
+			elif damage.is_reacting():
+				damage.apply_reaction_motion(delta)
+			elif not is_jump_movement_paused() and not _jump_started_this_tick:
 				handle_horizontal_movement(delta)
 				apply_gravity(delta)
 			handle_jump()
@@ -114,7 +136,7 @@ func _physics_process(delta: float) -> void:
 		MovementState.RECOVERY:
 			update_dash_recovery(delta)
 	var vertical_speed_before: float = velocity.y
-	if state_for_motion != MovementState.DASH_CHARGING and not is_jump_movement_paused():
+	if not climbing_for_motion and state_for_motion != MovementState.DASH_CHARGING and not is_jump_movement_paused():
 		apply_edge_correction(delta)
 		try_restore_wall_momentum(delta)
 	var horizontal_speed_before: float = velocity.x
@@ -124,7 +146,8 @@ func _physics_process(delta: float) -> void:
 		wall_momentum_frames_remaining = maxi(0, wall_momentum_frames_remaining - 1)
 		if wall_momentum_frames_remaining == 0:
 			_wall_saved_speed = 0.0
-	update_floor_transitions(floor_before, vertical_speed_before, state_for_motion)
+	if not climbing_for_motion:
+		update_floor_transitions(floor_before, vertical_speed_before, state_for_motion)
 	if state_for_motion == MovementState.DASHING and not _jump_started_this_tick:
 		try_dash_jump(is_on_floor()) # Also permit a press on this tick's landing.
 	# A landing can consume the buffer now; upward movement starts next tick.
@@ -141,11 +164,17 @@ func _physics_process(delta: float) -> void:
 	if not _dash_cooldown_started_this_tick:
 		dash_cooldown_frames_remaining = maxi(0, dash_cooldown_frames_remaining - 1)
 	_floor_history_valid = true
+	climbing.end_physics_tick(delta)
+	combat.end_physics_tick()
+	damage.check_hazards()
+	var dash_motion: bool = state_for_motion == MovementState.DASH_CHARGING or state_for_motion == MovementState.DASHING
+	var dash_now: bool = movement_state == MovementState.DASH_CHARGING or movement_state == MovementState.DASHING
+	stamina.advance(delta, damage.is_dead() or combat.is_attacking() or dash_motion or dash_now or climbing_for_motion)
 
 
 func handle_horizontal_movement(delta: float) -> void:
 	_move_direction = Input.get_axis("Move Left", "Move Right")
-	var target_speed: float = _move_direction * run_speed
+	var target_speed: float = _move_direction * (run_speed * combat.movement_multiplier() + combat.movement_speed_bonus())
 	var acceleration: float = air_acceleration
 	if is_on_floor():
 		acceleration = ground_acceleration if _move_direction != 0.0 else ground_friction
@@ -251,12 +280,17 @@ func apply_gravity(delta: float) -> void:
 		velocity += get_gravity() * gravity_multiplier * delta
 
 
-func update_jump_timers() -> void:
-	_immediate_jump_press = false
+func refresh_input_release_guards() -> void:
+	# Releases still count while local hitstop freezes the movement timers.
 	if not Input.is_action_pressed("Jump"):
 		_ignore_jump_until_release = false
 	if not Input.is_action_pressed("Action"):
 		_ignore_dash_until_release = false
+
+
+func update_jump_timers() -> void:
+	_immediate_jump_press = false
+	refresh_input_release_guards()
 	if movement_state == MovementState.DASH_CHARGING or movement_state == MovementState.DASHING:
 		clear_jump_buffer()
 		return
@@ -268,19 +302,35 @@ func update_jump_timers() -> void:
 		jump_buffer_frames_remaining = maxi(1, jump_buffer_frames) if _immediate_jump_press else jump_buffer_frames
 
 
+func resume_combat_jump_input(pressed: bool, released: bool) -> void:
+	# Hitstop preserves timers, but short presses/releases still need to survive it.
+	if pressed and not _ignore_jump_until_release and not _jump_pending:
+		jump_buffer_frames_remaining = maxi(1, jump_buffer_frames) if can_jump() else jump_buffer_frames
+	if released:
+		if _jump_pending:
+			_jump_released_during_charge = true
+		elif _jump_cut_armed and velocity.y < 0.0:
+			velocity.y *= jump_release_multiplier
+			_jump_cut_armed = false
+
+
 func clear_jump_buffer() -> void:
 	jump_buffer_frames_remaining = 0
 
 
 func can_jump() -> bool:
-	return not _jump_pending and ((_ground_jump_available and is_on_floor() and velocity.y >= 0.0) or coyote_frames_remaining > 0)
+	return not climbing.is_climbing() and not damage.is_action_locked() and not _jump_pending and ((_ground_jump_available and is_on_floor() and velocity.y >= 0.0) or coyote_frames_remaining > 0)
 
 
 func try_jump() -> void:
 	if jump_buffer_frames_remaining <= 0 or not can_jump():
 		return
-	# Reserve this legal ground/coyote jump now, so the delay cannot expire its
-	# permission or let repeated presses create additional jumps.
+	dash_available = true # Only ground-derived jumps restore aerial dash availability.
+	_reserve_jump()
+
+
+func _reserve_jump() -> void:
+	# Both grounded and ladder jumps share charge, momentum and release behavior.
 	_ground_jump_available = false
 	coyote_frames_remaining = 0
 	jump_charge_frames_remaining = maxi(0, jump_charge_frames)
@@ -294,6 +344,14 @@ func try_jump() -> void:
 	else:
 		velocity = Vector2.ZERO # Pause motion and preserve the saved momentum.
 		jump_charge_changed.emit(true)
+
+
+## Reserve one ladder-derived jump through the normal charge/release machinery.
+func jump_from_climb() -> void:
+	if not climbing.is_climbing() or damage.is_action_locked() or _ignore_jump_until_release:
+		return
+	climbing.detach()
+	_reserve_jump() # Do not grant an aerial dash or reset its cooldown.
 
 
 func is_jump_charging() -> bool:
@@ -352,7 +410,7 @@ func update_floor_transitions(floor_before: bool, vertical_speed: float, state_f
 			_ground_jump_available = true
 		coyote_frames_remaining = 0
 		if not floor_before:
-			dash_available = true # Actual collision landing, never coyote/buffer input.
+			dash_available = true # Actual collision landing rearms the aerial budget.
 			if _floor_history_valid and vertical_speed > 0.0:
 				landed.emit(vertical_speed)
 	elif floor_before and not is_on_floor():
@@ -363,10 +421,19 @@ func update_floor_transitions(floor_before: bool, vertical_speed: float, state_f
 		_ground_jump_available = false
 
 
-func try_start_dash() -> void:
-	if movement_state != MovementState.NORMAL or dash_cooldown_frames_remaining > 0 or _ignore_dash_until_release or not Input.is_action_just_pressed("Action"):
+func can_start_dash(ignore_attack: bool = false, ignore_stamina: bool = false) -> bool:
+	return (
+		not climbing.is_climbing() and not damage.is_action_locked() and movement_state == MovementState.NORMAL and dash_cooldown_frames_remaining <= 0
+		and not _ignore_dash_until_release and (ignore_attack or not combat.is_attacking())
+		and (dash_available or (is_on_floor() and velocity.y >= 0.0))
+		and (ignore_stamina or stamina.can_spend(stamina.dash_cost))
+	)
+
+
+func try_start_dash(buffered_request: bool = false) -> void:
+	if not (buffered_request or Input.is_action_just_pressed("Action")) or not can_start_dash(false, true):
 		return
-	if not dash_available and not (is_on_floor() and velocity.y >= 0.0):
+	if not stamina.spend(stamina.dash_cost):
 		return
 	clear_wall_momentum()
 	dash_available = false
@@ -376,12 +443,47 @@ func try_start_dash() -> void:
 	active_dash_speed = 0.0
 	active_dash_duration_frames = 0
 	_dash_charge_limit_frames = maxi(0, dash_charge_frames)
+	_buffered_dash_start_tick = Engine.get_physics_frames() if buffered_request else -1
 	cancel_jump_grace()
 	velocity = Vector2.ZERO
 	if _dash_charge_limit_frames > 0:
 		set_movement_state(MovementState.DASH_CHARGING, _dash_charge_limit_frames)
 	else:
 		begin_dash()
+
+
+func cancel_dash_for_attack() -> void:
+	if movement_state != MovementState.DASH_CHARGING and movement_state != MovementState.DASHING:
+		return
+	# Preserve momentum and the spent aerial dash. Ending either dash phase still
+	# starts the normal cooldown; this is not a landing or an air-budget refund.
+	start_dash_cooldown()
+	_dash_charge_limit_frames = 0
+	_buffered_dash_start_tick = -1
+	dash_charge_frames_elapsed = 0
+	dash_charge_ratio = 0.0
+	active_dash_speed = 0.0
+	active_dash_duration_frames = 0
+	set_movement_state(MovementState.NORMAL, 0)
+
+
+## Damage cancels abilities without granting a fresh dash or clearing its cooldown.
+func interrupt_for_damage() -> void:
+	climbing.detach()
+	combat.interrupt()
+	if movement_state != MovementState.NORMAL:
+		start_dash_cooldown()
+	cancel_jump_grace()
+	clear_wall_momentum()
+	_dash_charge_limit_frames = 0
+	_buffered_dash_start_tick = -1
+	dash_charge_frames_elapsed = 0
+	dash_charge_ratio = 0.0
+	active_dash_speed = 0.0
+	active_dash_duration_frames = 0
+	_ignore_jump_until_release = Input.is_action_pressed("Jump")
+	_ignore_dash_until_release = Input.is_action_pressed("Action")
+	set_movement_state(MovementState.NORMAL, 0)
 
 
 func cancel_jump_grace() -> void:
@@ -478,6 +580,8 @@ func advance_dash_phase(state_for_motion: MovementState) -> void:
 		return # Pause recovery braking/timing through anticipation and takeoff.
 	if state_for_motion == MovementState.DASH_CHARGING:
 		dash_phase_frames_remaining = maxi(0, _dash_charge_limit_frames - dash_charge_frames_elapsed)
+		if _buffered_dash_start_tick == Engine.get_physics_frames() and not Input.is_action_pressed("Action"):
+			return # A buffered tap gets one visible charge tick before release launch.
 		if not Input.is_action_pressed("Action") or dash_phase_frames_remaining == 0:
 			begin_dash() # Release early, or launch automatically at full charge.
 		return
@@ -525,11 +629,14 @@ func reset_movement() -> void:
 	_floor_history_valid = false
 	_ignore_jump_until_release = Input.is_action_pressed("Jump")
 	_ignore_dash_until_release = Input.is_action_pressed("Action")
+	_buffered_dash_start_tick = -1
 	set_movement_state(MovementState.NORMAL, 0)
 	movement_reset.emit()
 
 
 func update_facing_direction() -> void:
+	if is_instance_valid(combat) and combat.is_attacking():
+		return # Steering can reverse; the swing, sprite and hitbox remain locked.
 	if _move_direction == 0.0:
 		return
 	facing_direction = 1 if _move_direction > 0.0 else -1

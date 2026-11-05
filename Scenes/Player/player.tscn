@@ -5,11 +5,25 @@
 [ext_resource type="Script" uid="uid://bn2xj43ljagvu" path="res://Scenes/Player/player_hurtbox.gd" id="3_hurtbox"]
 [ext_resource type="Script" uid="uid://ditw61ejfdaak" path="res://Scenes/Player/player_dash_visuals.gd" id="4_dash_visuals"]
 [ext_resource type="Script" uid="uid://bpafenme6orer" path="res://Scenes/Player/player_animation.gd" id="5_animation"]
-[ext_resource type="Script" path="res://Scenes/Player/player_movement_effects.gd" id="6_effects"]
+[ext_resource type="Script" uid="uid://c40qg4hh7dk20" path="res://Scenes/Player/player_movement_effects.gd" id="6_effects"]
+[ext_resource type="Script" uid="uid://dn2jaudairnj0" path="res://Scenes/Player/Combat/player_combat.gd" id="7_combat"]
+
+[ext_resource type="Script" path="res://Scenes/Combat/health_component.gd" id="8_health"]
+[ext_resource type="Script" path="res://Scenes/Player/Health/player_damage.gd" id="9_damage"]
+[ext_resource type="Script" path="res://Scenes/Player/Health/player_hazards.gd" id="10_hazards"]
+
+[ext_resource type="Script" path="res://Scenes/Player/Stamina/stamina_component.gd" id="11_stamina"]
+[ext_resource type="Script" path="res://Scenes/Player/Climbing/player_climbing.gd" id="12_climbing"]
+
+[ext_resource type="PackedScene" path="res://Scenes/Player/Stamina/stamina_hud.tscn" id="13_stamina_hud"]
 
 [sub_resource type="RectangleShape2D" id="Rectangle_player"]
 resource_local_to_scene = true
 size = Vector2(30, 36)
+
+[sub_resource type="RectangleShape2D" id="Rectangle_attack"]
+resource_local_to_scene = true
+size = Vector2(48, 42)
 
 [sub_resource type="RectangleShape2D" id="Rectangle_climb"]
 resource_local_to_scene = true
@@ -45,16 +59,18 @@ shape = SubResource("Rectangle_player")
 position = Vector2(0, -18)
 
 [node name="AttackHitbox" type="Area2D" parent="AttackPivot" unique_id=1603480688]
-position = Vector2(18, 0)
+position = Vector2(31, 0)
 collision_layer = 0
 collision_mask = 0
 monitoring = false
 monitorable = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AttackPivot/AttackHitbox" unique_id=546321432]
+shape = SubResource("Rectangle_attack")
 disabled = true
 
 [node name="ClimbDetector" type="Area2D" parent="." unique_id=1169019077]
+position = Vector2(0, -18)
 position = Vector2(0, -18)
 collision_layer = 0
 collision_mask = 0
@@ -70,9 +86,37 @@ position = Vector2(0, -18)
 collision_layer = 4
 collision_mask = 8
 script = ExtResource("3_hurtbox")
+health_component_path = NodePath("../Health")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox" unique_id=215238445]
 shape = SubResource("Rectangle_hurtbox")
 
-[node name="MovementEffects" type="Node2D" parent="."]
+[node name="MovementEffects" type="Node2D" parent="." unique_id=1144066054]
 script = ExtResource("6_effects")
+
+[node name="CombatController" type="Node" parent="." unique_id=627532239]
+script = ExtResource("7_combat")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("8_health")
+invulnerability_frames = 36
+
+[node name="HazardDetector" type="Node" parent="."]
+script = ExtResource("10_hazards")
+
+[node name="DamageController" type="Node" parent="."]
+script = ExtResource("9_damage")
+
+[node name="Stamina" type="Node" parent="."]
+script = ExtResource("11_stamina")
+
+[node name="ClimbingController" type="Node" parent="."]
+script = ExtResource("12_climbing")
+
+[node name="StaminaHUD" parent="." instance=ExtResource("13_stamina_hud")]
+z_index = 10
+offset_left = -16.0
+offset_top = -54.0
+offset_right = 16.0
+offset_bottom = -52.0
+stamina_path = NodePath("../Stamina")

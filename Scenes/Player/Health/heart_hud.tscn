@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scenes/Player/Health/heart_hud.gd" id="1"]
+
+[node name="HeartHUD" type="Control"]
+layout_mode = 0
+mouse_filter = 2
+script = ExtResource("1")
