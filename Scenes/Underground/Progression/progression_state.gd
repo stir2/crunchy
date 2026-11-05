@@ -2,6 +2,8 @@ class_name AbyssProgressionState
 extends RefCounted
 ## Mutable progression only; no generated terrain/template definitions.
 signal changed
+signal fragment_collected
+signal key_assembled
 var checkpoints: Dictionary = {}
 var fragments: Dictionary = {}
 var gates: Dictionary = {}
@@ -21,6 +23,7 @@ func collect_fragment(definition: Dictionary) -> bool:
 		return false
 	fragments[definition.id] = definition.world_level
 	changed.emit()
+	fragment_collected.emit()
 	return true
 func collected_count(world_level_id: String) -> int:
 	return fragments.values().count(world_level_id)
@@ -28,8 +31,11 @@ func can_assemble_key(world_level_id: String) -> bool:
 	return collected_count(world_level_id) >= AbyssProgressionConfig.FRAGMENTS_PER_KEY
 ## Future blacksmith calls this AFTER crafting. No crafting/inventory here.
 func record_assembled_key(world_level_id: String) -> void:
+	var first_assembly: bool = not keys.get(world_level_id, false)
 	keys[world_level_id] = true
 	changed.emit()
+	if first_assembly:
+		key_assembled.emit()
 func unlock_gate(id: String, world_level_id: String) -> bool:
 	if not keys.get(world_level_id, false):
 		return false
