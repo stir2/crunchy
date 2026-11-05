@@ -6,7 +6,14 @@ extends Node2D
 @export var fall_reset_y: float = 600.0
 @export var base_viewport_size: Vector2i = Vector2i(640, 360)
 @export var test_window_size: Vector2i = Vector2i(1280, 720)
+## Start beside the melee targets; leave off to use the original movement spawn.
+@export var start_in_combat_section: bool = false
+## Start beyond the combat wall, beside the explicit damage area and tile spikes.
+@export var start_in_damage_section: bool = false
+## Start at the short ladder; the tall exhaustion shaft is farther right.
+@export var start_in_climbing_section: bool = false
 var _saved_window: Dictionary = {}
+var _combat_dummies: Array[Node] = []
 @onready var player: Player = $Player
 @onready var spawn: Marker2D = $Spawn
 
@@ -22,6 +29,11 @@ func _ready() -> void:
 	window.content_scale_factor = 1.0
 	window.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
 	window.size = test_window_size
+	for target in $CombatSection.get_children():
+		if target.has_method("reset_dummy"):
+			_combat_dummies.append(target)
+	if start_in_combat_section or start_in_damage_section or start_in_climbing_section:
+		respawn_player()
 
 
 func _exit_tree() -> void:
@@ -31,17 +43,25 @@ func _exit_tree() -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	if player.global_position.y > fall_reset_y:
+	if not player.damage.is_dead() and player.global_position.y > fall_reset_y:
 		respawn_player()
 
 
 func respawn_player() -> void:
-	move_player_to(spawn)
+	if start_in_climbing_section:
+		move_player_to($ClimbSpawn)
+	elif start_in_damage_section:
+		move_player_to($DamageSpawn)
+	else:
+		move_player_to($CombatSpawn if start_in_combat_section else spawn)
 
 
 func move_player_to(marker: Marker2D) -> void:
 	player.global_position = marker.global_position
 	player.reset_movement()
+	player.health.reset_health()
+	for target in _combat_dummies:
+		target.reset_dummy()
 	var camera: Camera2D = player.get_node("Camera2D")
 	camera.reset_smoothing()
 

@@ -201,7 +201,7 @@ func run() -> void:
 	check(preview._construction_requests.size() == 64, "Generated preview selection overlay did not populate")
 	check(preview.get_child_count() == 1, "Selection unexpectedly built world geometry")
 	abyss.queue_free()
-	var gallery: Node = load("res://Scenes/Underground/Rooms/example_gallery.tscn").instantiate()
+	var gallery: Node = load("res://Tests/Scenes/Underground/example_gallery.tscn").instantiate()
 	root.add_child(gallery)
 	gallery.queue_free()
 	print("Room templates: five gallery rooms and authored registry validated; weighted b selection %d/1000; seed changes %d; generated chunk %d authored / %d fallback; %d failures" % [b_count, seed_changes, authored, fallback_count, failures])

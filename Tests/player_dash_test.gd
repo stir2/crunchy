@@ -67,8 +67,12 @@ func run() -> void:
 	check(InputMap.has_action("Action"), "Dash action missing")
 	check(not InputMap.action_get_events("Action").is_empty(), "Action has no configured bindings")
 	lab = load("res://Scenes/Player/player_test.tscn").instantiate() as Node2D
+	lab.start_in_combat_section = false # Test fixture independent of lab authoring defaults.
+	lab.start_in_damage_section = false
+	lab.start_in_climbing_section = false
 	root.add_child(lab)
 	player = lab.get_node("Player") as Player
+	player.jump_charge_frames = 5 # Explicitly exercise anticipation despite user tuning.
 
 	# Last valid coyote frame works, but cannot be consumed twice.
 	await leave_ledge()

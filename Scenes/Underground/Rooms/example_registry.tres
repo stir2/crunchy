@@ -1,12 +1,12 @@
-[gd_resource type="Resource" script_class="AbyssRoomTemplateRegistry" format=3]
+[gd_resource type="Resource" script_class="AbyssRoomTemplateRegistry" format=3 uid="uid://cjgh0g58wh0na"]
 
-[ext_resource type="Script" path="res://Scenes/Underground/Generation/room_template_registry.gd" id="1_rhhgg"]
-[ext_resource type="Script" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="2_ww0ww"]
-[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/packed_horizontal.tres" id="3_0w1ml"]
-[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/packed_vertical.tres" id="4_fla7t"]
-[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/n0-w0-[blons].tres" id="5_7j1mt"]
-[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/open_cavern.tres" id="6_l4iyj"]
-[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/transition_west.tres" id="7_tkeh5"]
+[ext_resource type="Script" uid="uid://btu6yqphb1ahc" path="res://Scenes/Underground/Generation/room_template_registry.gd" id="1_rhhgg"]
+[ext_resource type="Script" uid="uid://ck5jir3ntl07j" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="2_ww0ww"]
+[ext_resource type="Resource" uid="uid://ci4dddt3gqgkm" path="res://Scenes/Underground/Rooms/Metadata/packed_horizontal.tres" id="3_0w1ml"]
+[ext_resource type="Resource" uid="uid://iahxfv3qfwax" path="res://Scenes/Underground/Rooms/Metadata/packed_vertical.tres" id="4_fla7t"]
+[ext_resource type="Resource" uid="uid://bivkxr853gcc7" path="res://Scenes/Underground/Rooms/Metadata/n0-w0-[blons].tres" id="5_7j1mt"]
+[ext_resource type="Resource" uid="uid://2asl0eg0vo4a" path="res://Scenes/Underground/Rooms/Metadata/open_cavern.tres" id="6_l4iyj"]
+[ext_resource type="Resource" uid="uid://61wgxul310aw" path="res://Scenes/Underground/Rooms/Metadata/transition_west.tres" id="7_tkeh5"]
 
 [resource]
 script = ExtResource("1_rhhgg")

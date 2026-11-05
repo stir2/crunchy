@@ -53,8 +53,12 @@ func run() -> void:
 	var original_viewport_size: Vector2i = root.content_scale_size
 	var original_scale_mode: int = root.content_scale_mode
 	lab = load("res://Scenes/Player/player_test.tscn").instantiate() as Node2D
+	lab.start_in_combat_section = false # Test fixture independent of lab authoring defaults.
+	lab.start_in_damage_section = false
+	lab.start_in_climbing_section = false
 	root.add_child(lab)
 	player = lab.get_node("Player") as Player
+	player.jump_charge_frames = 5 # Explicitly exercise anticipation despite user tuning.
 	await frames(15)
 	check(player.is_on_floor() and absf(player.position.y - 320.0) < 1.0, "Player did not land on solid floor")
 	check(player.collision_layer == 2 and player.collision_mask == 1, "Player collision does not match terrain")
@@ -110,7 +114,8 @@ func run() -> void:
 	check(root.canvas_item_default_texture_filter == Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST, "Lab default filter is not nearest")
 	check(player.get_node("Visuals/AnimatedSprite2D").scale == Vector2.ONE and player.get_node("Visuals/AnimatedSprite2D").texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "Sprite scaled/distorted or filtering not nearest")
 	var hitbox := player.get_node("AttackPivot/AttackHitbox") as Area2D
-	check(not hitbox.monitoring and not hitbox.monitorable and hitbox.collision_mask == 0 and hitbox.get_node("CollisionShape2D").disabled and hitbox.get_node("CollisionShape2D").shape == null, "Attack hitbox is active")
+	check(not hitbox.monitoring and not hitbox.monitorable and hitbox.collision_mask == 0 and hitbox.get_node("CollisionShape2D").disabled, "Idle attack hitbox is active")
+	check(hitbox.get_node("CollisionShape2D").shape is RectangleShape2D and hitbox.get_node("CollisionShape2D").shape.size == Vector2(48,42), "Configured melee rectangle missing")
 	check(not player.get_node("ClimbDetector").monitoring, "Climbing detector should be inactive")
 
 	# Ground acceleration ramps up; direction changes brake smoothly.
@@ -231,10 +236,10 @@ func run() -> void:
 	check(crossed_gap and landed_after_gap, "Player failed to cross and land beyond the test gap")
 	release_inputs()
 
-	# Up/Attack remain reserved; Down must not move a grounded player.
+	# Up remains reserved; Down must not move a grounded player.
 	await place(Vector2(240, 320))
 	var resting_position: Vector2 = player.position
-	for action in ["Move Up", "Move Down", "Attack"]:
+	for action in ["Move Up", "Move Down"]:
 		Input.action_press(action)
 	await frames(5)
 	check(player.position.is_equal_approx(resting_position) and not hitbox.monitoring, "Reserved inputs changed movement/combat")

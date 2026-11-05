@@ -33,8 +33,12 @@ func place() -> void:
 
 func run() -> void:
 	lab = load("res://Scenes/Player/player_test.tscn").instantiate() as Node2D
+	lab.start_in_combat_section = false # Test fixture independent of lab authoring defaults.
+	lab.start_in_damage_section = false
+	lab.start_in_climbing_section = false
 	root.add_child(lab)
 	player = lab.get_node("Player") as Player
+	player.jump_charge_frames = 5 # Explicitly exercise anticipation despite user tuning.
 	await place()
 	check(player.jump_charge_frames > 0, "Configured anticipation is disabled")
 	check(player.jump_release_multiplier > 0 and player.jump_release_multiplier < 1, "Variable-height jump is disabled")
@@ -55,7 +59,7 @@ func run() -> void:
 		await tick()
 		if delay > 0:
 			check(player.is_jump_charging() and player.jump_charge_frames_remaining == delay, "Press tick skipped or shortened the anticipation timer")
-			check(sprite.animation == &"run" and sprite.frame == 4 and not sprite.is_playing(), "Anticipation pose is not visible")
+			check(sprite.animation == &"jump" and sprite.frame == sprite.jump_charge_pose_frame and not sprite.is_playing(), "Anticipation pose is not visible")
 			check(player.visuals.modulate != Color.WHITE, "Jump wind-up has no visual feedback")
 			for elapsed in range(1,delay):
 				await tick()
@@ -106,7 +110,7 @@ func run() -> void:
 		await tick()
 		check(player.is_jump_charging() and player.position.is_equal_approx(charge_position) and player.velocity == Vector2.ZERO, "Jump charge moved or applied steering/friction")
 	await tick()
-	check(not player.is_jump_charging() and player.velocity.x == 500.0 - player.jump_horizontal_boost and player.velocity.y == player.jump_velocity, "Takeoff did not retain momentum and add the input-directed boost")
+	check(not player.is_jump_charging() and player.velocity.x == 500.0 and player.velocity.y == player.jump_velocity, "Opposite input redirected or boosted saved jump momentum")
 
 	# Grounded dash jump-cancel uses the same delay without destroying momentum.
 	await place()

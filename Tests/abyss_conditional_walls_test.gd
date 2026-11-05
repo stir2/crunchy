@@ -146,7 +146,7 @@ func run() -> void:
 		check(not AbyssRoomTemplateValidator.validate(invalid).is_empty(), "Invalid probability accepted")
 	check(FileAccess.get_file_as_bytes(metadata.scene.resource_path) == bytes_before and painted.get_used_cells().size() == 12, "Source scene mutated")
 	source.free()
-	var gallery: Node = load("res://Scenes/Underground/Rooms/example_gallery.tscn").instantiate()
+	var gallery: Node = load("res://Tests/Scenes/Underground/example_gallery.tscn").instantiate()
 	root.add_child(gallery)
 	var preview_seed: int = gallery.preview_seed
 	var next_seed := InputEventAction.new()
