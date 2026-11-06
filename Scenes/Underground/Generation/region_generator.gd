@@ -70,3 +70,9 @@ func get_chunk(coords: Vector2i) -> AbyssChunkData:
 func get_room(coords: Vector2i) -> AbyssRoomData:
 	var chunk_coords := room_to_chunk(coords)
 	return get_chunk(chunk_coords).get_room(coords - chunk_coords * _config.chunk_size)
+
+## Runtime cache eviction only; sampling/seed inputs remain unchanged.
+func retain_cached_chunks(bounds: Rect2i) -> void:
+	for coords in _chunks.keys():
+		if not bounds.has_point(coords):
+			_chunks.erase(coords)

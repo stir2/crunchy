@@ -206,3 +206,15 @@ func _signed_distance(tile: Vector2i) -> float:
 	var result := -nearest if open else nearest
 	_distance[tile] = result
 	return result
+
+## Keep a generous runtime halo; evicted samples reconstruct from global inputs.
+func retain_cached_rooms(bounds: Rect2i) -> void:
+	for cache: Dictionary in [_requests, _authored, _open, _opposite_rects]:
+		for coords: Vector2i in cache.keys():
+			if not bounds.has_point(coords):
+				cache.erase(coords)
+	var tiles := Rect2i(bounds.position * _size, bounds.size * _size)
+	for cache: Dictionary in [_raw, _distance, _final]:
+		for coords: Vector2i in cache.keys():
+			if not tiles.has_point(coords):
+				cache.erase(coords)

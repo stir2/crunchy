@@ -151,3 +151,14 @@ func has_checkpoint(coords: Vector2i) -> bool:
 			if other >= 0 and (other < score or (other == score and (neighbor.y < coords.y or (neighbor.y == coords.y and neighbor.x < coords.x)))):
 				return false
 	return true
+
+## Placement choices are deterministic; old interval/checkpoint caches are expendable.
+func retain_cached_rooms(bounds: Rect2i) -> void:
+	for coords in _checkpoint_scores.keys():
+		if not bounds.has_point(coords):
+			_checkpoint_scores.erase(coords)
+	var first_band := floori(float(bounds.position.y) / config.FRAGMENT_INTERVAL) - 1
+	var last_band := floori(float(bounds.end.y) / config.FRAGMENT_INTERVAL) + 1
+	for key: Vector2i in _bands.keys():
+		if key.y < first_band or key.y > last_band:
+			_bands.erase(key)
