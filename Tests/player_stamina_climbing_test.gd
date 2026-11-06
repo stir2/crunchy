@@ -330,7 +330,7 @@ func test_climb_combat_freeze_jump() -> void:
 		await tick()
 	check(not climbing.is_climbing() and player.is_jump_charging() and not player.dash_available, "Freeze lost buffered ladder jump or restored air dash")
 	await tick(player.jump_charge_frames)
-	check(player.velocity.y == player.jump_velocity * player.jump_release_multiplier, "Buffered ladder jump lost early release")
+	check(is_equal_approx(player.velocity.y,player.jump_velocity * player.combat.attack_jump_multiplier * player.jump_release_multiplier), "Buffered ladder attack jump lost combat multiplier or early release")
 
 func test_exhaustion_and_fast_fall() -> void:
 	await place(Vector2(4648,160))

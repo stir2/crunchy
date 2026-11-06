@@ -74,6 +74,7 @@ var _jump_started_this_tick: bool = false
 var _jump_cut_armed: bool = false
 var _jump_pending: bool = false
 var _jump_horizontal_speed: float = 0.0
+var _jump_vertical_multiplier: float = 1.0
 var _jump_released_during_charge: bool = false
 var _immediate_jump_press: bool = false
 var _floor_history_valid: bool = false
@@ -135,6 +136,8 @@ func _physics_process(delta: float) -> void:
 			try_dash_jump(floor_before)
 		MovementState.RECOVERY:
 			update_dash_recovery(delta)
+	if state_for_motion == MovementState.NORMAL and not climbing_for_motion and not damage.is_reacting() and not is_jump_movement_paused():
+		apply_swing_burst()
 	var vertical_speed_before: float = velocity.y
 	if not climbing_for_motion and state_for_motion != MovementState.DASH_CHARGING and not is_jump_movement_paused():
 		apply_edge_correction(delta)
@@ -181,6 +184,15 @@ func handle_horizontal_movement(delta: float) -> void:
 	# Air acceleration also slows horizontal drift when input is released.
 	# Only X changes here; jumping and gravity own Y.
 	velocity.x = move_toward(velocity.x, target_speed, acceleration * delta)
+
+func apply_swing_burst() -> void:
+	var burst: float = combat.consume_swing_burst()
+	if burst <= 0.0:
+		return
+	var forward_speed: float = run_speed*combat.movement_multiplier()+combat.movement_speed_bonus()+burst
+	# A speed floor gives immediate movement without stacking repeated impulses
+	# onto dash momentum. The existing move_and_slide still resolves all terrain.
+	velocity.x = combat.locked_facing*maxf(velocity.x*combat.locked_facing,forward_speed)
 
 
 func apply_edge_correction(delta: float) -> void:
@@ -337,6 +349,7 @@ func _reserve_jump() -> void:
 	_jump_released_during_charge = not Input.is_action_pressed("Jump")
 	clear_jump_buffer()
 	_jump_horizontal_speed = velocity.x
+	_jump_vertical_multiplier = combat.jump_multiplier() # Preserve through jump charge.
 	_jump_pending = true
 	_jump_cut_armed = false
 	if jump_charge_frames_remaining == 0:
@@ -383,8 +396,9 @@ func launch_jump() -> void:
 	# Check at takeoff: releasing or reversing input during charge removes boost.
 	if not is_zero_approx(_jump_horizontal_speed) and jump_input * _jump_horizontal_speed > 0.0:
 		boost = signf(_jump_horizontal_speed) * jump_horizontal_boost
-	velocity = Vector2(_jump_horizontal_speed + boost, jump_velocity)
+	velocity = Vector2(_jump_horizontal_speed + boost, jump_velocity*_jump_vertical_multiplier)
 	_jump_horizontal_speed = 0.0
+	_jump_vertical_multiplier = 1.0
 	if _jump_released_during_charge:
 		velocity.y *= jump_release_multiplier
 	_jump_cut_armed = not _jump_released_during_charge
@@ -491,6 +505,7 @@ func cancel_jump_grace() -> void:
 	var was_charging: bool = _jump_pending
 	_jump_pending = false
 	_jump_horizontal_speed = 0.0
+	_jump_vertical_multiplier = 1.0
 	jump_charge_frames_remaining = 0
 	_jump_released_during_charge = false
 	coyote_frames_remaining = 0

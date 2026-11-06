@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://l7esfmmcve8s"]
+
+[ext_resource type="Script" uid="uid://dxv3k4r0lho8" path="res://Scenes/Underground/Runtime/abyss_runtime.gd" id="1_runtime"]
+[ext_resource type="PackedScene" uid="uid://bkwrdhxyioatx" path="res://Scenes/Player/player.tscn" id="2_player"]
+[ext_resource type="Script" uid="uid://c5h435prq41ry" path="res://Scenes/Underground/Runtime/room_streamer.gd" id="3_stream"]
+[ext_resource type="Script" uid="uid://da2ktqc15fjha" path="res://Scenes/Underground/Runtime/axis_follow_camera.gd" id="4_camera"]
+[ext_resource type="PackedScene" path="res://Scenes/Player/Health/heart_hud.tscn" id="5_hearts"]
+
+[node name="AbyssRuntime" type="Node2D" unique_id=678067981]
+script = ExtResource("1_runtime")
+
+[node name="BackgroundCanvas" type="CanvasLayer" parent="." unique_id=411147891]
+layer = -10
+
+[node name="Background" type="ColorRect" parent="BackgroundCanvas" unique_id=1614838707]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.04, 0.05, 0.08, 1)
+
+[node name="LoadedRooms" type="Node2D" parent="." unique_id=126325903]
+
+[node name="Player" parent="." unique_id=1251569325 instance=ExtResource("2_player")]
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1814657056]
+enabled = false
+script = ExtResource("4_camera")
+
+[node name="StreamingController" type="Node" parent="." unique_id=1796754078]
+script = ExtResource("3_stream")
+
+[node name="HealthCanvas" type="CanvasLayer" parent="." unique_id=508030899]
+
+[node name="HeartHUD" parent="HealthCanvas" unique_id=1921032736 instance=ExtResource("5_hearts")]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 12.0
+offset_top = 12.0
+health_path = NodePath("../../Player/Health")

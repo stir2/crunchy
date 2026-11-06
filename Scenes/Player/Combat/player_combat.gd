@@ -17,10 +17,20 @@ signal swing_freeze_started(ticks: int)
 @export_range(0, 15, 1) var swing_freeze_frames: int = 4
 ## Extra horizontal target speed after the swing freeze. Zero disables it.
 @export_range(0.0, 500.0, 5.0) var swing_speed_boost: float = 80.0
-@export_range(0, 60, 1) var swing_speed_boost_frames: int = 8
-## Only late recovery can dash-cancel. 17 waits for the entire 17-frame slash.
-@export_range(0, 17, 1) var dash_cancel_start_frame: int = 14
-@export_range(0.0, 1.0, 0.05) var attack_movement_speed_multiplier: float = 1
+@export_range(0, 60, 1) var swing_speed_boost_frames: int = 12
+## One forward impulse as damage frames begin, only with matching direction held.
+## Extra speed above the attack's movement target; zero disables the burst.
+@export_range(0.0, 500.0, 5.0) var swing_burst_speed: float = 100.0
+## Number of recovery animation frames that must finish before dash-canceling.
+## Zero allows immediate recovery cancellation. This does not count physics ticks.
+@export_range(0, 17, 1) var dash_recovery_lock_frames: int = 2
+@export var repeat_while_held: bool = true
+## Earliest zero-indexed animation frame where a click/hold can restart a swing.
+## Recovery is always required; 17 disables cancellation for a 17-frame slash.
+@export_range(0, 17, 1) var attack_cancel_start_frame: int = 8
+@export_range(0.0, 1.0, 0.05) var attack_movement_speed_multiplier: float = 0.25
+## Scales jump takeoff velocity for jumps started during a swing.
+@export_range(0.0, 1.0, 0.05) var attack_jump_multiplier: float = 0.75
 @export_range(0, 100, 1) var attack_damage: int = 1
 @export_group("Hitbox")
 @export_range(1.0, 100.0, 1.0) var attack_reach: float = 40.0
@@ -44,6 +54,7 @@ var _swing_freeze_used: bool = false
 var _swing_freeze_ticks_left: int = 0
 var _paused_for_swing: bool = false
 var _swing_speed_boost_ticks_left: int = 0
+var _swing_burst_used: bool = false
 var _buffered_jump: bool = false
 var _jump_released: bool = false
 @onready var player: CharacterBody2D = get_parent() as CharacterBody2D
@@ -66,8 +77,18 @@ func is_attacking() -> bool:
 func movement_multiplier() -> float:
 	return attack_movement_speed_multiplier if is_attacking() else 1.0
 
+func jump_multiplier() -> float:
+	return attack_jump_multiplier if is_attacking() else 1.0
+
 func movement_speed_bonus() -> float:
 	return swing_speed_boost if _swing_speed_boost_ticks_left > 0 else 0.0
+
+func consume_swing_burst() -> float:
+	if attack_state != AttackState.ACTIVE or _swing_burst_used or is_hitstopped() or is_swing_frozen():
+		return 0.0
+	_swing_burst_used = true
+	var direction := Input.get_axis("Move Left","Move Right")
+	return swing_burst_speed if direction*locked_facing > 0.0 else 0.0
 
 func is_hitstopped() -> bool:
 	return Engine.get_physics_frames() <= _hitstop_until_tick
@@ -83,8 +104,15 @@ func begin_physics_tick() -> bool:
 	if not actions_enabled:
 		interrupt()
 		return false
+	if not Input.is_action_pressed("Action"):
+		buffered_dash = false # Releasing cancels a charge still waiting on recovery.
 	if is_attacking() and Input.is_action_just_pressed("Action"):
 		buffered_dash = true
+	# Repetition waits for recovery and gives a pending dash priority. Holding
+	# Attack must not immediately cancel the dash it just buffered into.
+	if repeat_while_held and Input.is_action_pressed("Attack") and not _ignore_attack_until_release:
+		if player.movement_state == Player.MovementState.NORMAL and not buffered_dash:
+			_attack_requested = true
 	var swing_freeze_tick := _paused_for_swing and _swing_freeze_ticks_left > 0
 	if swing_freeze_tick:
 		_swing_freeze_ticks_left -= 1
@@ -105,16 +133,20 @@ func begin_physics_tick() -> bool:
 	return false
 
 func try_start_attack() -> bool:
-	if not _attack_requested or not actions_enabled or is_attacking() or player.damage.is_action_locked():
+	if not _attack_requested or not actions_enabled or player.damage.is_action_locked():
 		return false
 	if player.is_jump_charging():
 		return false
+	if is_attacking():
+		if not can_attack_cancel():
+			return false
+		_finish(true)
 	if player.movement_state == Player.MovementState.DASH_CHARGING or player.movement_state == Player.MovementState.DASHING:
 		player.cancel_dash_for_attack()
 	elif player.movement_state != Player.MovementState.NORMAL:
 		return false
 	_attack_requested = false
-	_ignore_attack_until_release = true
+	_ignore_attack_until_release = not repeat_while_held
 	locked_facing = player.facing_direction
 	swing_id += 1
 	_hit_targets.clear()
@@ -123,6 +155,7 @@ func try_start_attack() -> bool:
 	_swing_freeze_ticks_left = 0
 	_paused_for_swing = false
 	_swing_speed_boost_ticks_left = 0
+	_swing_burst_used = false
 	buffered_dash = false
 	configure_hitbox()
 	pivot.scale.x = absf(pivot.scale.x) * locked_facing
@@ -135,7 +168,7 @@ func try_start_attack() -> bool:
 func consume_buffered_dash() -> bool:
 	if is_attacking() and not can_dash_cancel():
 		return false
-	var request := buffered_dash and actions_enabled
+	var request := buffered_dash and actions_enabled and Input.is_action_pressed("Action")
 	buffered_dash = false # Eligible or not, it gets exactly one attempt.
 	if request and is_attacking():
 		if not player.can_start_dash(true):
@@ -146,8 +179,19 @@ func consume_buffered_dash() -> bool:
 	return request
 
 func can_dash_cancel() -> bool:
+	if attack_state != AttackState.RECOVERY or not sprite.is_attack_animation():
+		return false
+	var count := sprite.sprite_frames.get_frame_count(sprite.animation)
+	var first_active := clampi(active_start_frame,0,count-1)
+	var first_recovery := clampi(active_end_frame,first_active,count-1)+1
 	return (
-		attack_state == AttackState.RECOVERY and sprite.frame >= dash_cancel_start_frame
+		sprite.frame-first_recovery >= dash_recovery_lock_frames
+		and not is_hitstopped() and not is_swing_frozen()
+	)
+
+func can_attack_cancel() -> bool:
+	return (
+		attack_state == AttackState.RECOVERY and sprite.frame >= attack_cancel_start_frame
 		and not is_hitstopped() and not is_swing_frozen()
 	)
 
@@ -248,6 +292,7 @@ func _on_movement_state_changed(state: int) -> void:
 
 ## Damage/death code can call this; movement_reset already does so automatically.
 func interrupt() -> void:
+	_swing_burst_used = false
 	buffered_dash = false
 	_attack_requested = false
 	_buffered_jump = false
