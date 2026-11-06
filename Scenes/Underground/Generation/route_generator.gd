@@ -412,3 +412,11 @@ func validate_chunk_layout(coords: Vector2i) -> bool:
 func debug_layout(coords: Vector2i) -> Dictionary:
 	get_chunk(coords)
 	return _diagnostics[coords]
+
+## Evict derived graphs without changing random-access contracts or definitions.
+func retain_cached_chunks(bounds: Rect2i) -> void:
+	for coords in _chunks.keys():
+		if not bounds.has_point(coords):
+			_chunks.erase(coords)
+			_diagnostics.erase(coords)
+	regions.retain_cached_chunks(bounds)

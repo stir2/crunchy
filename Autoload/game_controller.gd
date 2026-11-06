@@ -200,6 +200,7 @@ func reset_run() -> void:
 
 func start_day() -> void:
 	_reset_daily_state()
+	abyss_room_state.begin_day(day)
 	day_started.emit(day)
 	if is_day_10():
 		finale_reached.emit(village_health)

@@ -87,6 +87,39 @@ func run() -> void:
 	check(camera.offset == Vector2.ZERO,"Reset retained camera shake")
 	await tick()
 	check(effects.get_child_count() == 0,"Reset retained dust")
+	place(320)
+	await tick(5)
+	Input.action_press("Action")
+	await tick(2)
+	check(not camera.is_processing(),"Dash charge triggered launch shake early")
+	Input.action_release("Action")
+	await tick(2)
+	check(camera.is_processing() and camera._shake_strength == camera.dash_shake_pixels,"Dash launch did not trigger configured shake")
+	player.reset_movement()
+	var hit := CombatHit.new()
+	hit.amount = 1
+	hit.direction = Vector2.LEFT
+	check(player.damage.receive_hit(hit),"Feedback fixture rejected damage")
+	check(camera.is_processing() and camera._shake_strength == camera.hurt_shake_pixels,"Successful damage did not trigger configured hurt shake")
+	camera.reset_shake()
+	check(not player.damage.receive_hit(hit) and not camera.is_processing(),"Ignored damage triggered hurt shake")
+	camera.dash_shake_pixels = 0.0
+	player.set_movement_state(Player.MovementState.DASHING,1)
+	check(not camera.is_processing(),"Zero dash strength did not disable shake")
+	# Short shakes must visibly alternate over multiple frames, including the
+	# 60 FPS/0.1-second combination that sampled every horizontal sine at zero.
+	for fps in [60,120]:
+		camera.reset_shake()
+		camera.start_shake(30.0,0.1,Vector2(1.0,0.35))
+		var positive: int = 0
+		var negative: int = 0
+		for frame in range(fps/10):
+			camera._process(1.0/fps)
+			if camera.offset.x > 0.5: positive += 1
+			if camera.offset.x < -0.5: negative += 1
+		check(positive >= 2 and negative >= 2,"Dash shake disappeared across frames at %d FPS" % fps)
+		camera._process(0.1)
+		check(camera.offset == Vector2.ZERO and not camera.is_processing(),"Short shake did not finish cleanly")
 	lab.free()
 	print("Player feedback: delayed takeoff, world-space dust, cleanup, gentle/hard landing, camera-only shake and reset; failures=",failures)
 	quit(1 if failures else 0)
