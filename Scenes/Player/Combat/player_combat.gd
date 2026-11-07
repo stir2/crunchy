@@ -21,7 +21,7 @@ signal swing_freeze_started(ticks: int)
 ## One forward impulse as damage frames begin, only with matching direction held.
 ## Extra speed above the attack's movement target; zero disables the burst.
 @export_range(0.0, 500.0, 5.0) var swing_burst_speed: float = 100.0
-## Number of recovery animation frames that must finish before dash-canceling.
+## Number of recovery anismation frames that must finish before dash-canceling.
 ## Zero allows immediate recovery cancellation. This does not count physics ticks.
 @export_range(0, 17, 1) var dash_recovery_lock_frames: int = 2
 @export var repeat_while_held: bool = true
@@ -29,7 +29,7 @@ signal swing_freeze_started(ticks: int)
 ## Recovery is always required; 17 disables cancellation for a 17-frame slash.
 @export_range(0, 17, 1) var attack_cancel_start_frame: int = 8
 @export_range(0.0, 1.0, 0.05) var attack_movement_speed_multiplier: float = 0.25
-## Scales jump takeoff velocity for jumps started during a swing.
+## Scales jump takesoff velocity for jumps started during a swing.
 @export_range(0.0, 1.0, 0.05) var attack_jump_multiplier: float = 0.75
 @export_range(0, 100, 1) var attack_damage: int = 1
 @export_group("Hitbox")

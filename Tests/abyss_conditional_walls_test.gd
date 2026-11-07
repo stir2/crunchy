@@ -12,8 +12,8 @@ func requirements(coords: Vector2i = Vector2i(-3,8)) -> AbyssRoomRequirements:
 	req.room_size = AbyssRegionConfig.DEFAULT_ROOM_SIZE
 	req.region = AbyssRoomData.Region.OPEN
 	req.opening_schema = &"abyss_slots_v1"
-	req.horizontal_offsets = Vector2i(6,17)
-	req.vertical_offsets = Vector2i(6,17)
+	req.horizontal_offsets = AbyssRouteConfig.DEFAULT_OPENING_OFFSETS
+	req.vertical_offsets = AbyssRouteConfig.DEFAULT_OPENING_OFFSETS
 	return req
 func pack(room: AbyssAuthoredRoom) -> PackedScene:
 	var scene := PackedScene.new()

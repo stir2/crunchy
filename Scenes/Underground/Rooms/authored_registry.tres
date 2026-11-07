@@ -1,13 +1,9 @@
-[gd_resource type="Resource" script_class="AbyssRoomTemplateRegistry" format=3]
+[gd_resource type="Resource" script_class="AbyssRoomTemplateRegistry" format=3 uid="uid://titeln0myrwf"]
 
-[ext_resource type="Script" path="res://Scenes/Underground/Generation/room_template_registry.gd" id="1"]
-[ext_resource type="Script" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="2"]
-[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/e0-w1-[halls].tres" id="3"]
-[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/n0-e1-w1-[pump].tres" id="4"]
-[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/n0-s0-[catch].tres" id="5"]
-[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/n0-w0-[blons].tres" id="6"]
-[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/open_cavern.tres" id="7"]
+[ext_resource type="Script" uid="uid://btu6yqphb1ahc" path="res://Scenes/Underground/Generation/room_template_registry.gd" id="1"]
+[ext_resource type="Script" uid="uid://ck5jir3ntl07j" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="2"]
+[ext_resource type="Resource" uid="uid://2asl0eg0vo4a" path="res://Scenes/Underground/Rooms/Metadata/open_cavern.tres" id="7"]
 
 [resource]
 script = ExtResource("1")
-templates = Array[ExtResource("2")]([ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7")])
+templates = Array[ExtResource("2")]([ExtResource("7")])

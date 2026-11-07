@@ -54,4 +54,12 @@ static func apply(saved: Dictionary, configs: Array[Resource]) -> bool:
 						return false
 					value = StringName(value)
 			configs[i].set(info.name,value)
+	# Existing saved worlds keep their seed/topology, but use the updated physical
+	# slot convention too. Explicit custom offsets and other schemas stay intact.
+	for config in configs:
+		if config is AbyssRouteConfig and config.opening_schema == &"abyss_slots_v1":
+			if config.horizontal_offsets == Vector2i(6,17):
+				config.horizontal_offsets = AbyssRouteConfig.DEFAULT_OPENING_OFFSETS
+			if config.vertical_offsets == Vector2i(6,17):
+				config.vertical_offsets = AbyssRouteConfig.DEFAULT_OPENING_OFFSETS
 	return true

@@ -189,7 +189,7 @@ func _run() -> void:
 	var custom := AbyssRouteConfig.new()
 	custom.main_route_horizontal_wander = 0.0
 	custom.horizontal_offsets = Vector2i(2, 9)
-	custom.vertical_offsets = Vector2i(1, 10)
+	custom.vertical_offsets = Vector2i(2, 10) # Three-wide slots must leave capped corners.
 	check(custom.is_valid(AbyssRegionConfig.new().room_size), "Valid custom slots rejected")
 	var generator := AbyssRouteGenerator.new(AbyssRegionConfig.new(), custom)
 	for room in generator.get_chunk(Vector2i.ZERO).rooms:
