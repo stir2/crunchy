@@ -62,6 +62,7 @@ func enter_entrance() -> bool:
 	var token := _serial
 	_starting = true
 	last_error = ""
+	$StartupStatusCanvas.visible = false
 	_set_visibility(false)
 	player.set_physics_process(false)
 	_apply_presentation()
@@ -69,10 +70,10 @@ func enter_entrance() -> bool:
 	if _state != state:
 		_vitals_initialized = false
 	_state = state
-	state.begin_day(game.day)
-	_day = state.current_day
 	if not _configure_world(state):
 		return false
+	state.begin_day(game.day)
+	_day = state.current_day
 	_restore_vitals(state)
 	var entrance := stream.routes.entrance_room()
 	if stream.specials.level_at(entrance) != 1:
@@ -111,13 +112,22 @@ func _configure_world(state: AbyssRoomState) -> bool:
 	var configs: Array[Resource] = [configuration,route_configuration,terrain_configuration,progression_configuration]
 	var settings := state.world_settings
 	if settings.is_empty():
+		var progression: AbyssProgressionState = game.abyss_progression_state
+		if not state.groups.is_empty() or not state.markers.is_empty() or not progression.checkpoints.is_empty() or not progression.fragments.is_empty() or not progression.gates.is_empty() or not progression.keys.is_empty():
+			fail_startup("Existing abyss progress has no layout version. It was preserved; start a separate new run for the 40x40 layout.")
+			return false
 		if template_registry.resource_path.is_empty():
 			fail_startup("Save the runtime template registry as a .tres resource first")
 			return false
 		settings = AbyssRuntimeWorldSettings.capture(configs,template_registry)
-	elif not AbyssRuntimeWorldSettings.apply(settings,configs):
-		fail_startup("Saved abyss world settings are invalid or incompatible")
-		return false
+	else:
+		var mismatch := AbyssRuntimeWorldSettings.compatibility_error(settings,configuration,route_configuration)
+		if not mismatch.is_empty():
+			fail_startup(mismatch)
+			return false
+		if not AbyssRuntimeWorldSettings.apply(settings,configs):
+			fail_startup("Saved abyss world settings are invalid or incompatible; no progress was changed")
+			return false
 	template_registry = load(settings.registry) as AbyssRoomTemplateRegistry
 	if template_registry == null or not configuration.is_valid() or not route_configuration.is_valid(configuration.room_size) or not progression_configuration.is_valid():
 		fail_startup("Invalid abyss runtime configuration")
@@ -126,8 +136,10 @@ func _configure_world(state: AbyssRoomState) -> bool:
 		fail_startup("Runtime requires the existing 8x8-room chunks and 16px tile grid")
 		return false
 	if not stream.configure(configuration,route_configuration,terrain_configuration,progression_configuration,template_registry,state,game.abyss_progression_state):
-		fail_startup("Room template registration failed")
+		fail_startup("Room template registration failed:\n" + "\n".join(stream.selector.registration_errors))
 		return false
+	if not stream.deferred_templates.is_empty():
+		print("Abyss: ",stream.deferred_templates.size()," authored templates remain registered at their original layout; using procedural fallback until remade for ",configuration.room_size," / ",route_configuration.opening_schema)
 	state.world_settings = AbyssRuntimeWorldSettings.capture(configs,template_registry)
 	return true
 
@@ -196,6 +208,8 @@ func _set_visibility(show_runtime: bool) -> void:
 func fail_startup(message: String) -> void:
 	last_error = message
 	leave()
+	$StartupStatusCanvas/Panel/Message.text = "Unable to enter the abyss\n\n" + message
+	$StartupStatusCanvas.visible = true
 	push_error(message)
 	startup_failed.emit(message)
 

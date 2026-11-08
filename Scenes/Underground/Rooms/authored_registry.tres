@@ -3,7 +3,17 @@
 [ext_resource type="Script" uid="uid://btu6yqphb1ahc" path="res://Scenes/Underground/Generation/room_template_registry.gd" id="1"]
 [ext_resource type="Script" uid="uid://ck5jir3ntl07j" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="2"]
 [ext_resource type="Resource" uid="uid://2asl0eg0vo4a" path="res://Scenes/Underground/Rooms/Metadata/open_cavern.tres" id="7"]
+[ext_resource type="Resource" uid="uid://dr044tv3eeavy" path="res://Scenes/Underground/Rooms/Metadata/room_arena1.tres" id="packed_room_arena1"]
+[ext_resource type="Resource" uid="uid://bhs7oypqt52bh" path="res://Scenes/Underground/Rooms/Metadata/room_arena2.tres" id="packed_room_arena2"]
+[ext_resource type="Resource" uid="uid://dd8e1yhcfybif" path="res://Scenes/Underground/Rooms/Metadata/room_coaster.tres" id="packed_room_coaster"]
+[ext_resource type="Resource" uid="uid://dp2t6pi253e65" path="res://Scenes/Underground/Rooms/Metadata/room_corner_NE.tres" id="packed_room_corner_NE"]
+[ext_resource type="Resource" uid="uid://cv612ev0pmdct" path="res://Scenes/Underground/Rooms/Metadata/room_corner_NW.tres" id="packed_room_corner_NW"]
+[ext_resource type="Resource" uid="uid://b8ge2apn6ld4a" path="res://Scenes/Underground/Rooms/Metadata/room_corner_SE.tres" id="packed_room_corner_SE"]
+[ext_resource type="Resource" uid="uid://catqkni3iho0t" path="res://Scenes/Underground/Rooms/Metadata/room_corner_SW.tres" id="packed_room_corner_SW"]
+[ext_resource type="Resource" uid="uid://ckbe48mv4qcmn" path="res://Scenes/Underground/Rooms/Metadata/room_davestriple.tres" id="packed_room_davestriple"]
+[ext_resource type="Resource" uid="uid://cimhwaifts1yk" path="res://Scenes/Underground/Rooms/Metadata/room_fall1.tres" id="packed_room_fall1"]
+[ext_resource type="Resource" uid="uid://7ksxtu2mli1w" path="res://Scenes/Underground/Rooms/Metadata/room_halls.tres" id="packed_room_halls"]
 
 [resource]
 script = ExtResource("1")
-templates = Array[ExtResource("2")]([ExtResource("7")])
+templates = Array[ExtResource("2")]([ExtResource("7"), ExtResource("packed_room_arena1"), ExtResource("packed_room_arena2"), ExtResource("packed_room_coaster"), ExtResource("packed_room_corner_NE"), ExtResource("packed_room_corner_NW"), ExtResource("packed_room_corner_SE"), ExtResource("packed_room_corner_SW"), ExtResource("packed_room_davestriple"), ExtResource("packed_room_fall1"), ExtResource("packed_room_halls")])

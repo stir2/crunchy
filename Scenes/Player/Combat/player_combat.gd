@@ -39,6 +39,12 @@ signal swing_freeze_started(ticks: int)
 @export_group("Impact")
 @export var attack_knockback: Vector2 = Vector2(170, -70)
 @export_range(0, 15, 1) var hitstop_frames: int = 3
+@export_range(0, 100, 1) var dash_breakable_damage: int = 3
+@export_range(0, 15, 1) var dash_breakable_hitstop_frames: int = 3
+
+var _breakable_rooms: Array[AbyssAuthoredRoom] = []
+var _swing_breakable_hits: Dictionary = {}
+var _dash_breakable_hits: Dictionary = {}
 
 var attack_state: AttackState = AttackState.IDLE
 var locked_facing: int = 1
@@ -66,6 +72,9 @@ var _jump_released: bool = false
 func _ready() -> void:
 	_ignore_attack_until_release = Input.is_action_pressed("Attack")
 	configure_hitbox()
+	_discover_breakable_rooms(get_tree().root)
+	get_tree().node_added.connect(_register_breakable_room)
+	get_tree().node_removed.connect(_remove_breakable_room)
 	sprite.frame_changed.connect(_sync_phase)
 	sprite.animation_finished.connect(_on_animation_finished)
 	player.movement_reset.connect(interrupt)
@@ -150,6 +159,7 @@ func try_start_attack() -> bool:
 	locked_facing = player.facing_direction
 	swing_id += 1
 	_hit_targets.clear()
+	_swing_breakable_hits.clear()
 	_hitstop_used = false
 	_swing_freeze_used = false
 	_swing_freeze_ticks_left = 0
@@ -244,6 +254,7 @@ func end_physics_tick() -> void:
 	var query := PhysicsShapeQueryParameters2D.new()
 	query.shape = hit_shape.shape
 	query.transform = hitbox.global_transform * hit_shape.transform
+	_damage_swing_breakables(query.transform)
 	query.collision_mask = 32
 	query.collide_with_bodies = false
 	query.collide_with_areas = true
@@ -271,14 +282,15 @@ func end_physics_tick() -> void:
 			target.begin_hitstop(maxi(0, _hitstop_until_tick - Engine.get_physics_frames()))
 		hit_confirmed.emit(target, hit) # Hook for future sounds and impact particles.
 
-func _start_hitstop() -> void:
+func _start_hitstop(frames: int = -1) -> void:
 	_hitstop_used = true
-	if hitstop_frames <= 0:
+	var duration := hitstop_frames if frames < 0 else frames
+	if duration <= 0:
 		return
-	_hitstop_until_tick = Engine.get_physics_frames() + hitstop_frames
+	_hitstop_until_tick = Engine.get_physics_frames() + duration
 	_paused_for_freeze = true
 	sprite.pause()
-	hitstop_started.emit(hitstop_frames)
+	hitstop_started.emit(duration)
 
 func _on_animation_finished() -> void:
 	if is_attacking() and sprite.is_attack_animation():
@@ -313,3 +325,47 @@ func _finish(interrupted: bool) -> void:
 	player.update_facing_direction()
 	sprite.finish_attack()
 	attack_finished.emit(interrupted)
+
+func _discover_breakable_rooms(node: Node) -> void:
+	_register_breakable_room(node)
+	for child in node.get_children():
+		_discover_breakable_rooms(child)
+
+func _register_breakable_room(node: Node) -> void:
+	if node is AbyssAuthoredRoom and not _breakable_rooms.has(node):
+		_breakable_rooms.append(node)
+
+func _remove_breakable_room(node: Node) -> void:
+	if node is AbyssAuthoredRoom:
+		_breakable_rooms.erase(node)
+
+func _damage_swing_breakables(hit_transform: Transform2D) -> void:
+	var rectangle := hit_shape.shape as RectangleShape2D
+	if rectangle == null:
+		return
+	var polygon := PackedVector2Array()
+	for corner in [Vector2(-1,-1),Vector2(1,-1),Vector2(1,1),Vector2(-1,1)]:
+		polygon.append(hit_transform * (corner * rectangle.size * 0.5))
+	for room in _breakable_rooms:
+		if room.breakables != null and room.breakables.damage_in_polygon(polygon,attack_damage,_swing_breakable_hits):
+			if not _hitstop_used:
+				_start_hitstop()
+
+func begin_breakable_dash() -> void:
+	_dash_breakable_hits.clear()
+
+func connect_breakable_dash() -> bool:
+	var connected := false
+	for index in range(player.get_slide_collision_count()):
+		var collision := player.get_slide_collision(index)
+		var layer := collision.get_collider() as TileMapLayer
+		if layer == null or layer.name != &"BreakableWalls":
+			continue
+		var room := layer.get_parent() as AbyssAuthoredRoom
+		if room == null or room.breakables == null:
+			continue
+		var point := collision.get_position() - collision.get_normal()*2.0
+		connected = room.breakables.damage_at_once(point,dash_breakable_damage,_dash_breakable_hits) or connected
+	if connected:
+		_start_hitstop(dash_breakable_hitstop_frames)
+	return connected

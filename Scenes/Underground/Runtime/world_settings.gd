@@ -1,9 +1,10 @@
 class_name AbyssRuntimeWorldSettings
 extends RefCounted
+const VERSION: int = 2
 ## Save exported generation inputs once; later descents ignore changed Inspector defaults.
 ## These primitive snapshots travel through the existing AbyssRoomState save payload.
 static func capture(configs: Array[Resource], registry: AbyssRoomTemplateRegistry) -> Dictionary:
-	var result := {"version":1, "registry":registry.resource_path}
+	var result := {"version":VERSION, "registry":registry.resource_path}
 	for i in range(configs.size()):
 		var values := {}
 		for info in configs[i].get_property_list():
@@ -19,7 +20,7 @@ static func capture(configs: Array[Resource], registry: AbyssRoomTemplateRegistr
 	return result
 
 static func apply(saved: Dictionary, configs: Array[Resource]) -> bool:
-	if saved.get("version") != 1 or not saved.get("registry") is String:
+	if saved.get("version") != VERSION or not saved.get("registry") is String:
 		return false
 	for i in range(configs.size()):
 		var values: Variant = saved.get(str(i))
@@ -54,12 +55,26 @@ static func apply(saved: Dictionary, configs: Array[Resource]) -> bool:
 						return false
 					value = StringName(value)
 			configs[i].set(info.name,value)
-	# Existing saved worlds keep their seed/topology, but use the updated physical
-	# slot convention too. Explicit custom offsets and other schemas stay intact.
-	for config in configs:
-		if config is AbyssRouteConfig and config.opening_schema == &"abyss_slots_v1":
-			if config.horizontal_offsets == Vector2i(6,17):
-				config.horizontal_offsets = AbyssRouteConfig.DEFAULT_OPENING_OFFSETS
-			if config.vertical_offsets == Vector2i(6,17):
-				config.vertical_offsets = AbyssRouteConfig.DEFAULT_OPENING_OFFSETS
+	return true
+
+## Reject before touching room mutations, progression, day state or actor vitals.
+static func compatibility_error(saved: Dictionary, region: AbyssRegionConfig, routes: AbyssRouteConfig) -> String:
+	if saved.get("version") != VERSION:
+		return "This abyss save uses the old room layout. It cannot enter the 40x40 runtime; the save and progression have been preserved. Start a separate new run to use the larger rooms."
+	var dimensions: Variant = saved.get("0")
+	var openings: Variant = saved.get("1")
+	if not dimensions is Dictionary or not openings is Dictionary:
+		return "Saved abyss layout data is missing or invalid; no progress was changed."
+	if not _matches_size(dimensions.get("room_size"),region.room_size) or not _matches_size(dimensions.get("chunk_size"),region.chunk_size):
+		return "Saved abyss room/chunk dimensions differ from this runtime. The save and progression have been preserved."
+	if openings.get("opening_schema") != String(routes.opening_schema) or openings.get("opening_width") != routes.opening_width:
+		return "Saved abyss openings are incompatible with this runtime. The save and progression have been preserved."
+	return ""
+
+static func _matches_size(value: Variant, expected: Vector2i) -> bool:
+	if not value is Array or value.size() != 2:
+		return false
+	for i in range(2):
+		if not (value[i] is int or value[i] is float) or not is_finite(float(value[i])) or float(value[i]) != float(expected[i]):
+			return false
 	return true

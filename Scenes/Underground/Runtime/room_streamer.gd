@@ -3,7 +3,7 @@ extends Node
 ## Room instances over deterministic chunk planning. Only derived caches are evicted.
 signal room_loaded(coords: Vector2i)
 signal room_unloaded(coords: Vector2i)
-@export_range(1, 8) var load_radius: int = 3
+@export_range(1, 8) var load_radius: int = 2
 @export_range(2, 10) var unload_radius: int = 4
 @export_range(1, 8) var rooms_per_frame: int = 1
 @export_range(0.1, 20.0, 0.1) var construction_budget_ms: float = 4.0
@@ -22,10 +22,15 @@ var container: Node2D
 var runtime: Node
 var terrain_config: AbyssTerrainConfig
 var room_pixels: Vector2
+var _room_size: Vector2i
+var deferred_templates: PackedStringArray = []
 var _pending: Array[Vector2i] = []
 var _settling: Dictionary[Vector2i, int] = {}
 var _required: Dictionary[Vector2i, bool] = {}
 var _last_plan: String = ""
+var _preparing: bool = false
+var _preparing_coords: Vector2i
+var _preparing_row: int = 0
 var _cache_chunk := Vector2i(2147483647,2147483647)
 
 func _ready() -> void:
@@ -37,12 +42,17 @@ func configure(region: AbyssRegionConfig, route: AbyssRouteConfig, terrain: Abys
 	if not selector.registration_errors.is_empty():
 		push_error("Runtime room registry: " + "; ".join(selector.registration_errors))
 		return false
+	deferred_templates.clear()
+	for metadata in registry.templates:
+		if metadata.room_size != region.room_size or metadata.opening_schema != route.opening_schema or metadata.opening_width != route.opening_width:
+			deferred_templates.append(String(metadata.template_id))
 	_cache_chunk = Vector2i(2147483647,2147483647)
 	terrain_config = terrain
 	mutations = state
 	boundary = AbyssCavernBoundaryField.new(routes,selector,terrain)
 	specials = AbyssSpecialRooms.new(routes,progression,progression_state)
 	room_pixels = Vector2(region.room_size * registry.tile_pixels)
+	_room_size = region.room_size
 	return true
 
 func world_to_room(point: Vector2) -> Vector2i:
@@ -88,9 +98,11 @@ func request_neighborhood(center: Vector2i, velocity: Vector2 = Vector2.ZERO) ->
 			wanted[lead] = true
 	for coords in _required:
 		wanted[coords] = true
+	if _preparing and not wanted.has(_preparing_coords):
+		_preparing = false
 	_pending.clear()
 	for coords in wanted:
-		if not rooms.has(coords):
+		if not rooms.has(coords) and not (_preparing and coords == _preparing_coords):
 			_pending.append(coords)
 	var direction := velocity.normalized()
 	_pending.sort_custom(func(a: Vector2i,b: Vector2i) -> bool:
@@ -106,12 +118,29 @@ func _process(_delta: float) -> void:
 		return
 	var started := Time.get_ticks_usec()
 	var built := 0
-	while not _pending.is_empty() and built < rooms_per_frame:
-		var coords: Vector2i = _pending.pop_front()
-		if not rooms.has(coords):
+	while (_preparing or not _pending.is_empty()) and built < rooms_per_frame:
+		if not _preparing:
+			_preparing_coords = _pending.pop_front()
+			if rooms.has(_preparing_coords):
+				continue
+			_preparing = true
+			_preparing_row = 0
+			if selector.select_room(routes,_preparing_coords).method == AbyssRoomConstructionRequest.Method.AUTHORED:
+				_preparing_row = _room_size.y
+		var size := _room_size
+		if _preparing_row < size.y:
+			# Warm the same deterministic boundary cache a row at a time. The
+			# synchronous builder then reads cached samples instead of doing all
+			# signed-field/noise work in one frame. No partial collision is exposed.
+			for x in range(size.x):
+				boundary.is_solid(_preparing_coords*size+Vector2i(x,_preparing_row))
+			_preparing_row += 1
+		if _preparing_row >= size.y:
+			var coords := _preparing_coords
+			_preparing = false
 			_build_room(coords)
 			built += 1
-		if Time.get_ticks_usec()-started >= construction_budget_ms*1000.0:
+		if not active or Time.get_ticks_usec()-started >= construction_budget_ms*1000.0:
 			break
 
 func _build_room(coords: Vector2i) -> void:
@@ -171,7 +200,7 @@ func _physics_process(delta: float) -> void:
 	runtime.set_streaming_hold(not safe)
 	_unload_distant()
 	var chunk := routes.regions.room_to_chunk(current_room)
-	if chunk != _cache_chunk and _pending.is_empty() and _settling.is_empty():
+	if chunk != _cache_chunk and _pending.is_empty() and not _preparing and _settling.is_empty():
 		_cache_chunk = chunk
 		var chunk_bounds := Rect2i(chunk-Vector2i(2,2),Vector2i(5,5))
 		var cache_radius := maxi(load_radius+6,specials.config.checkpoint_min_spacing_rooms+load_radius+3)
@@ -199,6 +228,7 @@ func unload_room(coords: Vector2i) -> bool:
 	return true
 
 func clear_rooms() -> void:
+	_preparing = false
 	for room in rooms.values():
 		container.remove_child(room)
 		room.queue_free()

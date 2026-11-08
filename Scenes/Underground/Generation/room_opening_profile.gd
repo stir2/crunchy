@@ -39,11 +39,11 @@ func _get(property: StringName) -> Variant:
 func _set(property: StringName, value: Variant) -> bool:
 	if not String(property).begins_with("Connections/"):
 		return false
-	set_connection(StringName(String(property).trim_prefix("Connections/")), bool(value), AbyssRegionConfig.DEFAULT_ROOM_SIZE)
+	set_connection(StringName(String(property).trim_prefix("Connections/")), bool(value), AbyssRegionConfig.LEGACY_ROOM_SIZE)
 	return true
 
 
-func set_connection(id: StringName, enabled: bool, size: Vector2i) -> void:
+func set_connection(id: StringName, enabled: bool, size: Vector2i, width: int = 3) -> void:
 	var index := OPENING_IDS.find(id)
 	if index < 0:
 		return
@@ -51,10 +51,10 @@ func set_connection(id: StringName, enabled: bool, size: Vector2i) -> void:
 		if not openings.has(id):
 			openings.append(id)
 		# Read the central route defaults; designers never enter tile coordinates.
-		var config := AbyssRouteConfig.new()
 		var side: int = index >> 1
 		var slot := index % 2
-		var offset: int = config.horizontal_offsets[slot] if side % 2 == 0 else config.vertical_offsets[slot]
+		var extent := size.x if side%2==0 else size.y
+		var offset: int = AbyssRouteConfig.default_offsets_for_extent(extent,width)[slot]
 		match side:
 			0: opening_tiles[id] = Vector2i(offset, 0)
 			1: opening_tiles[id] = Vector2i(size.x - 1, offset)

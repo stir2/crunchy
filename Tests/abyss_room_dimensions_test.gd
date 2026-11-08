@@ -9,28 +9,34 @@ func _initialize() -> void:
 func run() -> void:
 	var current := AbyssRegionConfig.new()
 	var routes := AbyssRouteConfig.new()
-	check(current.room_size == Vector2i(24, 24) and current.chunk_size == Vector2i(8, 8), "Default dimensions incorrect")
+	check(current.room_size == Vector2i(40, 40) and current.chunk_size == Vector2i(8, 8), "Default dimensions incorrect")
 	var registry: AbyssRoomTemplateRegistry = load("res://Scenes/Underground/Rooms/example_registry.tres")
 	var selector := AbyssRoomTemplateSelector.new(registry, current.global_seed)
 	check(selector.registration_errors.is_empty(), "Migrated library invalid")
 	var base: AbyssAuthoredRoom = load("res://Scenes/Underground/Rooms/room_base.tscn").instantiate()
 	var scenes: Array[AbyssAuthoredRoom] = [base]
 	for metadata in registry.templates:
-		check(metadata.room_size == current.room_size, "Metadata dimensions differ")
+		check(metadata.room_size == AbyssRegionConfig.LEGACY_ROOM_SIZE, "Metadata dimensions differ")
 		scenes.append(metadata.scene.instantiate())
 	for room in scenes:
-		check(room.room_size == current.room_size and room.tile_pixels == 16 and room.scale == Vector2.ONE, "Room size/scale incorrect")
-		check(room.get_node("ObjectMarkers/RoomCenter").position == Vector2(current.room_size * 16) / 2, "Center marker misplaced")
+		check(room.room_size == AbyssRegionConfig.LEGACY_ROOM_SIZE and room.tile_pixels == 16 and room.scale == Vector2.ONE, "Room size/scale incorrect")
+		check(room.get_node("ObjectMarkers/RoomCenter").position == Vector2(room.room_size * 16) / 2, "Center marker misplaced")
+		var guides := AbyssRouteConfig.new()
+		guides.horizontal_offsets = Vector2i(5,18)
+		guides.vertical_offsets = Vector2i(5,18)
 		for side in range(4):
 			for slot in range(2):
 				var id := "%s_%d" % [["north", "east", "south", "west"][side], slot]
-				check(room.get_node("OpeningGuides/" + id).position == (Vector2(routes.opening_position(side, slot, current.room_size)) + Vector2(0.5, 0.5)) * 16, "Guide misplaced")
+				check(room.get_node("OpeningGuides/" + id).position == (Vector2(guides.opening_position(side, slot, room.room_size)) + Vector2(0.5, 0.5)) * 16, "Guide misplaced")
 		room.free()
 	# Configurability: one differently sized world falls back rather than mixing
 	# the registered 24x24 scenes into a larger room grid.
 	var custom := current.duplicate() as AbyssRegionConfig
 	custom.room_size = Vector2i(32, 28)
-	var custom_generator := AbyssRouteGenerator.new(custom, routes)
+	var custom_routes := routes.duplicate() as AbyssRouteConfig
+	custom_routes.horizontal_offsets = AbyssRouteConfig.default_offsets_for_extent(custom.room_size.x,routes.opening_width)
+	custom_routes.vertical_offsets = AbyssRouteConfig.default_offsets_for_extent(custom.room_size.y,routes.opening_width)
+	var custom_generator := AbyssRouteGenerator.new(custom, custom_routes)
 	var fallback := selector.select_room(custom_generator, Vector2i(-1, 2))
 	check(fallback.method == AbyssRoomConstructionRequest.Method.PROCEDURAL and fallback.requirements.room_size == custom.room_size, "Custom world lost dimensions or selected mixed-size geometry")
 	var compared := 0
@@ -38,10 +44,12 @@ func run() -> void:
 		var config := current.duplicate() as AbyssRegionConfig
 		config.global_seed = seed_value
 		var legacy := config.duplicate() as AbyssRegionConfig
-		legacy.room_size = Vector2i(12, 12)
+		legacy.room_size = Vector2i(24, 24)
 		var legacy_routes := routes.duplicate() as AbyssRouteConfig
-		legacy_routes.horizontal_offsets = Vector2i(3, 8)
-		legacy_routes.vertical_offsets = Vector2i(3, 8)
+		legacy_routes.horizontal_offsets = Vector2i(5, 18)
+		legacy_routes.opening_width = 3
+		legacy_routes.opening_schema = &"abyss_slots_v1"
+		legacy_routes.vertical_offsets = Vector2i(5, 18)
 		var before := AbyssRouteGenerator.new(legacy, legacy_routes)
 		var after := AbyssRouteGenerator.new(config, routes)
 		for cy in range(-1, 2):

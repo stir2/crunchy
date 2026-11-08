@@ -18,6 +18,8 @@ texture = ExtResource("1_ttk8o")
 5:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 6:0/0 = 0
 6:0/0/custom_data_1 = &"spike"
+7:0/0 = 0
+7:0/0/custom_data_1 = &"spike"
 
 [resource]
 physics_layer_0/collision_layer = 1

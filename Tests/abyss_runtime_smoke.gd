@@ -14,7 +14,7 @@ func tick(count: int = 1) -> void:
 		await physics_frame
 		await process_frame
 func settled(runtime: Node, center: Vector2i) -> void:
-	for i in range(300):
+	for i in range(1200):
 		if runtime.stream.neighborhood_ready(center):
 			return
 		await tick()
@@ -30,6 +30,65 @@ func fingerprint(room: AbyssAuthoredRoom) -> Dictionary:
 				data.append([cell,layer.get_cell_source_id(cell),layer.get_cell_atlas_coords(cell)])
 			result[layer.name] = data
 	return result
+
+func verify_player_clearance(runtime: Node) -> void:
+	# Sweep the real 30x36 shape through every slot in both directions. These
+	# temporary five rooms live far from the streamed world and are never saved.
+	var holder := Node2D.new()
+	root.add_child(holder)
+	var routes := runtime.route_configuration as AbyssRouteConfig
+	var center := Vector2i(-500,-500)
+	var coords_list: Array[Vector2i] = [center]
+	for direction in AbyssRegionGenerator.DIRECTIONS: coords_list.append(center+direction)
+	for coords in coords_list:
+		var req := AbyssRoomRequirements.new()
+		req.global_coords = coords
+		req.room_size = Vector2i(40,40)
+		req.region = AbyssRoomData.Region.PACKED
+		for side in range(4):
+			for slot in range(2): req.required_openings[AbyssRouteConfig.opening_id(side,slot)] = routes.opening_position(side,slot,req.room_size)
+		var request := AbyssRoomConstructionRequest.new()
+		request.requirements = req
+		request.room_seed = 123
+		var room := AbyssRoomTerrainBuilder.build(request,runtime.terrain_configuration)
+		holder.add_child(room)
+		(room.get_node("Solid") as TileMapLayer).update_internals()
+	await tick(3)
+	var shape_node := runtime.player.get_node("CollisionShape2D") as CollisionShape2D
+	check((shape_node.shape as RectangleShape2D).size == Vector2(30,36),"Player collider changed")
+	var space: PhysicsDirectSpaceState2D = runtime.player.get_world_2d().direct_space_state
+	for side in range(4):
+		var direction: Vector2i = AbyssRegionGenerator.DIRECTIONS[side]
+		for slot in range(2):
+			var cell := routes.opening_position(side,slot,Vector2i(40,40))
+			# Four-wide aperture centers lie between the middle pair of tiles.
+			var door := Vector2(center*640+cell*16)
+			if side==1: door.x += 16
+			if side==2: door.y += 16
+			var query := PhysicsShapeQueryParameters2D.new()
+			query.shape = shape_node.shape
+			query.transform = Transform2D(0,door-Vector2(direction)*32+Vector2(0,18))*shape_node.transform
+			query.motion = Vector2(direction)*64
+			query.collision_mask = runtime.player.collision_mask
+			query.exclude = [runtime.player.get_rid()]
+			check(space.cast_motion(query)[0] == 1.0,"Player clearance blocked at slot %d:%d" % [side,slot])
+	# Use the existing controller to climb a generated vertical segment.
+	var original_position: Vector2 = runtime.player.global_position
+	runtime.stream.active = false
+	runtime.camera.set_physics_process(false)
+	runtime.player.global_position = Vector2(center*640)+Vector2(9.5*16,10.5*16+18)
+	runtime.player.reset_movement()
+	var start_y: float = runtime.player.global_position.y
+	Input.action_press("Move Up")
+	await tick(3)
+	check(runtime.player.climbing.is_climbing() and runtime.player.global_position.y < start_y,"Generated climbable does not support existing player movement")
+	Input.action_release("Move Up")
+	runtime.player.global_position = original_position
+	runtime.player.reset_movement()
+	runtime.stream.active = true
+	runtime.camera.activate(runtime.player,runtime.stream)
+	holder.queue_free()
+	await tick()
 func run() -> void:
 	var started := Time.get_ticks_msec()
 	var game := root.get_node("GameController")
@@ -43,7 +102,7 @@ func run() -> void:
 	var host_id: int = main.get_instance_id()
 	main.change_scene("res://Scenes/Underground/abyss_runtime.tscn")
 	var runtime: Node = main.active_scene
-	for i in range(300):
+	for i in range(1200):
 		if runtime.is_active() or not runtime.last_error.is_empty(): break
 		await tick()
 	check(runtime.is_active(),"Runtime failed entrance startup: " + runtime.last_error)
@@ -56,12 +115,20 @@ func run() -> void:
 	var spawn: Vector2 = runtime.player.global_position
 	check(main.get_instance_id() == host_id and current_scene == main,"Runtime replaced persistent Main")
 	check(runtime.player.is_on_floor() and runtime.player.health.current_health == 5,"Entrance lacks support or resets HP")
-	check(stream.neighborhood_ready(entrance) and stream.rooms.size() == 49,"Initial 7x7 footprint incomplete")
+	check(stream.neighborhood_ready(entrance) and stream.rooms.size() == 25,"Initial 5x5 footprint incomplete")
 	check(stream.is_rect_ready(runtime.camera.view_rect(runtime.camera.global_position)),"Visible startup terrain missing")
 	check(not stream.unload_room(stream.current_room),"Streamer unloaded player's current room")
 	check(stream.world_to_room(stream.container.to_global(Vector2(-1,-1))) == Vector2i(-1,-1),"Negative room floor division")
 	check(stream.routes.regions.room_to_chunk(Vector2i(-1,-1)) == Vector2i(-1,-1),"Negative chunk floor division")
+	check(runtime.configuration.room_size == Vector2i(40,40) and stream.room_pixels == Vector2(640,640),"Runtime dimensions incorrect")
+	check(stream.load_radius == 2 and stream.unload_radius == 4,"Streaming radii incorrect")
+	var legacy_count := 0
+	for metadata in runtime.template_registry.templates:
+		if metadata.room_size != runtime.configuration.room_size or metadata.opening_schema != runtime.route_configuration.opening_schema or metadata.opening_width != runtime.route_configuration.opening_width:
+			legacy_count += 1
+	check(stream.deferred_templates.size() == legacy_count,"Legacy templates were not safely deferred")
 	var original := fingerprint(stream.rooms[entrance])
+	await verify_player_clearance(runtime)
 	# Force a cold leading room at dash/fast-fall speed: motion must wait for
 	# collision instead of entering the missing room, without losing momentum.
 	var ahead := entrance+Vector2i.RIGHT
@@ -77,20 +144,67 @@ func run() -> void:
 	await settled(runtime,entrance)
 	await tick(3)
 	check(not runtime._holding and stream.is_rect_ready(runtime.camera.view_rect(runtime.camera.global_position)),"Streaming hold did not resume with complete visible collision")
+	# Legacy source scenes stay untouched. Supply a small in-memory 40x40
+	# authored fixture to exercise actual streamed breakable persistence.
 	var mutation_room := Vector2i(2147483647,0)
 	var mutation_key := ""
 	var mutated: Dictionary = {}
 	for coords in stream.rooms:
-		if coords == stream.current_room or stream.rooms[coords].breakables == null: continue
-		for group in stream.rooms[coords].breakables.groups():
-			if not group.protected and group.health > 0:
-				mutation_room = coords
-				mutation_key = group.key
-				stream.rooms[coords].destroy_breakable_group(group.id)
-				mutated = fingerprint(stream.rooms[coords])
+		var request := stream.selector.select_room(stream.routes,coords)
+		if coords == stream.current_room or request.requirements.region != AbyssRoomData.Region.PACKED or request.requirements.neighbor_open_sides != 0: continue
+		var source := request.scene.instantiate() as AbyssAuthoredRoom if request.method == AbyssRoomConstructionRequest.Method.AUTHORED else AbyssRoomTerrainBuilder.build(request,stream.terrain_config)
+		var solid := source.get_node("Solid") as TileMapLayer
+		var breakable := source.get_node_or_null("BreakableWalls") as TileMapLayer
+		if breakable == null:
+			breakable = TileMapLayer.new()
+			breakable.name = "BreakableWalls"
+			breakable.tile_set = solid.tile_set
+			source.add_child(breakable)
+		var cell := Vector2i(-1,-1)
+		for candidate in solid.get_used_cells():
+			if candidate.x > 4 and candidate.x < 35 and candidate.y > 4 and candidate.y < 35:
+				cell = candidate
 				break
-		if not mutation_key.is_empty(): break
-	check(not mutation_key.is_empty(),"Startup footprint contains no mutable authored breakable to verify")
+		check(cell.x >= 0,"No interior rock for mutation fixture")
+		solid.erase_cell(cell)
+		breakable.set_cell(cell,0,Vector2i(5,0))
+		source.position = Vector2.ZERO
+		for child in source.get_children(): child.owner = source
+		var packed := PackedScene.new()
+		packed.pack(source)
+		var metadata := AbyssRoomTemplateMetadata.new()
+		var replace_index := -1
+		for i in range(stream.selector._templates.size()):
+			if stream.selector._templates[i].template_id == request.template_id:
+				replace_index = i
+				metadata = stream.selector._templates[i].duplicate(true) as AbyssRoomTemplateMetadata
+				break
+		if replace_index < 0: metadata.template_id = &"runtime_40_mutation_fixture"
+		metadata.scene = packed
+		metadata.room_size = Vector2i(40,40)
+		metadata.opening_schema = stream.routes.get_chunk(Vector2i.ZERO).route_config.opening_schema
+		metadata.opening_width = request.requirements.opening_width
+		metadata.opening_combinations[0].opening_tiles = request.requirements.required_openings.duplicate()
+		metadata.opening_combinations[0].openings.assign(request.requirements.required_openings.keys())
+		check(AbyssRoomTemplateValidator.validate(metadata).is_empty(),"40x40 mutation fixture invalid")
+		if replace_index >= 0: stream.selector._templates[replace_index] = metadata
+		else: stream.selector._templates.append(metadata)
+		mutation_room = coords
+		source.free()
+		break
+	check(mutation_room.x != 2147483647,"No packed room for streamed mutation fixture")
+	if mutation_room.x != 2147483647:
+		stream.unload_room(mutation_room)
+		stream.boundary.retain_cached_rooms(Rect2i(10000,10000,1,1))
+		stream.request_neighborhood(entrance)
+		await settled(runtime,entrance)
+		var room: AbyssAuthoredRoom = stream.rooms[mutation_room]
+		check(room.breakables != null,"40x40 authored room did not replace procedural fallback")
+		if room.breakables != null:
+			var group: Dictionary = room.breakables.groups()[0]
+			mutation_key = group.key
+			room.destroy_breakable_group(group.id)
+			mutated = fingerprint(room)
 	# Use a real generated horizontal contract at the next chunk edge.
 	var crossing: Dictionary = {}
 	# User seeds can leave chunk zero without an eastward route contract.
@@ -138,8 +252,19 @@ func run() -> void:
 		check(fingerprint(stream.rooms[mutation_room]) == mutated and stream.mutations.groups.get(mutation_key) == 0,"Breakable mutation lost on reconstruction")
 	var border_coords := Vector2i(stream.specials.config.room_bounds(1,8).y-1,0)
 	var barrier_room := AbyssRoomTerrainBuilder.build(stream.selector.select_room(stream.routes,border_coords),stream.terrain_config,stream.boundary,stream.mutations,stream.specials)
-	check(barrier_room.get_node("LevelBoundaryEast").get_used_cells().size() == 24,"Locked level border missing")
+	check(barrier_room.get_node("LevelBoundaryEast").get_used_cells().size() == 40,"Locked level border missing")
 	barrier_room.free()
+	# Gate passages scale independently of the full-height locked border.
+	for y in range(stream.specials.config.FRAGMENT_INTERVAL):
+		var coords := Vector2i(border_coords.x,y)
+		if stream.specials.gate_at(coords).is_empty(): continue
+		var gate_room := AbyssRoomTerrainBuilder.build(stream.selector.select_room(stream.routes,coords),stream.terrain_config,stream.boundary,stream.mutations,stream.specials)
+		var barrier := gate_room.get_node("LevelBoundaryEast") as AbyssLevelBoundary
+		check(barrier.gate_cells.size() == runtime.route_configuration.opening_width and barrier.get_used_cells().size() == 40,"Gate width or locked collision incorrect")
+		for cell in barrier.gate_cells:
+			check((gate_room.get_node("Solid") as TileMapLayer).get_cell_source_id(cell) == -1,"Gate has a second solid wall behind its barrier")
+		gate_room.free()
+		break
 	# Probe hysteresis without changing movement parameters.
 	runtime.player.set_physics_process(false)
 	runtime.camera.activate(runtime.player,stream)
@@ -171,7 +296,7 @@ func run() -> void:
 	runtime.player.health.current_health = 2 # Discarded actor must not overwrite loaded state.
 	main.change_scene("res://Scenes/Underground/abyss_runtime.tscn")
 	runtime = main.active_scene
-	for i in range(300):
+	for i in range(1200):
 		if runtime.is_active(): break
 		await tick()
 	check(runtime.is_active() and runtime.player.health.current_health == 4 and is_equal_approx(runtime.player.stamina.current_stamina,37.5),"New descent reset/overwrote saved vitals")
@@ -181,6 +306,13 @@ func run() -> void:
 	restored.begin_day(2)
 	check(mutation_key.is_empty() or not restored.groups.has(mutation_key),"Daily breakable did not reset")
 	check(restored.markers.has("permanent_marker") and game.abyss_progression_state.gates.has("retained") and game.abyss_progression_state.fragments.has("retained") and game.abyss_progression_state.checkpoints.has("retained"),"Daily reset cleared permanent state")
+	# An old save must fail compatibility without altering permanent/daily state.
+	var snapshot := restored.serialize()
+	var legacy_settings: Dictionary = restored.world_settings.duplicate(true)
+	legacy_settings.version = 1
+	legacy_settings["0"].room_size = [24,24]
+	check(not AbyssRuntimeWorldSettings.compatibility_error(legacy_settings,runtime.configuration,runtime.route_configuration).is_empty(),"Old layout save was silently accepted")
+	check(restored.serialize() == snapshot,"Compatibility rejection changed saved progress")
 	main.queue_free()
 	await process_frame
 	print("Abyss runtime: ",checks," checks; failures=",failures," elapsed_ms=",Time.get_ticks_msec()-started)

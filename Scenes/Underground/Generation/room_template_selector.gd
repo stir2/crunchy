@@ -36,6 +36,8 @@ func _init(registry: AbyssRoomTemplateRegistry, global_seed: int) -> void:
 static func compatible(metadata: AbyssRoomTemplateMetadata, profile: AbyssRoomOpeningProfile, request: AbyssRoomRequirements) -> bool:
 	if metadata.tile_pixels != request.tile_pixels or metadata.room_size != request.room_size or metadata.opening_schema != request.opening_schema:
 		return false
+	if metadata.opening_width != request.opening_width:
+		return false
 	if metadata.region == AbyssRoomTemplateMetadata.Compatibility.TRANSITION:
 		if not request.transition or int(metadata.transition_base_region) != int(request.region):
 			return false

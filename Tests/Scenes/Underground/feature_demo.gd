@@ -26,8 +26,9 @@ func _rebuild() -> void:
 	var req := AbyssRoomRequirements.new()
 	req.global_coords = Vector2i(0,1)
 	req.region = AbyssRoomData.Region.OPEN
-	req.room_size = AbyssRegionConfig.DEFAULT_ROOM_SIZE
-	req.opening_schema = &"abyss_slots_v1"
+	req.room_size = registry.templates[0].room_size
+	req.opening_schema = registry.templates[0].opening_schema
+	req.opening_width = registry.templates[0].opening_width
 	room = AbyssRoomSceneInstantiator.instantiate_authored(selector.select(req),state)
 	if room == null:
 		return

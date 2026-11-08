@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="AbyssRoomTemplateMetadata" format=3 uid="uid://btyp4amuecmih"]
+
+[ext_resource type="Script" uid="uid://ck5jir3ntl07j" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="1_metadata"]
+[ext_resource type="Script" uid="uid://dnt0nogb0yx73" path="res://Scenes/Underground/Generation/room_opening_profile.gd" id="2_profile"]
+[ext_resource type="PackedScene" uid="uid://bh7in0nmde8ou" path="res://Scenes/Underground/Rooms/Authored/Packed/room_pits.tscn" id="3_scene"]
+
+[sub_resource type="Resource" id="Resource_openings"]
+script = ExtResource("2_profile")
+openings = Array[StringName]([&"east:0", &"west:0"])
+opening_tiles = Dictionary[StringName, Vector2i]({
+&"east:0": Vector2i(39, 9),
+&"west:0": Vector2i(0, 9)
+})
+
+[resource]
+script = ExtResource("1_metadata")
+template_id = &"room_pits"
+display_name = "Pits"
+scene = ExtResource("3_scene")
+room_size = Vector2i(40, 40)
+opening_schema = &"abyss_slots_v2"
+opening_width = 5
+supported_openings = Array[StringName]([&"east:0", &"west:0"])
+opening_combinations = Array[ExtResource("2_profile")]([SubResource("Resource_openings")])

@@ -57,7 +57,7 @@ static func apply(room: AbyssAuthoredRoom, request: AbyssRoomConstructionRequest
 	for definition in service.definitions_at(coords):
 		var point := _position(room,definition.kind)
 		if definition.kind == "gate":
-			point = Vector2(room.room_size.x-0.5,room.room_size.y/2+0.5)*room.tile_pixels
+			point = Vector2(room.room_size.x-0.5,room.room_size.y*0.5)*room.tile_pixels
 		if point.x < 0:
 			room.content_warnings.append("No clear special marker position: " + definition.id)
 			continue
@@ -88,12 +88,22 @@ static func apply(room: AbyssAuthoredRoom, request: AbyssRoomConstructionRequest
 			continue
 		var left := coords if x != 0 else coords + Vector2i.LEFT
 		var gate := service.gate_at(left)
+		var width := request.requirements.opening_width
+		var gate_start := room.room_size.y/2-(width >> 1)
+		if not gate.is_empty() and request.method == AbyssRoomConstructionRequest.Method.PROCEDURAL:
+			# An unlocked gate must lead to the room interior, not a second rock wall.
+			# The separate locked barrier below still seals both sides completely.
+			for depth in range(room.room_size.x/2+2):
+				for y in range(gate_start,gate_start+width):
+					var cell := Vector2i(x+(-depth if x>0 else depth),y)
+					for key in ["Solid","Platforms"]:
+						(room.get_node(key) as TileMapLayer).erase_cell(cell)
 		var barrier := AbyssLevelBoundary.new()
 		barrier.name = "LevelBoundaryWest" if x == 0 else "LevelBoundaryEast"
 		barrier.tile_set = TILES
 		for y in range(room.room_size.y):
 			barrier.set_cell(Vector2i(x,y),0,Vector2i.ZERO)
-			if not gate.is_empty() and y >= room.room_size.y/2-1 and y <= room.room_size.y/2+1:
+			if not gate.is_empty() and y >= gate_start and y < gate_start+width:
 				barrier.gate_cells.append(Vector2i(x,y))
 		room.add_child(barrier)
 		barrier.configure(service,gate)

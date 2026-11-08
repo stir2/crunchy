@@ -144,6 +144,9 @@ func _physics_process(delta: float) -> void:
 		try_restore_wall_momentum(delta)
 	var horizontal_speed_before: float = velocity.x
 	move_and_slide()
+	var breakable_dash_hit: bool = state_for_motion == MovementState.DASHING and movement_state == MovementState.DASHING and combat.connect_breakable_dash()
+	if breakable_dash_hit:
+		velocity = Vector2(dash_direction * active_dash_speed, 0.0)
 	var new_wall_impact: bool = remember_wall_impact(horizontal_speed_before)
 	if had_wall_momentum and not new_wall_impact:
 		wall_momentum_frames_remaining = maxi(0, wall_momentum_frames_remaining - 1)
@@ -161,7 +164,8 @@ func _physics_process(delta: float) -> void:
 	if had_coyote:
 		coyote_frames_remaining = maxi(0, coyote_frames_remaining - 1)
 	jump_buffer_frames_remaining = maxi(0, jump_buffer_frames_remaining - 1)
-	advance_dash_phase(state_for_motion)
+	if not breakable_dash_hit:
+		advance_dash_phase(state_for_motion)
 	# The ending tick is not charged against the new cooldown. Its next N
 	# physics ticks all reject Dash, even while a jump wind-up freezes movement.
 	if not _dash_cooldown_started_this_tick:
@@ -533,6 +537,7 @@ func update_dash_charge() -> void:
 
 
 func begin_dash() -> void:
+	combat.begin_breakable_dash()
 	# Snapshot strength once: letting go cannot alter an already launched dash.
 	dash_charge_ratio = clampf(float(dash_charge_frames_elapsed) / _dash_charge_limit_frames, 0.0, 1.0) if _dash_charge_limit_frames > 0 else 1.0
 	var full_speed: float = maxf(0.0, dash_speed)

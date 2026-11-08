@@ -3,6 +3,8 @@ extends RefCounted
 ## Structural/boundary authoring checks only; not traversal or physics simulation.
 static func validate(metadata: AbyssRoomTemplateMetadata) -> PackedStringArray:
 	var errors := PackedStringArray()
+	if metadata.opening_width < 3 or metadata.opening_width > 8:
+		errors.append("Opening width must be between 3 and 8 tiles")
 	if metadata.room_size.x < 3 or metadata.room_size.y < 3 or metadata.opening_combinations.is_empty():
 		errors.append("Missing combinations or invalid room dimensions")
 		return errors
@@ -56,7 +58,7 @@ static func validate(metadata: AbyssRoomTemplateMetadata) -> PackedStringArray:
 				var on_side := (side == 0 and cell.y == 0) or (side == 1 and cell.x == size.x - 1) or (side == 2 and cell.y == size.y - 1) or (side == 3 and cell.x == 0)
 				if not slot in ["0", "1"] or not on_side or not Rect2i(Vector2i.ZERO, size).has_point(cell):
 					errors.append("Invalid opening ID/coordinate: %s" % id)
-				for opening_cell in AbyssRouteConfig.opening_cells(id, cell):
+				for opening_cell in AbyssRouteConfig.opening_cells(id, cell, metadata.opening_width):
 					if not Rect2i(Vector2i.ZERO, size).has_point(opening_cell) or (opening_cell.x in [0, size.x - 1] and opening_cell.y in [0, size.y - 1]):
 						errors.append("Opening span outside room: %s" % id)
 					holes[opening_cell] = true
