@@ -1,7 +1,9 @@
 class_name AbyssTerrainConfig
 extends Resource
-## Boundary apertures are three tiles wide, centered on the route slots.
-@export_range(2, 5) var tunnel_width: int = 3
+## Interior passages; boundary aperture width belongs to AbyssRouteConfig.
+@export_range(4, 12) var tunnel_width: int = 5
+## Vertical route segments exceed jump height in 40x40 rooms. Reuse tile climbing.
+@export var route_climbables: bool = true
 @export_range(0, 3) var shape_variation: int = 2
 @export_range(0.0, 1.0) var internal_openness: float = 0.35
 @export_range(0.0, 1.0) var platform_probability: float = 0.65

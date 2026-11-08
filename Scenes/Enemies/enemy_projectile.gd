@@ -1,6 +1,6 @@
 extends CombatDamageArea
-## Temporary projectile art is the existing Godot icon.
-const ICON = preload("res://icon.svg")
+## Animated web shot. Movement and dash reflection stay separate from the art.
+const WEB_FRAMES = preload("res://Scenes/Enemies/spider_projectile_frames.tres")
 @export var lifetime: float = 2.4
 @export var curve_gravity: float = 0.0
 @export var passes_terrain: bool = false
@@ -11,7 +11,8 @@ var travel_velocity: Vector2 = Vector2.ZERO
 var source_actor: Node2D
 var _bounces_left: int = 0
 var reflected: bool = false
-var _visual: Sprite2D
+var support_exit_distance: float = 0.0
+var _visual: AnimatedSprite2D
 
 
 func _ready() -> void:
@@ -22,10 +23,14 @@ func _ready() -> void:
 	collision_mask = 0
 	monitoring = false
 	monitorable = false
-	var visual := Sprite2D.new()
-	visual.texture = ICON
+	var visual := AnimatedSprite2D.new()
+	visual.sprite_frames = WEB_FRAMES
+	visual.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	visual.modulate = shot_color
-	visual.scale = Vector2.ONE * (14.0 / ICON.get_width())
+	visual.scale = Vector2(0.5, 0.5)
+	visual.offset = Vector2(1, -3)
+	visual.rotation = travel_velocity.angle()
+	visual.play(&"fly")
 	add_child(visual)
 	_visual = visual
 
@@ -34,6 +39,7 @@ func reflect_from(defender: CharacterBody2D) -> bool:
 	if reflected or not active:
 		return false
 	reflected = true
+	support_exit_distance = 0.0
 	source_actor = defender
 	curve_gravity = 0.0
 	var speed := clampf(maxf(travel_velocity.length(), absf(defender.velocity.x)), 200.0, 600.0)
@@ -41,6 +47,7 @@ func reflect_from(defender: CharacterBody2D) -> bool:
 	# Move clear of the player; from now on this shot only tests enemy hurtboxes.
 	global_position = defender.global_position + Vector2(defender.dash_direction * 18, -18)
 	_visual.modulate = Color(0.4, 1.0, 1.0)
+	_visual.rotation = travel_velocity.angle()
 	return true
 
 
@@ -51,14 +58,27 @@ func _physics_process(delta: float) -> void:
 		return
 	var destination := global_position + travel_velocity * delta + Vector2(0, 0.5 * curve_gravity * delta * delta)
 	travel_velocity.y += curve_gravity * delta
+	_visual.rotation = travel_velocity.angle()
 	# Test the full step so a fast shot cannot skip a thin wall or hurtbox.
 	var mask := 32 if reflected else 4
 	if not passes_terrain:
 		mask |= 1
-	var ray := PhysicsRayQueryParameters2D.create(global_position, destination, mask)
+	var ray_start := global_position
+	var contact: Dictionary = {}
+	if support_exit_distance > 0:
+		var distance := minf(support_exit_distance, global_position.distance_to(destination))
+		var exit := global_position.move_toward(destination, distance)
+		var support_ray := PhysicsRayQueryParameters2D.create(global_position, exit, 32 if reflected else 4)
+		support_ray.collide_with_areas = true
+		support_ray.hit_from_inside = true
+		contact = get_world_2d().direct_space_state.intersect_ray(support_ray)
+		ray_start = exit
+		support_exit_distance = maxf(0, support_exit_distance - distance)
+	var ray := PhysicsRayQueryParameters2D.create(ray_start, destination, mask)
 	ray.collide_with_areas = true
 	ray.hit_from_inside = true
-	var contact := get_world_2d().direct_space_state.intersect_ray(ray)
+	if contact.is_empty() and ray_start.distance_squared_to(destination) > 0.001:
+		contact = get_world_2d().direct_space_state.intersect_ray(ray)
 	if not contact.is_empty():
 		var hurtbox := contact.collider as CombatDamageable
 		if hurtbox == null and _bounces_left > 0 and not passes_terrain:

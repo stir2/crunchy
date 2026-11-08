@@ -8,7 +8,7 @@ signal climbing_changed(attached: bool)
 var _attached: bool = false
 var _reattach_requires_up_release: bool = false
 var _moving_this_tick: bool = false
-var _motion_start_y: float = 0.0
+var _motion_start: Vector2 = Vector2.ZERO
 var _providers: Array[Node2D] = []
 @onready var player: CharacterBody2D = get_parent()
 @onready var detector: CollisionShape2D = player.get_node("ClimbDetector/CollisionShape2D")
@@ -81,9 +81,7 @@ func begin_physics_tick() -> void:
 		if player.damage.is_action_locked() or stamina.current_stamina <= 0.0 or not overlaps_climbable():
 			detach()
 		elif player.jump_buffer_frames_remaining > 0 and not player._ignore_jump_until_release:
-			player.jump_from_climb() # Jump wins over simultaneous horizontal detachment.
-		elif Input.is_action_just_pressed("Move Left") or Input.is_action_just_pressed("Move Right"):
-			detach()
+			player.jump_from_climb() # Jump detaches through the normal charge/release path.
 		return
 	# Up may already be held when reaching the tiles. A previous detach still
 	# requires releasing Up, so jumping/exhaustion cannot immediately grab again.
@@ -103,14 +101,14 @@ func begin_physics_tick() -> void:
 		climbing_changed.emit(true)
 
 func apply_motion(_delta: float) -> void:
-	var direction := Input.get_axis("Move Up", "Move Down")
-	_motion_start_y = player.global_position.y
-	_moving_this_tick = not is_zero_approx(direction)
-	player.velocity = Vector2(0.0, direction * climb_speed)
+	var direction := Input.get_vector("Move Left", "Move Right", "Move Up", "Move Down")
+	_motion_start = player.global_position
+	_moving_this_tick = not direction.is_zero_approx()
+	player.velocity = direction * climb_speed
 
 func end_physics_tick(delta: float) -> void:
-	# Charge actual vertical movement, not an input held against a floor/ceiling.
-	if _moving_this_tick and not is_equal_approx(player.global_position.y, _motion_start_y):
+	# Charge actual climbing movement on either axis, not blocked input.
+	if _moving_this_tick and not player.global_position.is_equal_approx(_motion_start):
 		stamina.drain(stamina_drain_per_second * delta)
 	_moving_this_tick = false
 	if _attached and not overlaps_climbable():

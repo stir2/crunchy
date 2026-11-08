@@ -230,7 +230,7 @@ func test_climbing_motion() -> void:
 	Input.action_release("Action")
 	Input.action_press("Move Right")
 	await tick()
-	check(not climbing.is_climbing() and player.velocity.x > 0, "Horizontal detach failed")
+	check(climbing.is_climbing() and player.velocity.x == 100 and player.velocity.y == 0, "Sideways climbing detached or fell")
 	await place(Vector2(4392,320))
 	await press_up()
 	Input.action_release("Move Up")
@@ -243,6 +243,43 @@ func test_climbing_motion() -> void:
 	await press_up()
 	check(not climbing.is_climbing(), "Up attached without climbable tiles")
 
+func test_sideways_surface() -> void:
+	var room := AbyssAuthoredRoom.new()
+	room.position = Vector2(6000,0)
+	var layer := TileMapLayer.new()
+	layer.name = "Climbables"
+	layer.tile_set = AbyssRoomTerrainBuilder.TILES
+	for y in range(8,22):
+		for x in range(10):
+			layer.set_cell(Vector2i(x,y),0,Vector2i(3,0))
+	room.add_child(layer)
+	lab.add_child(room)
+	await place(Vector2(6080,260))
+	await press_up()
+	Input.action_release("Move Up")
+	Input.action_press("Move Right")
+	var before := player.position
+	var remaining := stamina.current_stamina
+	await tick(6)
+	check(climbing.is_climbing() and player.position.x > before.x and player.position.y == before.y,"Sideways traversal must stay attached without gravity")
+	check(is_equal_approx(remaining-stamina.current_stamina,15.0*6.0/Engine.physics_ticks_per_second),"Sideways climbing must drain moving stamina")
+	Input.action_release("Move Right")
+	Input.action_press("Move Left")
+	await tick(3)
+	check(climbing.is_climbing() and player.velocity.x == -100,"Left climbing failed")
+	Input.action_press("Move Up")
+	await tick()
+	check(is_equal_approx(player.velocity.length(),100.0) and player.velocity.y < 0,"Diagonal climbing exceeded climb speed")
+	Input.action_release("Move Up")
+	Input.action_press("Jump")
+	await tick()
+	check(not climbing.is_climbing() and player.is_jump_charging(),"Sideways climb jump did not detach")
+	await tick(player.jump_charge_frames)
+	check(player.velocity.y == player.jump_velocity and player.velocity.x < 0,"Climb jump lost upward launch or sideways momentum")
+	release_inputs()
+	room.queue_free()
+	await tick()
+
 func test_held_up_contact() -> void:
 	await place(Vector2(4350,200))
 	await press_up()
@@ -254,12 +291,18 @@ func test_held_up_contact() -> void:
 		if climbing.is_climbing(): break
 	check(climbing.is_climbing(), "Holding Up while approaching did not grab climbable")
 	await tick(3)
-	check(climbing.is_climbing() and player.velocity.x == 0.0, "Approach direction immediately detached the grab")
+	check(climbing.is_climbing() and player.velocity.x > 0.0, "Held approach direction did not continue sideways climbing")
 	Input.action_release("Move Right")
 	await tick()
 	Input.action_press("Move Right")
 	await tick()
-	check(not climbing.is_climbing(), "Fresh horizontal input failed to detach")
+	check(climbing.is_climbing(), "Fresh horizontal input detached from climbable")
+	for frame in range(40):
+		await tick()
+		if not climbing.is_climbing(): break
+	check(not climbing.is_climbing(), "Moving beyond climbable did not detach")
+	player.position = Vector2(4392,200)
+	player.velocity = Vector2.ZERO
 	Input.action_release("Move Right")
 	await tick(2)
 	check(not climbing.is_climbing(), "Held Up undid intentional detachment")
@@ -308,7 +351,7 @@ func test_climb_jump_and_damage() -> void:
 	Input.action_press("Move Right")
 	Input.action_press("Jump")
 	await tick()
-	check(player.is_jump_charging() and not climbing.is_climbing(), "Horizontal detach swallowed simultaneous ladder jump")
+	check(player.is_jump_charging() and not climbing.is_climbing(), "Sideways input swallowed simultaneous ladder jump")
 
 func test_climb_combat_freeze_jump() -> void:
 	await place(Vector2(4392,160))
@@ -330,7 +373,7 @@ func test_climb_combat_freeze_jump() -> void:
 		await tick()
 	check(not climbing.is_climbing() and player.is_jump_charging() and not player.dash_available, "Freeze lost buffered ladder jump or restored air dash")
 	await tick(player.jump_charge_frames)
-	check(player.velocity.y == player.jump_velocity * player.jump_release_multiplier, "Buffered ladder jump lost early release")
+	check(is_equal_approx(player.velocity.y,player.jump_velocity * player.combat.attack_jump_multiplier * player.jump_release_multiplier), "Buffered ladder attack jump lost combat multiplier or early release")
 
 func test_exhaustion_and_fast_fall() -> void:
 	await place(Vector2(4648,160))
@@ -418,6 +461,7 @@ func run() -> void:
 	await test_regeneration_policy()
 	await test_buffered_dash()
 	await test_climbing_motion()
+	await test_sideways_surface()
 	await test_held_up_contact()
 	await test_climb_jump_and_damage()
 	await test_climb_combat_freeze_jump()

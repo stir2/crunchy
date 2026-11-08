@@ -11,6 +11,7 @@ var main_route: bool
 var logical_neighbors: Array[Vector2i] = []
 var boundary_mask: int
 var opening_schema: StringName
+var opening_width: int = AbyssRouteConfig.OPENING_WIDTH
 var route_openings: Dictionary[StringName, Vector2i] = {}
 var required_openings: Dictionary[StringName, Vector2i] = {}
 var neighbor_open_sides: int = 0
@@ -30,6 +31,7 @@ static func from_room(room: AbyssRoomData, config: AbyssRegionConfig, routes: Ab
 	result.logical_neighbors = room.logical_neighbors()
 	result.boundary_mask = room.boundary_mask
 	result.opening_schema = routes.opening_schema
+	result.opening_width = routes.opening_width
 	result.horizontal_offsets = routes.horizontal_offsets
 	result.vertical_offsets = routes.vertical_offsets
 	result.required_openings = room.required_openings.duplicate()

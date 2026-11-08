@@ -41,8 +41,9 @@ static func reserved_cells(room: AbyssAuthoredRoom, req: AbyssRoomRequirements) 
 		var side := ["north", "east", "south", "west"].find(String(id).get_slice(":", 0))
 		if side < 0:
 			continue
-		for depth in range(3):
-			_reserve_neighborhood(reserved, point - AbyssRegionGenerator.DIRECTIONS[side] * depth)
+		for cell in AbyssRouteConfig.opening_cells(id,point,req.opening_width):
+			for depth in range(-1,4):
+				reserved[cell-AbyssRegionGenerator.DIRECTIONS[side]*depth] = true
 	if not room.protect_interior_routes:
 		return reserved
 	# Reserve a deterministic tree of existing empty paths between ports. This

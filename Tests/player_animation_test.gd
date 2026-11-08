@@ -57,7 +57,7 @@ func test_assets_and_origins() -> void:
 	check(sprite.jump_offset == Vector2(0,3) and sprite.dash_offset == Vector2(0,3) and sprite.attack_offset == Vector2(0,3), "Shared foot baseline changed")
 	check(player.get_node("MovementEffects").burst_offset == Vector2(-2,-15), "Existing effect origin changed")
 	check(player.get_node("CollisionShape2D").shape.size == Vector2(30,36) and player.get_node("Hurtbox/CollisionShape2D").shape.size == Vector2(24,32), "Physical dimensions changed")
-	check(player.combat.active_start_frame == 3 and player.combat.active_end_frame == 5 and player.combat.dash_cancel_start_frame == 14, "Default phases do not match Slash poses")
+	check(player.combat.active_start_frame == 3 and player.combat.active_end_frame == 5 and player.combat.dash_recovery_lock_frames == 2, "Default phases do not match Slash poses")
 
 func test_velocity_poses() -> void:
 	await place(Vector2(96,-200))
@@ -143,6 +143,7 @@ func test_slash_variants_and_hitstop() -> void:
 	await tick()
 	check(sprite.animation == &"attack" and sprite.is_playing(), "First swing did not use Slash1")
 	check(not sprite.flip_h and player.visuals.scale.x < 0, "Right Slash1 orientation incorrect")
+	Input.action_release("Attack") # Verify one tapped swing independently of hold repetition.
 	var saw_hitstop := false
 	for frame in range(180):
 		if not player.combat.is_attacking(): break
@@ -166,6 +167,7 @@ func test_slash_variants_and_hitstop() -> void:
 	await tick()
 	check(sprite.animation == &"attack_alt" and sprite.is_attack_animation(), "Independent second swing did not use Slash2")
 	check(not sprite.flip_h and player.visuals.scale.x > 0, "Left Slash2 orientation incorrect")
+	Input.action_release("Attack")
 	for frame in range(180):
 		if not player.combat.is_attacking(): break
 		await tick()

@@ -134,6 +134,29 @@ func add_flesh(amount: int) -> void:
 	flesh += amount
 
 
+## Explicit expedition APIs only; no village return/day flow is triggered here.
+func begin_abyss_descent(world: String) -> bool:
+	return abyss_room_state.exploration.begin_descent(world)
+
+func current_descent_flesh(world: String) -> int:
+	return abyss_room_state.exploration.current_flesh(world)
+
+func collect_descent_flesh(world: String, amount: int, origin: Vector2 = Vector2.INF, pickup_id: String = "") -> bool:
+	if amount <= 0: return false
+	# Physical pickups should pass their stable authored/generated ID.
+	var key := JSON.stringify([world,"flesh_pickup",pickup_id])
+	if not pickup_id.is_empty():
+		if abyss_room_state.markers.has(key): return false
+		abyss_room_state.markers[key] = "collected"
+	return abyss_room_state.exploration.add_descent_flesh(world,amount,origin)
+
+func return_abyss_descent(world: String) -> int:
+	# Clear carried Flesh before notifying bank observers; a repeated call pays zero.
+	var amount: int = abyss_room_state.exploration.take_descent_flesh(world)
+	if amount > 0: flesh += amount
+	return amount
+
+
 func add_rations(amount: int) -> void:
 	rations += amount
 

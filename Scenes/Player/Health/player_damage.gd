@@ -63,7 +63,7 @@ func try_dash_parry(hit: CombatHit, projectile: Node2D = null) -> bool:
 		sound.stream = PARRY_SOUND
 		sound.bus = &"SFX"
 		sound.pitch_scale = 1.5
-		sound.volume_db = -8.0
+		sound.volume_db = -8.0 + get_node("/root/SoundManager").gain_for(&"cleaver_impact")
 		add_child(sound)
 		sound.finished.connect(sound.queue_free)
 		sound.play()
@@ -140,3 +140,12 @@ func _process(_delta: float) -> void:
 	elif health.is_invulnerable() and (tick / blink_period_frames) % 2 == 0:
 		color.a = invulnerable_alpha
 	sprite.self_modulate = color
+
+## Preserve frame-based deadlines across an explicit gameplay pause.
+func compensate_paused_ticks(start_tick: int, ticks: int) -> void:
+	if _parry_flash_until > start_tick:
+		_parry_flash_until += ticks
+	if _reaction_until > start_tick:
+		_reaction_until += ticks
+	if _flash_until > start_tick:
+		_flash_until += ticks

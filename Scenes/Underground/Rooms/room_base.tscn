@@ -1,11 +1,10 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://c1qbbj1e88fep"]
 
-[ext_resource type="Script" path="res://Scenes/Underground/Rooms/authored_room.gd" id="1_2jku2"]
-[ext_resource type="TileSet" path="res://Assets/Tiles/room_placeholders.tres" id="2_vt0n6"]
+[ext_resource type="Script" uid="uid://bg8lhs2k6oonn" path="res://Scenes/Underground/Rooms/authored_room.gd" id="1_2jku2"]
+[ext_resource type="TileSet" uid="uid://dsxrhc8fbe5le" path="res://Assets/Tiles/room_placeholders.tres" id="2_vt0n6"]
 
 [node name="RoomBase" type="Node2D" unique_id=444195804]
 script = ExtResource("1_2jku2")
-room_size = Vector2i(24, 24)
 
 [node name="Solid" type="TileMapLayer" parent="." unique_id=1043100106]
 texture_filter = 1
@@ -20,28 +19,28 @@ texture_filter = 1
 tile_set = ExtResource("2_vt0n6")
 collision_enabled = false
 
-[node name="ConditionalWalls" type="TileMapLayer" parent="."]
-texture_filter = 1
-tile_set = ExtResource("2_vt0n6")
+[node name="ConditionalWalls" type="TileMapLayer" parent="." unique_id=348589287]
 modulate = Color(1, 0.75, 0.45, 1)
-
-[node name="Climbables" type="TileMapLayer" parent="."]
 texture_filter = 1
 tile_set = ExtResource("2_vt0n6")
 
-[node name="ConditionalPlatforms" type="TileMapLayer" parent="."]
+[node name="Climbables" type="TileMapLayer" parent="." unique_id=1783847461]
 texture_filter = 1
 tile_set = ExtResource("2_vt0n6")
 
-[node name="BreakableWalls" type="TileMapLayer" parent="."]
+[node name="ConditionalPlatforms" type="TileMapLayer" parent="." unique_id=1809629922]
 texture_filter = 1
 tile_set = ExtResource("2_vt0n6")
 
-[node name="Hazards" type="TileMapLayer" parent="."]
+[node name="BreakableWalls" type="TileMapLayer" parent="." unique_id=1386474198]
+texture_filter = 1
+tile_set = ExtResource("2_vt0n6")
+
+[node name="Hazards" type="TileMapLayer" parent="." unique_id=685081472]
+z_index = 1
 texture_filter = 1
 tile_set = ExtResource("2_vt0n6")
 collision_enabled = false
-z_index = 1
 
 [node name="ObjectMarkers" type="Node2D" parent="." unique_id=1100628727]
 
@@ -51,25 +50,25 @@ position = Vector2(192, 192)
 [node name="OpeningGuides" type="Node2D" parent="." unique_id=2128245743]
 
 [node name="north_0" type="Marker2D" parent="OpeningGuides" unique_id=56844466]
-position = Vector2(104, 8)
+position = Vector2(88, 8)
 
 [node name="north_1" type="Marker2D" parent="OpeningGuides" unique_id=2089873934]
-position = Vector2(280, 8)
+position = Vector2(296, 8)
 
 [node name="east_0" type="Marker2D" parent="OpeningGuides" unique_id=1682434900]
-position = Vector2(376, 104)
+position = Vector2(376, 88)
 
 [node name="east_1" type="Marker2D" parent="OpeningGuides" unique_id=721203134]
-position = Vector2(376, 280)
+position = Vector2(376, 296)
 
 [node name="south_0" type="Marker2D" parent="OpeningGuides" unique_id=1214117838]
-position = Vector2(104, 376)
+position = Vector2(88, 376)
 
 [node name="south_1" type="Marker2D" parent="OpeningGuides" unique_id=1944985926]
-position = Vector2(280, 376)
+position = Vector2(296, 376)
 
 [node name="west_0" type="Marker2D" parent="OpeningGuides" unique_id=622538833]
-position = Vector2(8, 104)
+position = Vector2(8, 88)
 
 [node name="west_1" type="Marker2D" parent="OpeningGuides" unique_id=2045296051]
-position = Vector2(8, 280)
+position = Vector2(8, 296)

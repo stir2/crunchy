@@ -5,6 +5,10 @@ const TILES = preload("res://Assets/Tiles/room_placeholders.tres")
 
 static func build(request: AbyssRoomConstructionRequest, config: AbyssTerrainConfig, boundary: AbyssCavernBoundaryField = null, state: AbyssRoomState = null, specials: AbyssSpecialRooms = null) -> AbyssAuthoredRoom:
 	var room := _build(request,config,boundary,state)
+	if room != null and request.method == AbyssRoomConstructionRequest.Method.PROCEDURAL:
+		var climbables := room.get_node("Climbables") as TileMapLayer
+		room.climbable_cells.assign(climbables.get_used_cells())
+		room.climbable_regions = AbyssTileGroups.describe(climbables,request.template_id)
 	if room != null and specials != null:
 		AbyssSpecialRoomConstruction.apply(room,request,specials)
 	return room
@@ -18,15 +22,16 @@ static func _build(request: AbyssRoomConstructionRequest, config: AbyssTerrainCo
 	room.tile_pixels = req.tile_pixels
 	room.construction_requirements = req
 	room.position = Vector2(req.global_coords * req.room_size * req.tile_pixels)
-	for layer_name in ["Solid", "Platforms", "Decorations", "Hazards"]:
+	for layer_name in ["Solid", "Platforms", "Decorations", "Hazards", "Climbables"]:
 		var layer := TileMapLayer.new()
 		layer.name = layer_name
 		layer.tile_set = TILES
 		layer.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		layer.collision_enabled = layer_name not in ["Decorations", "Hazards"]
+		layer.collision_enabled = layer_name in ["Solid", "Platforms"]
 		room.add_child(layer)
 	var solid := room.get_node("Solid") as TileMapLayer
 	var platforms := room.get_node("Platforms") as TileMapLayer
+	var climbables := room.get_node("Climbables") as TileMapLayer
 	var rng := RandomNumberGenerator.new()
 	rng.seed = request.room_seed
 	if boundary != null:
@@ -41,15 +46,10 @@ static func _build(request: AbyssRoomConstructionRequest, config: AbyssTerrainCo
 			var opening: Vector2i = req.route_openings[id]
 			var side := ["north", "east", "south", "west"].find(String(id).get_slice(":", 0))
 			var inward: Vector2i = -AbyssRegionGenerator.DIRECTIONS[side]
-			for cell in AbyssRouteConfig.opening_cells(id, opening):
+			for cell in AbyssRouteConfig.opening_cells(id, opening, req.opening_width):
 				for depth in range(3):
 					solid.erase_cell(cell + inward * depth)
-			var point: Vector2i = opening
-			var center := req.room_size / 2
-			while point != center:
-				_brush(solid, point, config.tunnel_width, req.room_size)
-				solid.erase_cell(point)
-				point += Vector2i(signi(center.x - point.x), 0) if point.x != center.x else Vector2i(0, signi(center.y - point.y))
+			_accessible_route(solid,climbables,opening,side,req.room_size/2,config,req.room_size)
 		if not req.route_openings.is_empty():
 			_brush(solid, req.room_size / 2, config.tunnel_width, req.room_size)
 		if rng.randf() < config.platform_probability:
@@ -58,12 +58,8 @@ static func _build(request: AbyssRoomConstructionRequest, config: AbyssTerrainCo
 				var start := Vector2i(rng.randi_range(1, req.room_size.x - length - 1), rng.randi_range(2, req.room_size.y - 3))
 				for x in range(length):
 					var cell := start + Vector2i(x, 0)
-					# Keep route landing corridors clear even of one-way collision.
-					var clear := true
-					for opening in req.route_openings.values():
-						if cell.distance_to(opening) < 2.0:
-							clear = false
-					if clear and solid.get_cell_source_id(cell) == -1:
+					# A one-way platform spanning the passage must not seal a descent.
+					if not _on_open_route(cell,req,config.tunnel_width) and solid.get_cell_source_id(cell) == -1:
 						platforms.set_cell(cell, 0, Vector2i.RIGHT)
 		return room
 	if boundary == null:
@@ -87,9 +83,12 @@ static func _build(request: AbyssRoomConstructionRequest, config: AbyssTerrainCo
 		var bend := Vector2i(clampi(point.x + rng.randi_range(-config.shape_variation, config.shape_variation), 2, req.room_size.x - 3), hub.y)
 		_line(solid, point, bend, config.tunnel_width, req.room_size, rng)
 		_line(solid, bend, hub, config.tunnel_width, req.room_size, rng)
+		# Keep the winding silhouette, with a clear direct route and continuous
+		# climbable vertical runs for exits beyond the player's jump height.
+		_accessible_route(solid,climbables,opening,side,hub,config,req.room_size)
 		_brush(solid, opening + inward, config.tunnel_width, req.room_size)
-		# Clear all three boundary tiles and a short throat into the tunnel.
-		for cell in AbyssRouteConfig.opening_cells(id, opening):
+		# The aperture and inner passage share an exact width-aware throat.
+		for cell in AbyssRouteConfig.opening_cells(id, opening, req.opening_width):
 			for depth in range(3):
 				solid.erase_cell(cell + inward * depth)
 	# Erode only faces touching known OPEN rooms. Wedges stay attached to the
@@ -106,6 +105,41 @@ static func _build(request: AbyssRoomConstructionRequest, config: AbyssTerrainCo
 	if boundary == null:
 		_remove_floating_rock(solid, req)
 	return room
+
+static func _on_open_route(cell: Vector2i, req: AbyssRoomRequirements, width: int) -> bool:
+	var center := req.room_size/2
+	var low := -(width >> 1)
+	for id in req.route_openings:
+		var side := ["north","east","south","west"].find(String(id).get_slice(":",0))
+		var start: Vector2i = req.route_openings[id]-AbyssRegionGenerator.DIRECTIONS[side]*2
+		var vertical_x := start.x if side%2==0 else center.x
+		var horizontal_y := center.y if side%2==0 else start.y
+		var horizontal := Rect2i(Vector2i(mini(start.x,center.x)+low,horizontal_y+low),Vector2i(absi(start.x-center.x)+width,width))
+		var vertical := Rect2i(Vector2i(vertical_x+low,mini(start.y,center.y)+low),Vector2i(width,absi(start.y-center.y)+width))
+		if horizontal.has_point(cell) or vertical.has_point(cell):
+			return true
+	return false
+
+static func _accessible_route(solid: TileMapLayer, climbables: TileMapLayer, opening: Vector2i, side: int, hub: Vector2i, config: AbyssTerrainConfig, size: Vector2i) -> void:
+	# Start inside the throat to avoid clipping the brush at the boundary.
+	var start := opening-AbyssRegionGenerator.DIRECTIONS[side]*2
+	var bend := Vector2i(start.x,hub.y) if side%2==0 else Vector2i(hub.x,start.y)
+	_accessible_segment(solid,climbables,start,bend,config,size)
+	_accessible_segment(solid,climbables,bend,hub,config,size)
+	if config.route_climbables and side%2==0:
+		for depth in range(3):
+			climbables.set_cell(opening-AbyssRegionGenerator.DIRECTIONS[side]*depth,0,Vector2i(3,0))
+
+static func _accessible_segment(solid: TileMapLayer, climbables: TileMapLayer, start: Vector2i, end: Vector2i, config: AbyssTerrainConfig, size: Vector2i) -> void:
+	var point := start
+	var direction := Vector2i(signi(end.x-start.x),signi(end.y-start.y))
+	while true:
+		_brush(solid,point,config.tunnel_width,size)
+		if config.route_climbables and start.x == end.x:
+			climbables.set_cell(point,0,Vector2i(3,0))
+		if point == end:
+			break
+		point += direction
 
 static func _brush(layer: TileMapLayer, center: Vector2i, width: int, size: Vector2i) -> void:
 	var low := -width / 2

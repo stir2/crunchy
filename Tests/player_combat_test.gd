@@ -48,14 +48,18 @@ func place(position: Vector2 = Vector2(2700,320), speed: Vector2 = Vector2.ZERO,
 	player._move_direction = facing
 	player.update_facing_direction()
 	combat.actions_enabled = true
+	combat.repeat_while_held = false # Isolate explicit-click regression fixtures.
 	combat.active_start_frame = 4
 	combat.active_end_frame = 7
 	combat.hitstop_frames = 3
 	combat.swing_freeze_frames = 3
 	combat.swing_speed_boost = 0.0 # Isolate existing checks from optional compensation.
+	combat.swing_burst_speed = 0.0
 	combat.swing_speed_boost_frames = 8
 	combat.attack_movement_speed_multiplier = 0.65
-	combat.dash_cancel_start_frame = 10
+	combat.attack_jump_multiplier = 1.0 # Existing jump fixtures retain their full arc.
+	combat.dash_recovery_lock_frames = 2
+	combat.attack_cancel_start_frame = 10
 	combat.attack_damage = 1
 	await tick(2)
 	hits.clear()
@@ -215,6 +219,75 @@ func test_swing_speed_boost() -> void:
 		check(combat.movement_speed_bonus() == 0,"Zero boost setting failed to disable compensation")
 		await tick()
 
+func test_swing_burst() -> void:
+	for facing in [-1,1]:
+		for steering in [-1,0,1]:
+			await place(Vector2(2700,320),Vector2.ZERO,facing)
+			combat.swing_burst_speed = 100.0
+			await press_attack()
+			Input.action_release("Attack")
+			if steering != 0:
+				Input.action_press("Move Right" if steering > 0 else "Move Left")
+			var before := player.position.x
+			await wait_phase(combat.AttackState.ACTIVE)
+			if not combat._swing_burst_used:
+				await tick()
+			check(combat._swing_burst_used,"Swing did not resolve its one burst opportunity")
+			if steering == facing:
+				var minimum := player.run_speed*combat.attack_movement_speed_multiplier+100.0
+				check(player.velocity.x*facing >= minimum-1.0 and (player.position.x-before)*facing > 0.0,"Matching direction did not burst forward")
+			else:
+				check(absf(player.velocity.x) <= player.run_speed*combat.attack_movement_speed_multiplier+1.0,"Neutral/opposite input triggered a swing burst")
+			check(combat.consume_swing_burst() == 0.0,"Burst repeated within one swing")
+	# Airborne burst affects only horizontal momentum, with normal gravity.
+	await place(Vector2(2700,-600),Vector2(0,100))
+	combat.swing_burst_speed = 100.0
+	await press_attack()
+	Input.action_release("Attack")
+	Input.action_press("Move Right")
+	await wait_phase(combat.AttackState.ACTIVE)
+	var falling_speed := player.velocity.y
+	await tick()
+	check(player.velocity.x > player.run_speed*combat.attack_movement_speed_multiplier and player.velocity.y > falling_speed,"Air burst failed or changed vertical physics")
+	player.reset_movement()
+	check(combat.consume_swing_burst() == 0.0,"Reset retained a burst")
+
+func test_attack_jump_multiplier() -> void:
+	var launches: Array[float] = []
+	var on_jump := func() -> void: launches.append(player.velocity.y)
+	player.jumped.connect(on_jump)
+	for charge in [0,5]:
+		for attacking in [false,true]:
+			await place()
+			launches.clear()
+			player.jump_charge_frames = charge
+			combat.attack_jump_multiplier = 0.5
+			combat.swing_freeze_frames = 0
+			if attacking:
+				await press_attack()
+				Input.action_release("Attack")
+			Input.action_press("Jump")
+			await tick(8)
+			var expected := player.jump_velocity*(0.5 if attacking else 1.0)
+			check(launches.size() == 1 and is_equal_approx(launches[0],expected),"Combat jump multiplier changed normal jumps or failed at charge %d" % charge)
+	# The jump keeps its reserved multiplier if the swing ends during charge;
+	# an early button release still produces the existing shorter jump.
+	await place()
+	launches.clear()
+	player.jump_charge_frames = 5
+	combat.attack_jump_multiplier = 0.5
+	combat.swing_freeze_frames = 0
+	await press_attack()
+	Input.action_release("Attack")
+	Input.action_press("Jump")
+	await tick()
+	Input.action_release("Jump")
+	combat.interrupt()
+	await tick(8)
+	check(launches.size() == 1 and is_equal_approx(launches[0],player.jump_velocity*0.5*player.jump_release_multiplier),"Attack jump lost charge snapshot or variable-height release")
+	player.jumped.disconnect(on_jump)
+	player.jump_charge_frames = 5
+
 func test_phases_and_input() -> void:
 	await place()
 	check(sprite.sprite_frames.get_frame_count(&"attack") == 17 and sprite.sprite_frames.get_animation_speed(&"attack") == 24 and not sprite.sprite_frames.get_animation_loop(&"attack"),"Wrong attack asset/rate/loop")
@@ -237,14 +310,15 @@ func test_phases_and_input() -> void:
 	await tick()
 	await press_attack()
 	check(combat.swing_id == serial + 1,"Release/repress failed")
-	# A press during recovery is not a queued combo.
+	# Early recovery clicks are ignored, including holding through the unlock.
 	Input.action_release("Attack")
 	await wait_phase(combat.AttackState.RECOVERY)
 	Input.action_press("Attack")
 	await tick()
+	check(combat.swing_id == serial+1,"Early recovery click canceled the current swing")
 	await wait_end()
-	await tick(5)
-	check(combat.swing_id == serial + 1,"Recovery press queued an unwanted combo")
+	await tick(40)
+	check(combat.swing_id == serial+1,"Early recovery click was queued or holding repeated swings")
 	await place()
 	combat.active_start_frame = 2
 	combat.active_end_frame = 3
@@ -253,6 +327,107 @@ func test_phases_and_input() -> void:
 	check(sprite.frame in [2,3],"Inspector phase boundary ignored")
 	await wait_phase(combat.AttackState.RECOVERY)
 	check(sprite.frame == 4,"Configured recovery boundary ignored")
+
+func test_recovery_cancel() -> void:
+	await place()
+	await press_attack()
+	Input.action_release("Attack")
+	await wait_phase(combat.AttackState.RECOVERY)
+	check(sprite.speed_scale == 1.0,"Recovery animation did not keep normal playback speed")
+	check(not combat.can_attack_cancel(),"Recovery canceled before configured frame")
+	var serial := combat.swing_id
+	for frame in range(30):
+		if sprite.frame >= combat.attack_cancel_start_frame: break
+		await tick()
+	check(combat.can_attack_cancel(),"Configured attack cancel frame did not unlock")
+	var old_animation := sprite.animation
+	Input.action_press("Attack")
+	await tick()
+	check(combat.swing_id == serial+1 and combat.attack_state == combat.AttackState.WINDUP,"Recovery click did not immediately restart swing")
+	check(last_finish_interrupted and last_finish_frame == 10,"Attack restart failed to interrupt at configured frame")
+	check(sprite.frame == 0 and sprite.animation != old_animation and sprite.speed_scale == 1.0,"Restart failed to reset animation or alternate slash")
+	check(not combat.hitbox.monitoring and combat.hit_shape.disabled,"Restart retained active hitbox")
+	await wait_end()
+	await tick(40)
+	check(combat.swing_id == serial+1,"Holding Attack after cancel repeated swings")
+	# Even frame zero never permits windup/active cancellation.
+	await place()
+	combat.attack_cancel_start_frame = 0
+	await press_attack()
+	Input.action_release("Attack")
+	await tick()
+	Input.action_press("Attack")
+	await tick()
+	serial = combat.swing_id
+	check(not combat.can_attack_cancel(),"Windup was attack-cancelable")
+	Input.action_release("Attack")
+	await wait_phase(combat.AttackState.ACTIVE)
+	Input.action_press("Attack")
+	await tick()
+	check(combat.swing_id == serial and not combat.can_attack_cancel(),"Active damage frames were attack-cancelable")
+	Input.action_release("Attack")
+	await wait_phase(combat.AttackState.RECOVERY)
+	check(combat.can_attack_cancel(),"Frame zero did not enable cancellation from first recovery frame")
+	# A frame beyond the animation disables cancel; clicks never queue.
+	combat.attack_cancel_start_frame = 17
+	Input.action_press("Attack")
+	await tick()
+	Input.action_release("Attack")
+	await wait_end()
+	await tick(10)
+	check(combat.swing_id == serial,"Disabled cancel queued another swing")
+	# Respawn clears the current swing and guards held input.
+	await place()
+	await press_attack()
+	serial = combat.swing_id
+	player.reset_movement()
+	await tick(100)
+	check(combat.swing_id == serial and not combat.is_attacking(),"Reset retained/restarted a swing")
+
+func test_held_attacks() -> void:
+	await place()
+	combat.repeat_while_held = true
+	await press_attack()
+	var serial := combat.swing_id
+	for repeat_index in range(3):
+		for frame in range(100):
+			if combat.swing_id > serial: break
+			await tick()
+		check(combat.swing_id == serial+1 and combat.attack_state == combat.AttackState.WINDUP,"Held Attack failed to repeat from recovery")
+		check(last_finish_interrupted and last_finish_frame == combat.attack_cancel_start_frame,"Held Attack bypassed the configured recovery frame")
+		check(sprite.speed_scale == 1.0 and not combat.hitbox.monitoring,"Repeated attack changed playback or retained damage hitbox")
+		serial = combat.swing_id
+	Input.action_release("Attack")
+	await wait_end()
+	await tick(40)
+	check(combat.swing_id == serial,"Release failed to stop repeated attacks")
+	# With cancellation disabled, hold still repeats after the complete animation.
+	await place()
+	combat.repeat_while_held = true
+	combat.attack_cancel_start_frame = 17
+	await press_attack()
+	serial = combat.swing_id
+	for frame in range(110):
+		if combat.swing_id > serial: break
+		await tick()
+	check(combat.swing_id == serial+1 and not last_finish_interrupted and last_finish_frame == 16,"Held Attack failed to respect full recovery")
+	# Buffered dash wins over automatic repetition, and stays a dash while held.
+	Input.action_press("Action")
+	await tick()
+	serial = combat.swing_id
+	for frame in range(110):
+		if player.movement_state == Player.MovementState.DASH_CHARGING: break
+		await tick()
+	check(player.movement_state == Player.MovementState.DASH_CHARGING,"Held Attack starved a buffered dash")
+	await tick(3)
+	check(combat.swing_id == serial and not combat.is_attacking(),"Held Attack automatically canceled a buffered dash")
+	player.reset_movement()
+	await tick(100)
+	check(combat.swing_id == serial and not combat.is_attacking(),"Reset failed to guard held Attack")
+	Input.action_release("Attack")
+	await tick()
+	await press_attack()
+	check(combat.swing_id == serial+1,"Release/repress after reset did not restore attacks")
 
 func test_movement_and_lock() -> void:
 	await place(Vector2(2700,320),Vector2(170,0))
@@ -427,19 +602,38 @@ func test_dash_buffers() -> void:
 		Input.action_release("Action")
 		await tick()
 		check(player.movement_state == Player.MovementState.DASHING,"Buffered charge failed to launch")
-	# A short tap, released long before the end, is still consumed exactly once.
-	await place()
-	await press_attack()
-	Input.action_press("Action")
-	await tick()
-	Input.action_release("Action")
-	await tick()
-	Input.action_press("Action")
-	await tick()
-	Input.action_release("Action")
-	await wait_end()
-	await tick(2)
-	check(dash_states.count(Player.MovementState.DASH_CHARGING) == 1 and dash_states.count(Player.MovementState.DASHING) == 1,"Multiple taps queued multiple dashes or skipped charge")
+	# Releasing before the cancel window removes the request in every phase.
+	for phase in [combat.AttackState.WINDUP,combat.AttackState.ACTIVE,combat.AttackState.RECOVERY]:
+		await place()
+		await press_attack()
+		await wait_phase(phase)
+		Input.action_press("Action")
+		await tick()
+		check(combat.buffered_dash,"Dash cancellation fixture failed to buffer")
+		Input.action_release("Action")
+		await tick()
+		check(not combat.buffered_dash,"Released Action retained its queued dash")
+		await wait_end()
+		await tick(3)
+		check(not dash_states.has(Player.MovementState.DASH_CHARGING) and not dash_states.has(Player.MovementState.DASHING),"Released dash produced a phantom charge/launch")
+		check(player.stamina.current_stamina == player.stamina.max_stamina and player.dash_available,"Canceled request spent stamina or aerial dash")
+	# Release must also be observed while local freeze pauses attack progression.
+	for contact in [false,true]:
+		await place()
+		combat.swing_freeze_frames = 8
+		if contact: target_at(Vector2(2740,320))
+		await press_attack()
+		for frame in range(60):
+			if (combat.is_hitstopped() if contact else combat.is_swing_frozen()): break
+			await tick()
+		Input.action_press("Action")
+		await tick()
+		Input.action_release("Action")
+		await tick()
+		check(not combat.buffered_dash,"Local freeze retained released dash input")
+		await wait_end()
+		await tick(3)
+		check(not dash_states.has(Player.MovementState.DASH_CHARGING),"Freeze released request started dash charge")
 	for cooldown in [false,true]:
 		await place(Vector2(2700,-600))
 		await press_attack()
@@ -530,9 +724,9 @@ func test_action_cancels() -> void:
 		await wait_end()
 		check(not last_finish_interrupted and last_finish_frame == 16,"Ineligible cancel cut the swing short")
 	# Inspector controls support both full recovery and the whole recovery window.
-	for cancel_frame in [17,8]:
+	for lock_frames in [17,0]:
 		await place()
-		combat.dash_cancel_start_frame = cancel_frame
+		combat.dash_recovery_lock_frames = lock_frames
 		await press_attack()
 		await wait_phase(combat.AttackState.RECOVERY)
 		Input.action_press("Action")
@@ -540,8 +734,24 @@ func test_action_cancels() -> void:
 		await wait_end()
 		await tick()
 		check(player.movement_state == Player.MovementState.DASH_CHARGING,"Configured cancel did not start charge")
-		check(last_finish_frame == (16 if cancel_frame == 17 else 8),"Inspector cancel frame ignored")
-		check(last_finish_interrupted == (cancel_frame == 8),"Natural finish/cancel distinction lost")
+		check(last_finish_frame == (16 if lock_frames == 17 else 8),"Inspector recovery lock ignored")
+		check(last_finish_interrupted == (lock_frames == 0),"Natural finish/cancel distinction lost")
+	# Count from recovery, even when the authored active period changes.
+	for last_active in [3,5,7]:
+		await place()
+		combat.active_start_frame = 2
+		combat.active_end_frame = last_active
+		combat.dash_recovery_lock_frames = 3
+		await press_attack()
+		Input.action_release("Attack")
+		Input.action_press("Action")
+		await tick()
+		for frame in range(100):
+			if not combat.is_attacking(): break
+			check(player.movement_state == Player.MovementState.NORMAL,"Dash bypassed protected recovery")
+			await tick()
+		check(last_finish_interrupted and last_finish_frame == last_active+1+3,"Dash lock did not count completed recovery frames")
+		check(player.movement_state == Player.MovementState.DASH_CHARGING,"Recovery cancel bypassed existing dash charge")
 
 func test_dash_swing_jump_air_dash() -> void:
 	# A grounded dash spent the previous budget. A legal ground-derived jump must
@@ -661,6 +871,7 @@ func run() -> void:
 	player = lab.get_node("Player") as Player
 	player.jump_charge_frames = 5 # Explicitly exercise anticipation despite user tuning.
 	combat = player.get_node("CombatController") as PlayerCombatController
+	check(combat.repeat_while_held,"Held attack repetition is not enabled by default")
 	sprite = player.get_node("Visuals/AnimatedSprite2D") as AnimatedSprite2D
 	combat.hit_confirmed.connect(func(_target: CombatDamageable, hit: CombatHit) -> void: hits.append(hit))
 	combat.hitstop_started.connect(func(ticks: int) -> void: stops.append(ticks))
@@ -677,7 +888,11 @@ func run() -> void:
 	await tick(5)
 	await test_swing_freeze()
 	await test_swing_speed_boost()
+	await test_swing_burst()
+	await test_attack_jump_multiplier()
 	await test_phases_and_input()
+	await test_recovery_cancel()
+	await test_held_attacks()
 	await test_movement_and_lock()
 	await test_hits_and_stop()
 	await test_dash_buffers()

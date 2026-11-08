@@ -2,7 +2,12 @@
 class_name AbyssAuthoredRoom
 extends Node2D
 ## Geometry container only. Metadata and mutable gameplay state live elsewhere.
-@export var room_size: Vector2i = AbyssRegionConfig.DEFAULT_ROOM_SIZE
+## Keep existing scenes at 24x24 until explicitly remade; no implicit resizing.
+@export var room_size: Vector2i = AbyssRegionConfig.LEGACY_ROOM_SIZE:
+	set(value):
+		room_size = value
+		if Engine.is_editor_hint() and is_inside_tree():
+			call_deferred("_refresh_opening_guides")
 @export var tile_pixels: int = 16
 @export var show_editor_guides: bool = true:
 	set(value):
@@ -43,6 +48,24 @@ func _draw() -> void:
 
 		for rect in reserved_route_rects:
 			draw_rect(Rect2(Vector2(rect.position * tile_pixels), Vector2(rect.size * tile_pixels)), Color(0.2, 0.9, 1.0, 0.7), false, 1.0)
+
+func _refresh_opening_guides() -> void:
+	var width := 3 if room_size == AbyssRegionConfig.LEGACY_ROOM_SIZE else AbyssRouteConfig.OPENING_WIDTH
+	var config := AbyssRouteConfig.new()
+	config.horizontal_offsets = AbyssRouteConfig.default_offsets_for_extent(room_size.x,width)
+	config.vertical_offsets = AbyssRouteConfig.default_offsets_for_extent(room_size.y,width)
+	for side in range(4):
+		for slot in range(2):
+			var id := String(AbyssRouteConfig.opening_id(side,slot)).replace(":","_")
+			var guide := get_node_or_null("OpeningGuides/"+id) as Marker2D
+			if guide != null:
+				guide.position = (Vector2(config.opening_position(side,slot,room_size))+Vector2(0.5,0.5))*tile_pixels
+				if width%2==0:
+					guide.position -= (Vector2.RIGHT if side%2==0 else Vector2.DOWN)*tile_pixels*0.5
+	var center := get_node_or_null("ObjectMarkers/RoomCenter") as Marker2D
+	if center != null:
+		center.position = Vector2(room_size*tile_pixels)*0.5
+	queue_redraw()
 
 
 func damage_breakable_at(world_position: Vector2, amount: float) -> bool:

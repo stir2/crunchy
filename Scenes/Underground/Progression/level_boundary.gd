@@ -11,7 +11,7 @@ func configure(service: AbyssSpecialRooms, definition: Dictionary) -> void:
 	_refresh()
 func _refresh() -> void:
 	for cell in gate_cells:
-		if progression.state.is_gate_unlocked(gate.get("id","")):
+		if progression.is_gate_unlocked(gate):
 			erase_cell(cell)
 		else:
 			set_cell(cell,0,Vector2i.ZERO)

@@ -215,8 +215,7 @@ func _on_died(_hit: CombatHit) -> void:
 	_health_label.hide()
 	sprite.modulate = Color.WHITE
 	sprite.pause()
-	if flesh_reward > 0:
-		GameController.add_flesh(flesh_reward)
+	_award_flesh()
 	died.emit()
 	var death := create_tween().set_parallel(true)
 	death.tween_property(sprite, "modulate:a", 0.0, 0.16)
@@ -229,12 +228,26 @@ func _play_impact() -> void:
 	var sound := AudioStreamPlayer2D.new()
 	sound.stream = IMPACT_SOUND
 	sound.bus = &"SFX"
-	sound.volume_db = -10.0
+	sound.volume_db = -10.0 + SoundManager.gain_for(&"cleaver_impact")
 	sound.pitch_scale = 1.1 if health <= 0 else 1.0
 	get_parent().add_child(sound)
 	sound.global_position = global_position
 	sound.finished.connect(sound.queue_free)
 	sound.play()
+
+
+func _award_flesh() -> void:
+	if flesh_reward <= 0:
+		return
+	var host := get_parent()
+	while host != null:
+		if host is AbyssRuntime:
+			if host.is_active() and host.stream.specials != null:
+				GameController.collect_descent_flesh(host.stream.specials.world, flesh_reward, global_position)
+			return
+		host = host.get_parent()
+	# Standalone enemy labs do not have an expedition balance.
+	GameController.add_flesh(flesh_reward)
 
 
 func _update_animation() -> void:

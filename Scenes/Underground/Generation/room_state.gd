@@ -7,6 +7,7 @@ var markers: Dictionary = {}
 var world_settings: Dictionary = {}
 var player_vitals: Dictionary = {}
 var current_day: int = -1
+var exploration := AbyssExplorationState.new()
 
 ## Only daily breakable mutations reset. Marker/progression state stays permanent.
 func begin_day(day_number: int) -> bool:
@@ -27,7 +28,7 @@ static func key(request: AbyssRoomConstructionRequest, kind: String, identity: S
 	return JSON.stringify([world, request.requirements.global_coords.x, request.requirements.global_coords.y, String(request.template_id), kind, identity])
 func serialize() -> String:
 	return JSON.stringify({"version":1, "groups":groups, "markers":markers,
-		"world_settings":world_settings, "player_vitals":player_vitals, "current_day":current_day})
+		"world_settings":world_settings, "player_vitals":player_vitals, "current_day":current_day,"exploration":exploration.serialize()})
 func restore(json: String) -> Error:
 	var value: Variant = JSON.parse_string(json)
 	if not value is Dictionary or value.get("version") != 1 or not value.get("groups") is Dictionary or not value.get("markers") is Dictionary:
@@ -50,6 +51,12 @@ func restore(json: String) -> Error:
 	for number in vitals.values():
 		if not (number is int or number is float) or not is_finite(float(number)) or number < 0:
 			return ERR_INVALID_DATA
+	if not value.get("exploration",{}) is Dictionary:
+		return ERR_INVALID_DATA
+	var explored := AbyssExplorationState.new()
+	if explored.restore(value.get("exploration",{})) != OK:
+		return ERR_INVALID_DATA
+	exploration = explored
 	groups = value.groups.duplicate(true)
 	markers = value.markers.duplicate(true)
 	world_settings = value.get("world_settings", {}).duplicate(true)

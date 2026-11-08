@@ -17,6 +17,8 @@
 
 [ext_resource type="PackedScene" path="res://Scenes/Player/Stamina/stamina_hud.tscn" id="13_stamina_hud"]
 
+[ext_resource type="PackedScene" path="res://Scenes/Interaction/player_interaction.tscn" id="14_interaction"]
+
 [sub_resource type="RectangleShape2D" id="Rectangle_player"]
 resource_local_to_scene = true
 size = Vector2(30, 36)
@@ -120,3 +122,5 @@ offset_top = -54.0
 offset_right = 16.0
 offset_bottom = -52.0
 stamina_path = NodePath("../Stamina")
+
+[node name="InteractionController" parent="." instance=ExtResource("14_interaction")]

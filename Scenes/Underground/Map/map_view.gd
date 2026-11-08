@@ -1,0 +1,85 @@
+class_name AbyssMapView
+extends Control
+@export var marker_scene: PackedScene = preload("res://Scenes/Underground/Map/map_marker.tscn")
+@export_range(24.0,128.0,1.0) var room_spacing: float = 64.0
+var graph: Dictionary = {"nodes":{},"edges":[],"markers":[]}
+var room_pixels: float = 640.0
+var center: Vector2 = Vector2.ZERO
+var map_zoom: float = 1.0
+var player_position: Vector2
+var _dragging: bool = false
+var _icons: Array[Node2D] = []
+
+func _ready() -> void:
+	resized.connect(_refresh_positions)
+
+func world_to_screen(point: Vector2) -> Vector2:
+	return size*0.5+(point-center)*(room_spacing*map_zoom/room_pixels)
+
+func set_graph(value: Dictionary, pixels: float, player: Vector2) -> void:
+	graph = value
+	room_pixels = pixels
+	player_position = player
+	for icon in _icons:
+		remove_child(icon)
+		icon.queue_free()
+	_icons.clear()
+	for marker: Dictionary in graph.markers:
+		var icon := marker_scene.instantiate() as Node2D
+		icon.kind = marker.kind
+		icon.active = marker.active
+		add_child(icon)
+		_icons.append(icon)
+	var player_icon := marker_scene.instantiate() as Node2D
+	player_icon.kind = "player"
+	add_child(player_icon)
+	_icons.append(player_icon)
+	_refresh_positions()
+
+func recenter() -> void:
+	center = player_position
+	_dragging = false
+	_refresh_positions()
+
+func pan_screen(delta: Vector2) -> void:
+	center -= delta*room_pixels/(room_spacing*map_zoom)
+	_refresh_positions()
+
+func zoom_at(factor: float, cursor: Vector2) -> void:
+	var anchor := center+(cursor-size*0.5)*room_pixels/(room_spacing*map_zoom)
+	map_zoom = clampf(map_zoom*factor,0.35,3.0)
+	center = anchor-(cursor-size*0.5)*room_pixels/(room_spacing*map_zoom)
+	_refresh_positions()
+
+func _refresh_positions() -> void:
+	for index in range(_icons.size()):
+		var point: Vector2 = graph.markers[index].position if index < graph.markers.size() else player_position
+		_icons[index].position = world_to_screen(point)
+	queue_redraw()
+
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		if event.button_index in [MOUSE_BUTTON_LEFT,MOUSE_BUTTON_MIDDLE,MOUSE_BUTTON_RIGHT]:
+			_dragging = event.pressed
+		elif event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN]:
+			zoom_at(1.2 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1.0/1.2,event.position)
+		accept_event()
+	elif event is InputEventMouseMotion and _dragging:
+		pan_screen(event.relative)
+		accept_event()
+
+func _draw() -> void:
+	draw_rect(Rect2(Vector2.ZERO,size),Color(0.025,0.035,0.045,0.98))
+	for edge: Dictionary in graph.edges:
+		var points: PackedVector2Array = edge.points
+		if edge.unlocked_gate:
+			var glow := PackedVector2Array()
+			for point in points: glow.append(world_to_screen(point))
+			var glow_color: Color = edge.from_color.lerp(edge.to_color,0.5)
+			glow_color.a = 0.14
+			draw_polyline(glow,glow_color,6,true)
+		for index in range(points.size()-1):
+			var color: Color = edge.from_color if index == 0 else edge.to_color if index == 2 else edge.from_color.lerp(edge.to_color,0.5)
+			draw_line(world_to_screen(points[index]),world_to_screen(points[index+1]),color,1.5,true)
+	for node: Dictionary in graph.nodes.values():
+		draw_circle(world_to_screen(node.position),3.5 if node.visited else 3.0,node.color,true,-1,true)

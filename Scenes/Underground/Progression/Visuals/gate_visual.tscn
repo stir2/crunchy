@@ -1,0 +1,6 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Scenes/Underground/Progression/special_placeholder.gd" id="1"]
+[node name="Visuals" type="Node2D"]
+texture_filter = 1
+script = ExtResource("1")
+feature = "gate"

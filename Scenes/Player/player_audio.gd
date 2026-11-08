@@ -13,7 +13,7 @@ func _ready() -> void:
 	_warning = AudioStreamPlayer.new()
 	_warning.stream = sounds.stream_for(&"low_health_initial")
 	_warning.bus = &"SFX"
-	_warning.volume_db = -16
+	_warning.volume_db = -16 + sounds.gain_for(&"low_health_initial")
 	add_child(_warning)
 	_heartbeat = AudioStreamPlayer.new()
 	var loop := sounds.stream_for(&"low_health").duplicate() as AudioStreamWAV
@@ -22,7 +22,7 @@ func _ready() -> void:
 	loop.loop_end = roundi(loop.get_length() * loop.mix_rate)
 	_heartbeat.stream = loop
 	_heartbeat.bus = &"SFX"
-	_heartbeat.volume_db = -20
+	_heartbeat.volume_db = -20 + sounds.gain_for(&"low_health")
 	add_child(_heartbeat)
 	_warning.finished.connect(func():
 		if _low_health:
@@ -30,7 +30,9 @@ func _ready() -> void:
 	player.combat.phase_changed.connect(_on_attack_phase)
 	player.combat.hit_confirmed.connect(_on_hit_confirmed)
 	player.health.health_changed.connect(_on_health_changed)
-	player.health.died.connect(func(_hit: CombatHit): _was_dead = true)
+	player.health.died.connect(func(_hit: CombatHit):
+		_was_dead = true
+		sounds.play_sfx(&"death", -12))
 	player.health.health_reset.connect(_on_health_reset)
 	_was_dead = player.health.is_dead()
 	_on_health_changed(player.health.current_health, player.health.max_health)

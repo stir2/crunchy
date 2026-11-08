@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="AbyssRoomTemplateMetadata" format=3 uid="uid://dwwjjwhq2r535"]
+
+[ext_resource type="Script" uid="uid://ck5jir3ntl07j" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="1_metadata"]
+[ext_resource type="Script" uid="uid://dnt0nogb0yx73" path="res://Scenes/Underground/Generation/room_opening_profile.gd" id="2_profile"]
+[ext_resource type="PackedScene" uid="uid://d4dvuenpo6klo" path="res://Scenes/Underground/Rooms/Authored/Packed/room_jumporfight.tscn" id="3_scene"]
+
+[sub_resource type="Resource" id="Resource_openings"]
+script = ExtResource("2_profile")
+
+[resource]
+script = ExtResource("1_metadata")
+template_id = &"room_jumporfight"
+display_name = "Jump or Fight"
+scene = ExtResource("3_scene")
+room_size = Vector2i(40, 40)
+opening_schema = &"abyss_slots_v2"
+opening_width = 5
+opening_combinations = Array[ExtResource("2_profile")]([SubResource("Resource_openings")])

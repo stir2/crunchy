@@ -91,7 +91,8 @@ func is_solid(tile: Vector2i) -> bool:
 		if _is_open(coords) and _is_open(neighbor):
 			result = false
 		elif not _is_open(coords) and not _is_open(neighbor):
-			result = not AbyssRouteConfig.contains_opening(request(coords).requirements.required_openings, local)
+			var req := request(coords).requirements
+			result = not AbyssRouteConfig.contains_opening(req.required_openings, local, req.opening_width)
 	_final[tile] = result
 	return result
 

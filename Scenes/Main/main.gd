@@ -25,6 +25,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func start_new_game() -> void:
+	SoundManager.play_sfx(&"play_button", -12)
 	VillageManager.start_new_run()
 	change_scene(CUTSCENE_SCENE)
 
@@ -32,6 +33,7 @@ func start_new_game() -> void:
 func continue_game() -> bool:
 	if not SaveManager.load_game():
 		return false
+	SoundManager.play_sfx(&"play_button", -12)
 	change_scene(HOUSE_SCENE)
 	return true
 

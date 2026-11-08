@@ -10,9 +10,24 @@ enum Compatibility { OPEN, PACKED, TRANSITION }
 ## TRANSITION preserves the original OPEN/PACKED type; it is not a third noise type.
 @export var transition_base_region: AbyssRoomData.Region = AbyssRoomData.Region.PACKED
 @export var tile_pixels: int = 16
-@export var room_size: Vector2i = AbyssRegionConfig.DEFAULT_ROOM_SIZE
+## Legacy defaults preserve existing .tres files that omit these properties.
+## Explicitly resizing legacy metadata to 40x40 adopts the new opening contract.
+@export var room_size: Vector2i = AbyssRegionConfig.LEGACY_ROOM_SIZE:
+	set(value):
+		if room_size == value:
+			return
+		room_size = value
+		if room_size == AbyssRegionConfig.DEFAULT_ROOM_SIZE and opening_schema == &"abyss_slots_v1":
+			opening_schema = &"abyss_slots_v2"
+			opening_width = AbyssRouteConfig.OPENING_WIDTH
+		for profile in opening_combinations:
+			if profile != null:
+				for id in profile.openings.duplicate():
+					profile.set_connection(id,true,room_size,opening_width)
+		emit_changed()
 ## Version the physical opening convention independently of template IDs.
 @export var opening_schema: StringName = &"abyss_slots_v1"
+@export_range(3, 8) var opening_width: int = 3
 ## Legacy union of supported side:slot IDs. Profiles are the authoritative
 ## combinations; this union alone never implies that arbitrary subsets are safe.
 @export_storage var supported_openings: Array[StringName] = []
@@ -53,6 +68,6 @@ func _set(property: StringName, value: Variant) -> bool:
 	elif opening_combinations[0] == null:
 		opening_combinations[0] = AbyssRoomOpeningProfile.new()
 	opening_combinations[0].set_connection(
-		StringName(String(property).trim_prefix("Connections/")), bool(value), room_size)
+		StringName(String(property).trim_prefix("Connections/")), bool(value), room_size, opening_width)
 	emit_changed()
 	return true

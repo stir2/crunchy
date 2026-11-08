@@ -12,6 +12,7 @@ static func validate(room: AbyssAuthoredRoom, metadata: AbyssRoomTemplateMetadat
 			errors.append("Required support rectangles must lie inside the room")
 	var req := AbyssRoomRequirements.new()
 	req.room_size = room.room_size
+	req.opening_width = metadata.opening_width
 	req.route_openings = profile.opening_tiles.duplicate()
 	var protected := AbyssConditionalWallGroups.reserved_cells(room,req)
 	for key in ["Climbables","ConditionalPlatforms","BreakableWalls"]:
