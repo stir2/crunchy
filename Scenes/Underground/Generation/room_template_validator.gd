@@ -131,7 +131,8 @@ static func _validate_conditional(room: AbyssAuthoredRoom, metadata: AbyssRoomTe
 		for rect in room.reserved_route_rects:
 			if rect.has_point(cell):
 				errors.append("Conditional wall overlaps reserved route: %s" % cell)
-		for key in ["Solid", "Platforms"]:
+		# Platforms may sit behind conditional walls and remain when walls are omitted.
+		for key in ["Solid"]:
 			var permanent := room.get_node_or_null(NodePath(key)) as TileMapLayer
 			if permanent != null and permanent.get_cell_source_id(cell) != -1:
 				errors.append("Conditional wall overlaps permanent geometry: %s" % cell)

@@ -34,7 +34,6 @@ tile_set = ExtResource("2_pwk3j")
 
 [node name="ConditionalPlatforms" type="TileMapLayer" parent="." unique_id=22730198]
 texture_filter = 1
-tile_map_data = PackedByteArray("AAAKACIAAAABAAAAAAALACIAAAABAAAAAAA=")
 tile_set = ExtResource("2_pwk3j")
 
 [node name="BreakableWalls" type="TileMapLayer" parent="." unique_id=849217134]

@@ -13,7 +13,9 @@
 [ext_resource type="Resource" uid="uid://ckbe48mv4qcmn" path="res://Scenes/Underground/Rooms/Metadata/room_davestriple.tres" id="packed_room_davestriple"]
 [ext_resource type="Resource" uid="uid://cimhwaifts1yk" path="res://Scenes/Underground/Rooms/Metadata/room_fall1.tres" id="packed_room_fall1"]
 [ext_resource type="Resource" uid="uid://7ksxtu2mli1w" path="res://Scenes/Underground/Rooms/Metadata/room_halls.tres" id="packed_room_halls"]
+[ext_resource type="Resource" uid="uid://btyp4amuecmih" path="res://Scenes/Underground/Rooms/Metadata/room_pits.tres" id="packed_room_pits"]
+[ext_resource type="Resource" uid="uid://xxm3m2lhy8d6" path="res://Scenes/Underground/Rooms/Metadata/room_stomach.tres" id="packed_room_stomach"]
 
 [resource]
 script = ExtResource("1")
-templates = Array[ExtResource("2")]([ExtResource("7"), ExtResource("packed_room_arena1"), ExtResource("packed_room_arena2"), ExtResource("packed_room_coaster"), ExtResource("packed_room_corner_NE"), ExtResource("packed_room_corner_NW"), ExtResource("packed_room_corner_SE"), ExtResource("packed_room_corner_SW"), ExtResource("packed_room_davestriple"), ExtResource("packed_room_fall1"), ExtResource("packed_room_halls")])
+templates = Array[ExtResource("2")]([ExtResource("7"), ExtResource("packed_room_arena1"), ExtResource("packed_room_arena2"), ExtResource("packed_room_coaster"), ExtResource("packed_room_corner_NE"), ExtResource("packed_room_corner_NW"), ExtResource("packed_room_corner_SE"), ExtResource("packed_room_corner_SW"), ExtResource("packed_room_davestriple"), ExtResource("packed_room_fall1"), ExtResource("packed_room_halls"), ExtResource("packed_room_pits"), ExtResource("packed_room_stomach")])
