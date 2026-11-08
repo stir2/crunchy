@@ -21,7 +21,8 @@ const OPENING_WIDTH: int = 5
 	set(value):
 		branch_max_length = value
 		branch_min_length = mini(branch_min_length, value)
-@export_range(0.0, 1.0) var downward_preference: float = 0.95
+## Retain a downward bias while allowing more lateral detours.
+@export_range(0.0, 1.0) var downward_preference: float = 0.70
 @export_range(0.0, 1.0) var directional_persistence: float = 0.25
 @export_range(0.1, 3.0) var turning_weight: float = 1.0
 @export_range(1, 12) var max_straight_run: int = 3

@@ -79,6 +79,8 @@ position = Vector2(8, 504)
 
 [node name="EnemySpawnMarker" parent="." unique_id=1894787401 instance=ExtResource("3_ij4jx")]
 position = Vector2(240, 186)
+marker_id = &"EnemySpawnMarker"
 
 [node name="EnemySpawnMarker2" parent="." unique_id=1805684370 instance=ExtResource("3_ij4jx")]
 position = Vector2(400, 186)
+marker_id = &"EnemySpawnMarker2"

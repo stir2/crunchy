@@ -343,9 +343,15 @@ func _damage_swing_breakables(hit_transform: Transform2D) -> void:
 	var rectangle := hit_shape.shape as RectangleShape2D
 	if rectangle == null:
 		return
+	# Cover the whole swing from its origin to the existing outer edge. A narrow
+	# attack rectangle alone can overshoot thin walls when standing against them.
+	# This changes only breakable detection, not enemy hitboxes or maximum reach.
+	var half := rectangle.size*0.5
+	var origin := hit_transform.affine_inverse()*pivot.global_position
+	var near_x := minf(-half.x,origin.x)
 	var polygon := PackedVector2Array()
-	for corner in [Vector2(-1,-1),Vector2(1,-1),Vector2(1,1),Vector2(-1,1)]:
-		polygon.append(hit_transform * (corner * rectangle.size * 0.5))
+	for corner in [Vector2(near_x,-half.y),Vector2(half.x,-half.y),Vector2(half.x,half.y),Vector2(near_x,half.y)]:
+		polygon.append(hit_transform*corner)
 	for room in _breakable_rooms:
 		if room.breakables != null and room.breakables.damage_in_polygon(polygon,attack_damage,_swing_breakable_hits):
 			if not _hitstop_used:
@@ -369,3 +375,8 @@ func connect_breakable_dash() -> bool:
 	if connected:
 		_start_hitstop(dash_breakable_hitstop_frames)
 	return connected
+
+## Preserve frame-based deadlines across an explicit gameplay pause.
+func compensate_paused_ticks(start_tick: int, ticks: int) -> void:
+	if _hitstop_until_tick >= start_tick:
+		_hitstop_until_tick += ticks

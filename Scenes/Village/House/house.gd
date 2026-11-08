@@ -1,6 +1,6 @@
 extends Node2D
 
-const ABYSS_SCENE := "res://Scenes/Underground/abyss.tscn"
+const ABYSS_SCENE := "res://Scenes/Underground/abyss_runtime.tscn"
 const CUTSCENE_SCENE := "res://Scenes/Cutscene/toll_cutscene.tscn"
 
 enum RoomPanel { STAIRS = 0, DESK = 1, WINDOW = 2 }

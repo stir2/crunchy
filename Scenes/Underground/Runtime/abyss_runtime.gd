@@ -4,6 +4,7 @@ extends Node2D
 signal ready_for_play(destination: Dictionary)
 signal startup_failed(message: String)
 signal streaming_hold_changed(holding: bool)
+signal returned_to_village(flesh_banked: int)
 @export var auto_start: bool = true
 @export var configuration: AbyssRegionConfig = AbyssRegionConfig.new()
 @export var route_configuration: AbyssRouteConfig = AbyssRouteConfig.new()
@@ -27,7 +28,12 @@ var _jump_released: bool = false
 var _dash_pressed: bool = false
 var _saved_window: Dictionary = {}
 var _day: int = -1
+var _return_pending: bool = false
 var _state: AbyssRoomState
+@onready var entrance_return: InteractionTarget = $EntranceReturn
+@onready var flesh_hud: AbyssFleshHUD = $FleshHUD
+@onready var exploration: AbyssExplorationTracker = $ExplorationTracker
+@onready var abyss_map: AbyssMapOverlay = $AbyssMap
 @onready var interactions: PlayerInteractionController = $Player/InteractionController
 @onready var game: Node = get_node("/root/GameController")
 @onready var player: Player = $Player
@@ -63,6 +69,7 @@ func enter_entrance() -> bool:
 	_serial += 1
 	var token := _serial
 	_starting = true
+	_return_pending = false
 	last_error = ""
 	$StartupStatusCanvas.visible = false
 	_set_visibility(false)
@@ -78,6 +85,7 @@ func enter_entrance() -> bool:
 	state.begin_day(game.day)
 	_day = state.current_day
 	_restore_vitals(state)
+	if not player.damage.is_dead(): state.exploration.begin_descent(stream.specials.world)
 	var entrance := stream.routes.entrance_room()
 	if stream.specials.level_at(entrance) != 1:
 		fail_startup("Configured route entrance is outside Level 1")
@@ -98,6 +106,7 @@ func enter_entrance() -> bool:
 		fail_startup("No safe 30x36 entrance landing in the existing Level 1 terrain")
 		return false
 	player.global_position = destination.spawn_position
+	entrance_return.global_position = destination.spawn_position+Vector2(0,-18)
 	player.reset_movement() # Temporary abilities only; never heal/reset stamina.
 	_starting = false
 	_active = true
@@ -117,7 +126,7 @@ func _configure_world(state: AbyssRoomState) -> bool:
 	var settings := state.world_settings
 	if settings.is_empty():
 		var progression: AbyssProgressionState = game.abyss_progression_state
-		if not state.groups.is_empty() or not state.markers.is_empty() or not progression.checkpoints.is_empty() or not progression.fragments.is_empty() or not progression.gates.is_empty() or not progression.keys.is_empty() or not progression.unlocked_levels.is_empty():
+		if not state.groups.is_empty() or not state.markers.is_empty() or not progression.checkpoints.is_empty() or not progression.fragments.is_empty() or not progression.gates.is_empty() or not progression.keys.is_empty() or not progression.unlocked_levels.is_empty() or not state.exploration.visited.is_empty() or not state.exploration.graves.is_empty() or not state.exploration.descent_souls.is_empty():
 			fail_startup("Existing abyss progress has no layout version. It was preserved; start a separate new run for the 40x40 layout.")
 			return false
 		if template_registry.resource_path.is_empty():
@@ -145,6 +154,9 @@ func _configure_world(state: AbyssRoomState) -> bool:
 	if not stream.deferred_templates.is_empty():
 		print("Abyss: ",stream.deferred_templates.size()," authored templates remain registered at their original layout; using procedural fallback until remade for ",configuration.room_size," / ",route_configuration.opening_schema)
 	state.world_settings = AbyssRuntimeWorldSettings.capture(configs,template_registry)
+	exploration.configure(state.exploration,stream.specials.world)
+	abyss_map.configure(stream.specials,state.exploration,configuration.room_size)
+	flesh_hud.bind_state(game,state.exploration,stream.specials.world,player)
 	return true
 
 func set_streaming_hold(holding: bool) -> void:
@@ -188,6 +200,10 @@ func _process(_delta: float) -> void:
 
 ## Future host calls this on leaving. It can keep this node or free it afterward.
 func leave() -> void:
+	_return_pending = false
+	flesh_hud.unbind()
+	abyss_map.close_map()
+	exploration.leave()
 	_serial += 1
 	_capture_vitals()
 	_active = false
@@ -210,6 +226,7 @@ func _set_visibility(show_runtime: bool) -> void:
 	visible = show_runtime
 	$BackgroundCanvas.visible = show_runtime
 	$HealthCanvas.visible = show_runtime
+	flesh_hud.visible = show_runtime
 
 func fail_startup(message: String) -> void:
 	last_error = message
@@ -270,3 +287,57 @@ func _exit_tree() -> void:
 	_serial += 1
 	_capture_vitals()
 	_restore_presentation()
+
+func checkpoint_primary_available(request: AbyssSpecialSpawnRequest) -> bool:
+	if request == null or request.progression != stream.specials or request.kind != &"checkpoint": return false
+	var active: bool = stream.specials.state.checkpoints.get(request.definition.id,{}).get("activated",false)
+	return not active or (player.health.current_health < player.health.max_health and _state.exploration.checkpoint_heal_available(stream.specials.world,request.definition.id))
+
+func activate_or_heal_checkpoint(request: AbyssSpecialSpawnRequest) -> String:
+	if not interactions.actions_allowed() or not checkpoint_primary_available(request): return ""
+	var activated := request.activate()
+	var healed := 0
+	if player.health.current_health < player.health.max_health and _state.exploration.use_checkpoint_heal(stream.specials.world,request.definition.id):
+		healed = player.health.heal(2)
+	if activated: return "Checkpoint activated — restored %d HP" % healed
+	return "Restored %d HP" % healed if healed > 0 else ""
+
+func can_safe_return() -> bool:
+	return is_active() and not _return_pending and not _holding and not get_tree().paused 		and game.abyss_room_state == _state and interactions.actions_allowed()
+
+func request_safe_return(source: InteractionTarget) -> bool:
+	if not can_safe_return() or not source.can_interact_for_action(player,InteractionTarget.Channel.TRAVEL): return false
+	var origin := player.get_node("CollisionShape2D") as Node2D
+	if origin.global_position.distance_to(source.global_position) > interactions.interaction_radius: return false
+	_return_pending = true # Claim before deferring: two sources cannot extract twice.
+	interactions.set_enabled(false)
+	player.set_physics_process(false)
+	_complete_safe_return.call_deferred(_serial)
+	return true
+
+func _complete_safe_return(token: int) -> void:
+	if token != _serial or not is_active() or not _return_pending: return
+	if game.abyss_room_state != _state or player.damage.is_action_locked():
+		_return_pending = false
+		interactions.set_enabled(not _holding)
+		player.set_physics_process(not _holding)
+		return
+	var tree := get_tree()
+	var host := get_parent()
+	var standalone := not host.has_method("change_scene")
+	var host_scene: PackedScene
+	if standalone: host_scene = load("res://Scenes/Main/main.tscn") as PackedScene
+	var amount: int = game.return_abyss_descent(stream.specials.world)
+	game.health = player.health.current_health
+	game.stamina = int(player.stamina.current_stamina)
+	game.return_to_stairs = true
+	leave() # Capture exact vitals and restore local presentation before showing village.
+	returned_to_village.emit(amount)
+	if standalone:
+		host = host_scene.instantiate()
+		tree.root.add_child(host)
+		tree.current_scene = host
+		host.change_scene("res://Scenes/Village/House/house.tscn")
+		queue_free()
+	else:
+		host.change_scene("res://Scenes/Village/House/house.tscn")

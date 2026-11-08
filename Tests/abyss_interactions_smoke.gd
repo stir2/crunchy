@@ -22,11 +22,11 @@ func tick(count: int = 1) -> void:
 		await process_frame
 
 func press_interact() -> void:
-	Input.action_release("Interact")
+	Input.action_release("Interact 1")
 	await tick()
-	Input.action_press("Interact")
+	Input.action_press("Interact 1")
 	await tick()
-	Input.action_release("Interact")
+	Input.action_release("Interact 1")
 	await tick()
 
 func load_room(coords: Vector2i) -> AbyssAuthoredRoom:
@@ -60,6 +60,14 @@ func run() -> void:
 	var game := root.get_node("GameController")
 	game.abyss_room_state = AbyssRoomState.new()
 	game.abyss_progression_state = AbyssProgressionState.new()
+	var fixture := AbyssRegionConfig.new()
+	fixture.global_seed = 12
+	fixture.noise_frequency = 0.085
+	fixture.open_threshold = 0.0
+	var progression := AbyssProgressionConfig.new()
+	progression.checkpoint_probability = 1.0
+	var configs: Array[Resource] = [fixture,AbyssRouteConfig.new(),AbyssTerrainConfig.new(),progression]
+	game.abyss_room_state.world_settings = AbyssRuntimeWorldSettings.capture(configs,load("res://Scenes/Underground/Rooms/authored_registry.tres"))
 	host = load("res://Scenes/Main/main.tscn").instantiate()
 	root.add_child(host)
 	current_scene = host
@@ -80,11 +88,12 @@ func run() -> void:
 	controller = player.get_node("InteractionController")
 	player.gravity_multiplier = 0.0
 	player.collision_mask = 0
+	player.damage.hurtbox.invulnerable = true # Isolate input checks from teleporting onto authored hazards.
 	player.stamina.regeneration_per_second = 0.0
 	var service := runtime.stream.specials
 	var state := service.state
 	check(controller.interaction_radius == 48,"Interaction radius changed")
-	var binding := InputMap.action_get_events("Interact")[0] as InputEventKey
+	var binding := InputMap.action_get_events("Interact 1")[0] as InputEventKey
 	check(binding.physical_keycode == KEY_E,"Interact is not mapped to E")
 	var checkpoint_coords := Vector2i(2147483647,0)
 	for y in range(10):
@@ -105,7 +114,7 @@ func run() -> void:
 	player.stamina.reset_stamina(37)
 	await press_interact()
 	check(service.activated_checkpoints().size() == 1,"E did not activate checkpoint")
-	check(player.health.current_health == 4 and player.stamina.current_stamina == 37,"Checkpoint changed vitals")
+	check(player.health.current_health == 6 and player.stamina.current_stamina == 37,"Checkpoint must heal one heart without restoring stamina")
 	check(not checkpoint.can_interact(player),"Activated checkpoint remains actionable")
 	runtime.stream.unload_room(checkpoint_coords)
 	await tick()
@@ -147,19 +156,19 @@ func run() -> void:
 			check(not state.fragments.has(definition.id),"Dash charging allowed interaction")
 			player.reset_movement()
 			await tick()
-		Input.action_press("Interact")
+		Input.action_press("Interact 1")
 		await tick()
 		var count := state.collected_count(service.level_key(1))
 		await tick(3)
 		check(count == index+1 and state.collected_count(service.level_key(1)) == count,"Held E duplicated collection")
 		check(not fragment.request.collect(),"Duplicate fragment collection accepted")
 		check(not fragment.is_available(player) and controller.message.text.contains("fragment"),"Collection feedback/eligibility failed")
-		Input.action_release("Interact")
+		Input.action_release("Interact 1")
 		await tick()
 	check(state.collected_count(service.level_key(2)) == 1,"Other-level fragments lost")
 	await approach(gate)
 	check(controller.prompt.text.contains("Unlock Level"),"Sufficient gate prompt missing")
-	Input.action_press("Interact")
+	Input.action_press("Interact 1")
 	await tick()
 	check(state.collected_count(service.level_key(1)) == 0 and state.consumed_fragments.size() == required,"Unlock did not consume exact requirement")
 	check(state.collected_count(service.level_key(2)) == 1,"Unlock spent fragments from wrong level")
@@ -169,7 +178,7 @@ func run() -> void:
 	var spent := state.consumed_fragments.duplicate()
 	await tick(4)
 	check(not gate.request.unlock() and state.consumed_fragments == spent,"Unlock double-spent fragments")
-	Input.action_release("Interact")
+	Input.action_release("Interact 1")
 	var aperture := (gate_room.get_node("LevelBoundaryEast") as AbyssLevelBoundary).gate_cells[2]
 	var query := PhysicsPointQueryParameters2D.new()
 	query.position = gate_room.to_global((Vector2(aperture)+Vector2(0.5,0.5))*16)

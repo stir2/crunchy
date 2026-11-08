@@ -5,6 +5,11 @@
 [ext_resource type="Script" uid="uid://c5h435prq41ry" path="res://Scenes/Underground/Runtime/room_streamer.gd" id="3_stream"]
 [ext_resource type="Script" uid="uid://da2ktqc15fjha" path="res://Scenes/Underground/Runtime/axis_follow_camera.gd" id="4_camera"]
 [ext_resource type="PackedScene" path="res://Scenes/Player/Health/heart_hud.tscn" id="5_hearts"]
+[ext_resource type="PackedScene" path="res://Scenes/Underground/Map/abyss_map.tscn" id="6_map"]
+[ext_resource type="Script" uid="uid://1nltxt4d4clk" path="res://Scenes/Underground/Map/exploration_tracker.gd" id="7_exploration"]
+[ext_resource type="PackedScene" path="res://Scenes/Underground/HUD/flesh_hud.tscn" id="8_flesh_hud"]
+
+[ext_resource type="Script" path="res://Scenes/Interaction/entrance_return.gd" id="9_entrance_return"]
 
 [node name="AbyssRuntime" type="Node2D" unique_id=678067981]
 script = ExtResource("1_runtime")
@@ -38,7 +43,7 @@ script = ExtResource("3_stream")
 layout_mode = 3
 anchors_preset = 0
 offset_left = 12.0
-offset_top = 12.0
+offset_top = 40.0
 health_path = NodePath("../../Player/Health")
 
 [node name="StartupStatusCanvas" type="CanvasLayer" parent="." unique_id=1510579507]
@@ -68,3 +73,13 @@ theme_override_font_sizes/font_size = 16
 text = "Unable to enter the abyss"
 vertical_alignment = 1
 autowrap_mode = 3
+
+[node name="ExplorationTracker" type="Node" parent="." unique_id=166994276]
+script = ExtResource("7_exploration")
+
+[node name="AbyssMap" parent="." unique_id=1390685481 instance=ExtResource("6_map")]
+
+[node name="FleshHUD" parent="." unique_id=1881410424 instance=ExtResource("8_flesh_hud")]
+
+[node name="EntranceReturn" type="Node2D" parent="."]
+script = ExtResource("9_entrance_return")

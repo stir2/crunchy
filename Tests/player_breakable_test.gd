@@ -36,6 +36,31 @@ func make_room() -> AbyssAuthoredRoom:
 	result.breakables.setup(result,request,state,AbyssTileGroups.describe(walls,&"breakable_test",{}),{})
 	return result
 
+func check_close_swing(x: float, facing: int, gap: float, expect_hit: bool) -> void:
+	state = AbyssRoomState.new()
+	request.breakable_health = 3.0
+	room = make_room()
+	root.add_child(room)
+	player.reset_movement()
+	player.position = Vector2(x,208)
+	player._move_direction = facing
+	player.update_facing_direction()
+	# Narrow hitboxes used to pass entirely beyond a wall at touching distance.
+	player.combat.hitbox_width = 16.0
+	for frame in range(4): await tick()
+	Input.action_press("Attack")
+	await tick()
+	Input.action_release("Attack")
+	var froze := false
+	for frame in range(150):
+		await tick()
+		froze = froze or player.combat.is_hitstopped()
+		if not player.combat.is_attacking(): break
+	check(room.breakables.groups()[0].health == (2.0 if expect_hit else 3.0),"Close swing damage incorrect: facing=%d gap=%s expected_hit=%s" % [facing,gap,expect_hit])
+	check(froze == expect_hit,"Close swing hitstop incorrect")
+	room.queue_free()
+	await tick()
+
 func run() -> void:
 	request.requirements = AbyssRoomRequirements.new()
 	request.template_id = &"breakable_test"
@@ -103,5 +128,10 @@ func run() -> void:
 	for frame in range(30): await tick()
 	check(room.breakables.groups()[0].health == 6.0,"A surviving group must take damage only once per dash")
 	check(player.position.x < 146,"Surviving breakables must retain collision")
+	for facing in [-1,1]:
+		for gap in [0.0,4.0,24.0]:
+			await check_close_swing(145.0-gap if facing == 1 else 191.0+gap,facing,gap,true)
+		await check_close_swing(145.0-44.0 if facing == 1 else 191.0+44.0,facing,44.0,false)
+	await check_close_swing(145.0,-1,0.0,false) # Do not hit a wall behind the swing.
 	print("Player breakables: swing grouping, dash impact, hitstop, forward momentum and persistence; failures=",failures)
 	quit(1 if failures else 0)

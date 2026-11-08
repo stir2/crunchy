@@ -15,6 +15,8 @@ static func capture(configs: Array[Resource], registry: AbyssRoomTemplateRegistr
 				value = [value.x, value.y]
 			elif value is StringName:
 				value = String(value)
+			elif value is int and info.name == &"global_seed":
+				value = str(value) # JSON numbers cannot preserve every 64-bit seed.
 			values[info.name] = value
 		result[str(i)] = values
 	return result
@@ -32,6 +34,10 @@ static func apply(saved: Dictionary, configs: Array[Resource]) -> bool:
 			if not values.has(info.name):
 				return false
 			var value: Variant = values[info.name]
+			if int(info.type) == TYPE_INT and info.name == &"global_seed" and value is String:
+				if not value.is_valid_int() or str(value.to_int()) != value:
+					return false
+				value = value.to_int()
 			match int(info.type):
 				TYPE_VECTOR2I:
 					if not value is Array or value.size() != 2:

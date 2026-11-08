@@ -75,3 +75,8 @@ func _refresh_maximum() -> void:
 	if _initialized:
 		current_health = mini(current_health, max_health)
 		health_changed.emit(current_health, max_health)
+
+## Preserve frame-based deadlines across an explicit gameplay pause.
+func compensate_paused_ticks(start_tick: int, ticks: int) -> void:
+	if _invulnerable_until > start_tick:
+		_invulnerable_until += ticks

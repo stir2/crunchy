@@ -7,6 +7,7 @@
 [node name="PackedRoom" type="Node2D" unique_id=247041278]
 script = ExtResource("1_hn2sh")
 room_size = Vector2i(40, 40)
+protect_interior_routes = false
 
 [node name="Solid" type="TileMapLayer" parent="." unique_id=1033750265]
 texture_filter = 1
@@ -79,6 +80,8 @@ position = Vector2(8, 504)
 
 [node name="EnemySpawnMarker" parent="." unique_id=126480040 instance=ExtResource("3_pf4dn")]
 position = Vector2(214, 503)
+marker_id = &"EnemySpawnMarker"
 
 [node name="EnemySpawnMarker2" parent="." unique_id=806991317 instance=ExtResource("3_pf4dn")]
 position = Vector2(300, 501)
+marker_id = &"EnemySpawnMarker2"

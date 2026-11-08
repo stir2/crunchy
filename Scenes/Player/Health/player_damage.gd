@@ -92,3 +92,10 @@ func _process(_delta: float) -> void:
 	elif health.is_invulnerable() and (tick / blink_period_frames) % 2 == 0:
 		color.a = invulnerable_alpha
 	sprite.self_modulate = color
+
+## Preserve frame-based deadlines across an explicit gameplay pause.
+func compensate_paused_ticks(start_tick: int, ticks: int) -> void:
+	if _reaction_until > start_tick:
+		_reaction_until += ticks
+	if _flash_until > start_tick:
+		_flash_until += ticks
