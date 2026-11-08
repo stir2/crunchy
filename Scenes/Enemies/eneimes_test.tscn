@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/Enemies/blue_enemy.tscn" id="enemy_blue"]
 [ext_resource type="PackedScene" path="res://Scenes/Enemies/green_enemy.tscn" id="enemy_green"]
 [ext_resource type="PackedScene" path="res://Scenes/Enemies/red_enemy.tscn" id="enemy_red"]
+[ext_resource type="PackedScene" path="res://Scenes/Enemies/spider_rusher.tscn" id="enemy_spider_rusher"]
 
 [sub_resource type="RectangleShape2D" id="CombatFloorA"]
 size = Vector2(710, 32)
@@ -132,10 +133,22 @@ position = Vector2(4320, 320)
 position = Vector2(4392, 304)
 
 [node name="RedEnemy" parent="." unique_id=1658116603 instance=ExtResource("enemy_red")]
-position = Vector2(240, 320)
+position = Vector2(1044, 257)
 
 [node name="BlueEnemy" parent="." unique_id=671380217 instance=ExtResource("enemy_blue")]
-position = Vector2(720, 320)
+position = Vector2(1312, 321)
 
 [node name="GreenEnemy" parent="." unique_id=977968894 instance=ExtResource("enemy_green")]
-position = Vector2(1040, 320)
+position = Vector2(438, 316)
+
+[node name="RushingSpider" parent="." unique_id=816156399 instance=ExtResource("enemy_spider_rusher")]
+position = Vector2(828, 240)
+
+[node name="RushingSpider2" parent="." unique_id=927759545 instance=ExtResource("enemy_spider_rusher")]
+position = Vector2(644, 320)
+
+[node name="RushingSpider3" parent="." unique_id=48299005 instance=ExtResource("enemy_spider_rusher")]
+position = Vector2(553, 129)
+
+[node name="RushingSpider4" parent="." unique_id=837097779 instance=ExtResource("enemy_spider_rusher")]
+position = Vector2(425, 191)
