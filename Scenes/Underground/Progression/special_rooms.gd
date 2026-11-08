@@ -110,7 +110,7 @@ func can_cross(a: Vector2i, b: Vector2i) -> bool:
 	if level_at(a) == level_at(b):
 		return level_at(a) != 0
 	var gate := gate_at(a if a.x < b.x else b)
-	return not gate.is_empty() and state.is_gate_unlocked(gate.id)
+	return not gate.is_empty() and is_gate_unlocked(gate)
 
 func unlock_gate(definition: Dictionary) -> bool:
 	if definition.get("kind") != "gate":
@@ -118,11 +118,16 @@ func unlock_gate(definition: Dictionary) -> bool:
 	var actual := gate_at(Vector2i(int(definition.get("x",0)),int(definition.get("y",-1))))
 	if actual.is_empty() or actual.id != definition.get("id"):
 		return false
-	return state.unlock_gate(actual.id,level_key(actual.level))
+	if is_gate_unlocked(actual):
+		return false
+	return state.unlock_level(level_key(int(actual.destination_level)),level_key(int(actual.level)),int(actual.fragments_per_key))
+func is_gate_unlocked(definition: Dictionary) -> bool:
+	return not definition.is_empty() and state.is_gate_unlocked(String(definition.id))
+
 func gate_status(coords: Vector2i) -> Dictionary:
 	var definition := gate_at(coords).duplicate(true)
 	if not definition.is_empty():
-		definition["unlocked"] = state.is_gate_unlocked(definition.id)
+		definition["unlocked"] = is_gate_unlocked(definition)
 	return definition
 
 func activated_checkpoints() -> Array:

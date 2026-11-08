@@ -1,5 +1,6 @@
-[gd_scene load_steps=2 format=3]
-[ext_resource type="Script" path="res://Scenes/Underground/Progression/special_placeholder.gd" id="1"]
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Scenes/Underground/Progression/special_interactable.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Scenes/Underground/Progression/Visuals/checkpoint_visual.tscn" id="2"]
 [node name="Checkpoint" type="Node2D"]
 script = ExtResource("1")
-feature = "checkpoint"
+[node name="Visuals" parent="." instance=ExtResource("2")]

@@ -28,6 +28,7 @@ var _dash_pressed: bool = false
 var _saved_window: Dictionary = {}
 var _day: int = -1
 var _state: AbyssRoomState
+@onready var interactions: PlayerInteractionController = $Player/InteractionController
 @onready var game: Node = get_node("/root/GameController")
 @onready var player: Player = $Player
 @onready var stream: AbyssRoomStreamer = $StreamingController
@@ -37,6 +38,7 @@ var _state: AbyssRoomState
 
 func _ready() -> void:
 	_set_visibility(false)
+	interactions.set_enabled(false)
 	player.set_physics_process(false)
 	stream.player = player
 	stream.camera = camera
@@ -64,6 +66,7 @@ func enter_entrance() -> bool:
 	last_error = ""
 	$StartupStatusCanvas.visible = false
 	_set_visibility(false)
+	interactions.set_enabled(false)
 	player.set_physics_process(false)
 	_apply_presentation()
 	var state: AbyssRoomState = game.abyss_room_state
@@ -101,6 +104,7 @@ func enter_entrance() -> bool:
 	_set_visibility(true)
 	camera.activate(player,stream)
 	player.set_physics_process(true)
+	interactions.set_enabled(true)
 	ready_for_play.emit(destination.duplicate(true))
 	return true
 
@@ -113,7 +117,7 @@ func _configure_world(state: AbyssRoomState) -> bool:
 	var settings := state.world_settings
 	if settings.is_empty():
 		var progression: AbyssProgressionState = game.abyss_progression_state
-		if not state.groups.is_empty() or not state.markers.is_empty() or not progression.checkpoints.is_empty() or not progression.fragments.is_empty() or not progression.gates.is_empty() or not progression.keys.is_empty():
+		if not state.groups.is_empty() or not state.markers.is_empty() or not progression.checkpoints.is_empty() or not progression.fragments.is_empty() or not progression.gates.is_empty() or not progression.keys.is_empty() or not progression.unlocked_levels.is_empty():
 			fail_startup("Existing abyss progress has no layout version. It was preserved; start a separate new run for the 40x40 layout.")
 			return false
 		if template_registry.resource_path.is_empty():
@@ -148,6 +152,7 @@ func set_streaming_hold(holding: bool) -> void:
 		return
 	_holding = holding
 	player.set_physics_process(not holding)
+	interactions.set_enabled(not holding)
 	if holding:
 		_resume_sprite = sprite.is_playing()
 		sprite.pause()
@@ -191,6 +196,7 @@ func leave() -> void:
 	_jump_pressed = false
 	_jump_released = false
 	_dash_pressed = false
+	interactions.set_enabled(false)
 	player.set_physics_process(false)
 	player.reset_movement()
 	camera.set_physics_process(false)
