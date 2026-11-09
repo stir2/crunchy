@@ -4,6 +4,7 @@ extends RefCounted
 signal changed
 signal fragment_collected
 signal key_assembled
+signal gate_unlocked
 var checkpoints: Dictionary = {}
 var fragments: Dictionary = {}
 var gates: Dictionary = {}
@@ -54,11 +55,14 @@ func record_assembled_key(world_level_id: String) -> void:
 func unlock_gate(id: String, world_level_id: String) -> bool:
 	if not keys.get(world_level_id, false):
 		return false
+	var was_unlocked := is_gate_unlocked(id)
 	gates[id] = true
 	var destination := destination_for_gate_id(id)
 	if not destination.is_empty():
 		unlocked_levels[destination] = true
 	changed.emit()
+	if not was_unlocked:
+		gate_unlocked.emit()
 	return true
 func destination_for_gate_id(id: String) -> String:
 	# Existing IDs are <world>/level/<source>/gate/<room-x>:<room-y>.
@@ -88,7 +92,7 @@ func unlock_level(destination_id: String, fragment_level_id: String, required: i
 		consumed_fragments[available[index]] = true
 	unlocked_levels[destination_id] = true
 	changed.emit()
-	key_assembled.emit()
+	gate_unlocked.emit()
 	return true
 func serialize() -> String:
 	return JSON.stringify({"version":2,"checkpoints":checkpoints,"fragments":fragments,"gates":gates,"keys":keys,"consumed_fragments":consumed_fragments,"unlocked_levels":unlocked_levels})

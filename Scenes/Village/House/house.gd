@@ -7,6 +7,8 @@ enum RoomPanel { STAIRS = 0, DESK = 1, WINDOW = 2 }
 
 var current_panel: RoomPanel = RoomPanel.DESK
 var ending_dialog: AcceptDialog
+var _morning_transition: bool = false
+var _greeted_refugee: String = ""
 var _rumble: AudioStreamPlayer
 
 @onready var stairs_panel: Control = %StairsPanel
@@ -53,6 +55,10 @@ func _ready() -> void:
 		Input.set_custom_mouse_cursor(cursor_tex, Input.CURSOR_ARROW)
 		Input.set_custom_mouse_cursor(cursor_tex, Input.CURSOR_POINTING_HAND)
 
+	for button in [left_nav_btn, right_nav_btn, open_blueprint_btn]:
+		button.set_meta("own_click_sound", true)
+	left_nav_btn.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
+	right_nav_btn.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
 	left_nav_btn.pressed.connect(_on_left_nav_pressed)
 	right_nav_btn.pressed.connect(_on_right_nav_pressed)
 
@@ -107,7 +113,7 @@ func set_panel(p: RoomPanel) -> void:
 	if DialogueManager.is_busy():
 		return
 	if current_panel != p:
-		SoundManager.play_sfx(&"panel_transition", -18)
+		SoundManager.play_ui(&"panel_transition", -26)
 	current_panel = p
 	stairs_panel.visible = (p == RoomPanel.STAIRS)
 	desk_panel.visible = (p == RoomPanel.DESK)
@@ -159,13 +165,13 @@ func _open_blueprint() -> void:
 		if not is_inside_tree():
 			return
 	village_panel.refresh()
-	SoundManager.play_sfx(&"open_ledger", -16)
+	SoundManager.play_ui(&"open_ledger", -23)
 	village_panel.show()
 
 
 func _close_blueprint() -> void:
 	if village_panel.visible:
-		SoundManager.play_sfx(&"close_ledger", -16)
+		SoundManager.play_ui(&"close_ledger", -24)
 	village_panel.hide()
 
 
@@ -242,7 +248,7 @@ func _refresh_panel_content() -> void:
 
 
 func _on_refugee_waiting(candidate: Dictionary) -> void:
-	if GameController.is_day_10():
+	if GameController.is_day_10() or _morning_transition:
 		return
 	var is_bum: bool = candidate.get("is_bum", false)
 	var type_str := "Bum" if is_bum else "Worker"
@@ -252,6 +258,10 @@ func _on_refugee_waiting(candidate: Dictionary) -> void:
 	else:
 		refugee_desc_label.text = "Can learn a trade and work in a building."
 	refugee_modal.show()
+	var identity := str(candidate.get("id", candidate.get("name", "Traveler")))
+	if identity != _greeted_refugee:
+		_greeted_refugee = identity
+		SoundManager.greet_refugee()
 
 
 func _on_welcome_refugee_pressed() -> void:
@@ -324,6 +334,8 @@ func _on_victim_choice_requested(candidates: Array) -> void:
 
 
 func _on_night_resolved(report: Dictionary) -> void:
+	_morning_transition = true
+	refugee_modal.hide()
 	if bool(report.get("wiped", false)):
 		return
 	call_deferred("_transition_to_morning_cutscene")
@@ -338,7 +350,21 @@ func _transition_to_morning_cutscene() -> void:
 
 
 func _on_village_wiped() -> void:
+	call_deferred("_present_village_wiped")
+
+
+func _present_village_wiped() -> void:
 	_close_blueprint()
+	var screen := CanvasLayer.new()
+	screen.layer = 100
+	var black := ColorRect.new()
+	black.color = Color.BLACK
+	black.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	screen.add_child(black)
+	add_child(screen)
+	await SoundManager.play_transition_cues(screen)
+	if not is_inside_tree():
+		return
 	ending_dialog.dialog_text = "The village is empty. The monster takes the Chief.\nYour run ended on Day %d." % GameController.day
 	ending_dialog.get_ok_button().text = "Main Menu"
 	ending_dialog.confirmed.connect(_return_to_menu, CONNECT_ONE_SHOT)

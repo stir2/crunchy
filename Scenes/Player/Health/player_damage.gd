@@ -4,7 +4,7 @@ extends Node
 signal damage_reaction(hit: CombatHit, amount: int)
 signal died(hit: CombatHit)
 signal attack_parried(hit: CombatHit, projectile: bool)
-const PARRY_SOUND = preload("res://Assets/Audio/SFX/cleaver_impact.wav")
+const PARRY_SOUND = preload("res://Assets/Audio/SFX/Combat/cleaver_impact.wav")
 @export var default_knockback: Vector2 = Vector2(180, -160)
 @export_range(0, 120) var reaction_frames: int = 8
 @export_range(0.0, 5000.0, 10.0) var knockback_deceleration: float = 600.0

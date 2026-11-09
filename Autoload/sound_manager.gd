@@ -2,10 +2,64 @@ extends Node
 ## Shared one-shots survive panel changes. Player warning loops stay on the player.
 const PLAYER_AUDIO = preload("res://Scenes/Player/player_audio.gd")
 const ROOT := "res://Assets/Audio/SFX/"
+const SOUND_PATHS := {
+	&"button_click": "UI/button_click.wav",
+	&"button_hover": "UI/button_hover.wav",
+	&"open_ledger": "UI/open_ledger.wav",
+	&"close_ledger": "UI/close_ledger.wav",
+	&"panel_transition": "UI/panel_transition.wav",
+	&"play_button": "UI/play_button.wav",
+	&"purchase": "UI/purchase.wav",
+	&"cleaver_swing": "Combat/cleaver_swing.wav",
+	&"cleaver_swing_alt": "Combat/cleaver_swing_alt.wav",
+	&"cleaver_impact": "Combat/cleaver_impact.wav",
+	&"footstep_stone": "Movement/footstep_stone.wav",
+	&"footstep_wood": "Movement/footstep_wood.wav",
+	&"jump": "Movement/jump.wav",
+	&"land_stone": "Movement/land_stone.wav",
+	&"land_wood": "Movement/land_wood.wav",
+	&"freefall": "Movement/freefall.wav",
+	&"bull_rush_charge": "Movement/bull_rush_charge.wav",
+	&"bull_rush": "Movement/bull_rush.wav",
+	&"low_health_initial": "Player/low_health_initial.wav",
+	&"low_health": "Player/low_health.wav",
+	&"death": "Player/death.wav",
+	&"revive": "Player/revive.wav",
+	&"key_fragment_pickup": "Progression/key_fragment_pickup.wav",
+	&"key_merge": "Progression/key_merge.wav",
+	&"gate_unlock": "Progression/gate_unlock.wav",
+	&"geiger_counter_tick": "Quota/geiger_counter_tick.wav",
+	&"toll_impact": "Quota/toll_impact.wav",
+	&"monster_rumbling_1": "Monster/monster_rumbling_1.wav",
+	&"monster_rumbling_2": "Monster/monster_rumbling_2.wav",
+	&"monster_rumbling_3": "Monster/monster_rumbling_3.wav",
+	&"Scream1": "Village/Screams/scream_01.wav",
+	&"Scream2": "Village/Screams/scream_02.wav",
+	&"Scream3": "Village/Screams/scream_03.wav",
+	&"Scream4": "Village/Screams/scream_04.wav",
+	&"Scream5": "Village/Screams/scream_05.wav",
+	&"Scream6": "Village/Screams/scream_06.wav",
+	&"Scream7": "Village/Screams/scream_07.wav",
+	&"Scream8": "Village/Screams/scream_08.wav",
+	&"Scream9": "Village/Screams/scream_09.wav",
+	&"Scream10": "Village/Screams/scream_10.wav",
+	&"Scream11": "Village/Screams/scream_11.wav",
+	&"Scream12": "Village/Screams/scream_12.wav",
+	&"Refugee1": "Village/Refugees/refugee_01.wav",
+	&"Refugee2": "Village/Refugees/refugee_02.wav",
+	&"Refugee3": "Village/Refugees/refugee_03.wav",
+	&"Refugee4": "Village/Refugees/refugee_04.wav",
+	&"Refugee5": "Village/Refugees/refugee_05.wav",
+	&"night_bell-1": "Village/Bells/night_bell.wav",
+	&"night_bell": "Unused/night_bell_original.wav",
+}
 ## Measured source peaks, before playback gain. Keep the supplied WAVs untouched.
 const SOURCE_PEAK_DB := {
+	&"bull_rush_charge": -20.61, &"bull_rush": 0.34, &"freefall": -18.55, &"jump": -12.91, &"gate_unlock": -9.23,
+	&"land_stone": -4.31, &"land_wood": -9.07,
+	&"footstep_stone": -14.86, &"footstep_wood": -14.08,
 	&"button_click": -8.9, &"button_hover": -5.8,
-	&"cleaver_impact": -0.3, &"cleaver_swing": -5.0, &"cleaver_swing_alt": -6.9,
+	&"cleaver_impact": -0.3, &"cleaver_swing": -4.95, &"cleaver_swing_alt": -6.78,
 	&"open_ledger": -14.8, &"close_ledger": -27.6, &"panel_transition": -24.3,
 	&"purchase": -17.9, &"revive": -17.4,
 	&"low_health": -16.0, &"low_health_initial": 0.0,
@@ -18,6 +72,21 @@ const SOURCE_PEAK_DB := {
 	&"Scream5": -6.1, &"Scream6": -1.2, &"Scream7": -6.1, &"Scream8": 0.0,
 	&"Scream9": -10.0, &"Scream10": -4.3, &"Scream11": -2.9, &"Scream12": 0.0,
 }
+# Skip quiet source padding without editing the supplied recordings.
+const START_OFFSETS := {
+	&"open_ledger": 0.32,
+	&"gate_unlock": 0.46, &"key_fragment_pickup": 0.38, &"key_merge": 0.17,
+	&"bull_rush_charge": 0.03, &"purchase": 0.10, &"geiger_counter_tick": 0.055, &"jump": 0.015,
+}
+const CUE_ENDS := {
+	&"play_button": 1.8, &"night_bell-1": 4.6,
+}
+var transition_cues: Array[StringName] = []
+var _transition_losses: Array[Dictionary] = []
+var _last_motion_ms: int = -1000
+var _repeat_history: Dictionary = {}
+var _greeting: AudioStreamPlayer
+var _ui_voices: Dictionary = {}
 var _streams: Dictionary = {}
 var _last_hover_ms: int = -1000
 var _rumble_index: int = 0
@@ -30,35 +99,41 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	get_tree().node_added.connect(_on_node_added)
 	_register_tree(get_tree().root)
-	GameController.night_started.connect(func(_day: int, _flesh: int, _quota: int): play_sfx(&"night_bell-1", -12))
-	VillageManager.villager_left.connect(func(_name: String, _cause: StringName):
-		play_sfx(StringName("Scream%d" % (_scream_index + 1)), -14)
+	# Simulation queues night cues; the black-screen presentation owns playback.
+	GameController.night_started.connect(func(_day: int, _flesh: int, _quota: int):
+		transition_cues.push_front(&"night_bell-1"))
+	VillageManager.villager_left.connect(func(villager_name: String, cause: StringName):
+		_transition_losses.append({"name": villager_name, "cause": cause})
+		transition_cues.append(StringName("Scream%d" % (_scream_index + 1)))
 		_scream_index = (_scream_index + 1) % 12)
-	VillageManager.refugee_waiting.connect(func(_candidate: Dictionary):
-		play_sfx(StringName("Refugee%d" % (_refugee_index + 1)), -16)
-		_refugee_index = (_refugee_index + 1) % 5)
+	for sound in [&"button_click", &"button_hover", &"panel_transition", &"open_ledger", &"close_ledger"]:
+		stream_for(sound)
 	_bind_progression()
 
 
 func stream_for(sound: StringName) -> AudioStream:
+	if not SOUND_PATHS.has(sound):
+		push_error("Unknown sound: %s" % sound)
+		return null
 	if not _streams.has(sound):
-		_streams[sound] = load(ROOT + String(sound) + ".wav")
+		_streams[sound] = load(ROOT + String(SOUND_PATHS[sound]))
 	return _streams[sound]
 
 
 func gain_for(sound: StringName) -> float:
-	return -3.0 - float(SOURCE_PEAK_DB.get(sound, -3.0))
+	return -6.0 - float(SOURCE_PEAK_DB.get(sound, -3.0))
 
 
 func play_sfx(sound: StringName, volume_db: float = -10.0, ui: bool = false) -> AudioStreamPlayer:
 	var audio := AudioStreamPlayer.new()
 	audio.stream = stream_for(sound)
 	audio.bus = &"SFX"
-	audio.volume_db = volume_db + gain_for(sound)
+	audio.volume_db = volume_db + gain_for(sound) + repetition_gain_for(sound)
+	audio.pitch_scale = pitch_for(sound)
 	audio.process_mode = Node.PROCESS_MODE_ALWAYS if ui else Node.PROCESS_MODE_PAUSABLE
 	add_child(audio)
 	audio.finished.connect(audio.queue_free)
-	audio.play()
+	audio.play(start_offset_for(sound))
 	return audio
 
 
@@ -85,12 +160,13 @@ func _register(node: Node) -> void:
 	node.set_meta("sfx_registered", true)
 	if node is BaseButton:
 		node.button_down.connect(func():
-			if not node.disabled and node.is_visible_in_tree():
-				play_sfx(&"button_click", -16, true))
+			if not node.disabled and node.is_visible_in_tree() and not node.get_meta("own_click_sound", false):
+				play_ui(&"button_click", -24))
 		node.mouse_entered.connect(func():
-			if not node.disabled and node.is_visible_in_tree() and Time.get_ticks_msec() - _last_hover_ms >= 80:
-				_last_hover_ms = Time.get_ticks_msec()
-				play_sfx(&"button_hover", -23, true))
+			var now := Time.get_ticks_msec()
+			if not node.disabled and node.is_visible_in_tree() and now - _last_hover_ms >= 160 and now - _last_motion_ms < 120:
+				_last_hover_ms = now
+				play_ui(&"button_hover", -31))
 	elif node is Player:
 		var audio := PLAYER_AUDIO.new()
 		audio.name = "PlayerAudio"
@@ -107,6 +183,7 @@ func _bind_progression() -> void:
 	_progression = GameController.abyss_progression_state
 	_progression.fragment_collected.connect(func(): play_sfx(&"key_fragment_pickup", -10))
 	_progression.key_assembled.connect(func(): play_sfx(&"key_merge", -10))
+	_progression.gate_unlocked.connect(func(): play_sfx(&"gate_unlock", -10))
 
 
 func _exit_tree() -> void:
@@ -114,3 +191,99 @@ func _exit_tree() -> void:
 		if child is AudioStreamPlayer:
 			child.stop()
 			child.stream = null
+
+
+func start_offset_for(sound: StringName) -> float:
+	return float(START_OFFSETS.get(sound, 0.0))
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		_last_motion_ms = Time.get_ticks_msec()
+
+
+func play_ui(sound: StringName, volume_db: float) -> void:
+	# Repeated navigation replaces its own tail instead of layering more noise.
+	var reference := _ui_voices.get(sound) as WeakRef
+	var previous: AudioStreamPlayer = reference.get_ref() if reference != null else null
+	if is_instance_valid(previous):
+		previous.stop()
+		previous.queue_free()
+	_ui_voices[sound] = weakref(play_sfx(sound, volume_db, true))
+
+
+func greet_refugee() -> void:
+	if is_instance_valid(_greeting):
+		_greeting.stop()
+		_greeting.queue_free()
+	_greeting = play_sfx(StringName("Refugee%d" % (_refugee_index + 1)), -22, true)
+	_refugee_index = (_refugee_index + 1) % 5
+
+
+func queue_start_cue() -> void:
+	_transition_losses.clear()
+	transition_cues.assign([&"play_button"])
+
+
+func play_transition_cues(host: Node) -> void:
+	if is_instance_valid(_greeting):
+		_greeting.stop()
+		_greeting.queue_free()
+	for reference: WeakRef in _ui_voices.values():
+		var voice: AudioStreamPlayer = reference.get_ref()
+		if is_instance_valid(voice):
+			voice.stop()
+			voice.queue_free()
+	_ui_voices.clear()
+	var notice: Control
+	var losses := take_transition_losses()
+	var cues := transition_cues.duplicate()
+	transition_cues.clear()
+	for sound: StringName in cues:
+		if not is_instance_valid(host) or not host.is_inside_tree():
+			return
+		if String(sound).begins_with("Scream") and notice == null and not losses.is_empty():
+			notice = preload("res://Scenes/Cutscene/villager_loss_notice.gd").new()
+			notice.losses = losses
+			host.add_child(notice)
+		var audio := AudioStreamPlayer.new()
+		audio.stream = stream_for(sound)
+		audio.bus = &"SFX"
+		audio.volume_db = (-14 if sound in [&"play_button", &"night_bell-1"] else -16) + gain_for(sound)
+		host.add_child(audio)
+		audio.play()
+		var duration: float = audio.stream.get_length() if String(sound).begins_with("Scream") else minf(audio.stream.get_length(), CUE_ENDS.get(sound, audio.stream.get_length()))
+		var cue := host.create_tween()
+		cue.tween_interval(maxf(0.01, duration - 0.15))
+		cue.tween_property(audio, "volume_db", -70.0, 0.15)
+		await cue.finished
+		audio.queue_free()
+		if sound != &"play_button" and not String(sound).begins_with("Scream"):
+			await host.get_tree().create_timer(0.35, false).timeout
+	if is_instance_valid(notice):
+		await notice.fade_out()
+		notice.queue_free()
+
+
+func take_transition_losses() -> Array[Dictionary]:
+	var losses := _transition_losses.duplicate()
+	_transition_losses.clear()
+	return losses
+
+
+func pitch_for(sound: StringName) -> float:
+	if sound in [&"jump", &"cleaver_swing", &"cleaver_swing_alt", &"cleaver_impact"]:
+		return randf_range(0.97, 1.03)
+	if sound in [&"button_click", &"button_hover", &"panel_transition", &"purchase"]:
+		return randf_range(0.98, 1.02)
+	return 1.0
+
+
+func repetition_gain_for(sound: StringName) -> float:
+	if sound not in [&"jump", &"bull_rush", &"bull_rush_charge"]:
+		return 0.0
+	var now := Time.get_ticks_msec()
+	var recent: Dictionary = _repeat_history.get(sound, {"time": -10000, "count": 0})
+	var count: int = mini(4, int(recent.count) + 1) if now - int(recent.time) < 1100 else 0
+	_repeat_history[sound] = {"time": now, "count": count}
+	return -float(count)

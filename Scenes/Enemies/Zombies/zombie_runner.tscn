@@ -1,0 +1,57 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scenes/Enemies/Zombies/zombie_enemy.gd" id="1"]
+[ext_resource type="SpriteFrames" path="res://Scenes/Enemies/Zombies/zombie_sprite_frames.tres" id="2"]
+
+[ext_resource type="Script" path="res://Scenes/Combat/damageable.gd" id="3"]
+[ext_resource type="Script" path="res://Scenes/Combat/damage_area.gd" id="4"]
+
+[sub_resource type="RectangleShape2D" id="Body"]
+size = Vector2(24, 40)
+
+[sub_resource type="RectangleShape2D" id="Hit"]
+size = Vector2(22, 38)
+
+[sub_resource type="RectangleShape2D" id="Attack"]
+size = Vector2(44, 30)
+
+[node name="ZombieRunner" type="CharacterBody2D"]
+collision_layer = 0
+collision_mask = 1
+floor_snap_length = 4.0
+script = ExtResource("1")
+zombie_kind = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -20)
+shape = SubResource("Body")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+position = Vector2(0, -20)
+texture_filter = 1
+sprite_frames = ExtResource("2")
+animation = &"idle"
+autoplay = "idle"
+
+[node name="RushHitbox" type="Area2D" parent="."]
+position = Vector2(0, -20)
+collision_layer = 8
+collision_mask = 0
+monitorable = true
+monitoring = false
+script = ExtResource("4")
+active = false
+source_path = NodePath("..")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RushHitbox"]
+shape = SubResource("Attack")
+
+[node name="Damageable" type="Area2D" parent="."]
+position = Vector2(0, -20)
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+script = ExtResource("3")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Damageable"]
+shape = SubResource("Hit")

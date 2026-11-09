@@ -19,12 +19,12 @@ const INFINITY_COUNT_TIME := 5.5 # 1 -> huge, accelerating
 const INFINITY_LAND_TIME := 1.6  # final brake onto the infinity symbol
 
 # --- audio tuning ---
-const TICK_STREAM := preload("res://Assets/Audio/SFX/geiger_counter_tick.wav")
-const IMPACT_STREAM := preload("res://Assets/Audio/SFX/toll_impact.wav")
+const TICK_STREAM := preload("res://Assets/Audio/SFX/Quota/geiger_counter_tick.wav")
+const IMPACT_STREAM := preload("res://Assets/Audio/SFX/Quota/toll_impact.wav")
 const TICK_POOL := 6
 const TICK_MIN_INTERVAL_MS := 22 # caps the click rate so the frenzy stays a crackle, not mush
-const TICK_VOLUME_DB := -9.0
-const IMPACT_VOLUME_DB := -2.0
+const TICK_VOLUME_DB := -15.0
+const IMPACT_VOLUME_DB := -7.0
 
 enum Phase { PRELUDE, SPINNING, HOLD, DONE }
 
@@ -37,6 +37,7 @@ enum Phase { PRELUDE, SPINNING, HOLD, DONE }
 @onready var bottom_shadow: ColorRect = %BottomShadow
 @onready var click_audio_player: AudioStreamPlayer = %ClickAudioPlayer
 
+var _intro_running: bool = true
 var _phase := Phase.PRELUDE
 var _is_infinity := false
 var _reels: Array[DigitReel] = []
@@ -252,6 +253,8 @@ func _exit_tree() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _intro_running:
+		return
 	if not (event.is_action_pressed("ui_accept") \
 			or event.is_action_pressed("Cutscene Skip")):
 		return
@@ -312,7 +315,12 @@ func _setup_reels(quota_str: String) -> void:
 
 
 func _run_sequence() -> void:
-	await get_tree().create_timer(PRELUDE_TIME).timeout
+	var has_intro: bool = not SoundManager.transition_cues.is_empty()
+	await SoundManager.play_transition_cues(self)
+	if not is_inside_tree() or _phase != Phase.PRELUDE:
+		return
+	_intro_running = false
+	await get_tree().create_timer(0.15 if has_intro else PRELUDE_TIME).timeout
 	if _phase != Phase.PRELUDE or not is_inside_tree():
 		return # skipped during the prelude
 	_phase = Phase.SPINNING
@@ -416,7 +424,7 @@ func _play_tick() -> void:
 	_tick_idx = (_tick_idx + 1) % _tick_players.size()
 	p.pitch_scale = randf_range(0.82, 0.94)
 	p.volume_db = TICK_VOLUME_DB + randf_range(-3.0, 0.0)
-	p.play()
+	p.play(SoundManager.start_offset_for(&"geiger_counter_tick"))
 
 
 func _play_impact() -> void:

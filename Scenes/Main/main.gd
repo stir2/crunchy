@@ -7,6 +7,7 @@ const CUTSCENE_SCENE := "res://Scenes/Cutscene/toll_cutscene.tscn"
 const MENU_SCENE := "res://Scenes/Menus/main_menu.tscn"
 const PAUSE_SCENE := preload("res://Scenes/Menus/pause_menu.tscn")
 
+var _transitioning: bool = false
 var active_scene: Node
 var active_path := ""
 var pause_menu: CanvasLayer
@@ -19,22 +20,24 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel") and active_path != MENU_SCENE:
+	if event.is_action_pressed("ui_cancel") and active_path != MENU_SCENE and not _transitioning:
 		pause_menu.toggle()
 		get_viewport().set_input_as_handled()
 
 
 func start_new_game() -> void:
-	SoundManager.play_sfx(&"play_button", -12)
+	SoundManager.queue_start_cue()
 	VillageManager.start_new_run()
 	change_scene(CUTSCENE_SCENE)
 
 
 func continue_game() -> bool:
+	if _transitioning:
+		return false
 	if not SaveManager.load_game():
 		return false
-	SoundManager.play_sfx(&"play_button", -12)
-	change_scene(HOUSE_SCENE)
+	SoundManager.queue_start_cue()
+	_continue_intro()
 	return true
 
 
@@ -52,3 +55,19 @@ func change_scene(path: String) -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	active_scene = packed.instantiate()
 	add_child(active_scene)
+
+
+func _continue_intro() -> void:
+	_transitioning = true
+	var screen := CanvasLayer.new()
+	screen.layer = 100
+	var black := ColorRect.new()
+	black.color = Color.BLACK
+	black.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	screen.add_child(black)
+	add_child(screen)
+	active_scene.process_mode = Node.PROCESS_MODE_DISABLED
+	await SoundManager.play_transition_cues(screen)
+	change_scene(HOUSE_SCENE)
+	screen.queue_free()
+	_transitioning = false

@@ -1,5 +1,8 @@
 [gd_resource type="AudioBusLayout" format=3 uid="uid://cs84ixkmtco0j"]
 
+[sub_resource type="AudioEffectHardLimiter" id="Master_limiter"]
+ceiling_db = -1.0
+
 [sub_resource type="AudioEffectLowPassFilter" id="LowPass_quota"]
 cutoff_hz = 3600.0
 
@@ -19,12 +22,7 @@ damping = 0.55
 dry = 0.8
 wet = 0.55
 
-[sub_resource type="AudioEffectHardLimiter" id="Master_limiter"]
-ceiling_db = -1.0
-release = 0.1
-
 [resource]
-bus/0/name = &"Master"
 bus/0/effect/0/effect = SubResource("Master_limiter")
 bus/0/effect/0/enabled = true
 bus/1/name = &"SFX"

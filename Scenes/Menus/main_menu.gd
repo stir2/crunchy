@@ -7,6 +7,8 @@ extends Control
 
 
 func _ready() -> void:
+	%NewGameButton.set_meta("own_click_sound", true)
+	continue_button.set_meta("own_click_sound", true)
 	continue_button.disabled = not SaveManager.has_save()
 	%NewGameButton.pressed.connect(_new_game)
 	continue_button.pressed.connect(_continue)
