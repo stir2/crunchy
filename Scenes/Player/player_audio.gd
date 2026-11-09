@@ -2,6 +2,8 @@ extends Node
 ## Sound follows combat and health signals without changing their timing.
 var _low_health: bool = false
 var _was_dead: bool = false
+var _death_voice: WeakRef
+var _death_cue_played: bool = false
 var _last_swing: int = -1
 var _warning: AudioStreamPlayer
 var _heartbeat: AudioStreamPlayer
@@ -73,8 +75,8 @@ func _ready() -> void:
 	player.combat.hit_confirmed.connect(_on_hit_confirmed)
 	player.health.health_changed.connect(_on_health_changed)
 	player.health.died.connect(func(_hit: CombatHit):
-		_was_dead = true
-		sounds.play_sfx(&"death", -12))
+		_was_dead = true)
+	sprite.death_animation_started.connect(_on_death_animation_started)
 	player.health.health_reset.connect(_on_health_reset)
 	_was_dead = player.health.is_dead()
 	_on_health_changed(player.health.current_health, player.health.max_health)
@@ -224,6 +226,8 @@ func _on_health_changed(current: int, maximum: int) -> void:
 
 
 func _on_health_reset() -> void:
+	if not player.health.is_dead():
+		_death_cue_played = false
 	if _was_dead and not player.health.is_dead():
 		sounds.play_sfx(&"revive", -12)
 	_was_dead = player.health.is_dead()
@@ -294,3 +298,16 @@ func _update_movement_duck(delta: float) -> void:
 	for foot in _footsteps:
 		if foot.playing:
 			foot.volume_db += _movement_duck_db - previous
+
+
+func death_playback_position() -> float:
+	var voice: AudioStreamPlayer = _death_voice.get_ref() if _death_voice != null else null
+	if not is_instance_valid(voice): return -1.0
+	if not voice.playing: return voice.stream.get_length()
+	return voice.get_playback_position() + AudioServer.get_time_since_last_mix()
+
+
+func _on_death_animation_started() -> void:
+	if _death_cue_played or not player.health.is_dead(): return
+	_death_cue_played = true
+	_death_voice = weakref(sounds.play_sfx(&"death", -12))

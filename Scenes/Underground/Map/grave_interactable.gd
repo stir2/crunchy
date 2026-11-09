@@ -2,6 +2,7 @@ extends InteractionTarget
 ## Minimal recovery hook, using the existing E interaction component.
 var state: AbyssExplorationState
 var world: String
+const DEATH_SHEET = preload("res://SpriteSheets/chiefDeath_140x260_24fps.png")
 var grave_id: String
 
 func is_available(actor: Node2D) -> bool:
@@ -17,6 +18,5 @@ func _perform_interaction(_actor: Node2D) -> String:
 	return "Recovered %d Flesh" % int(recovered.souls) if not recovered.is_empty() else ""
 
 func _draw() -> void:
-	draw_rect(Rect2(-5,-13,10,13),Color(0.65,0.75,0.8))
-	draw_line(Vector2(0,-11),Vector2(0,-3),Color(0.1,0.15,0.2),2)
-	draw_line(Vector2(-3,-8),Vector2(3,-8),Color(0.1,0.15,0.2),2)
+	# Frame 46 ends at source y=145; align that baseline to the saved feet.
+	draw_texture_rect_region(DEATH_SHEET,Rect2(-70,-145,140,260),Rect2(46*140,0,140,260))

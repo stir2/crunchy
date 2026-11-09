@@ -89,6 +89,7 @@ func apply_reaction_motion(delta: float) -> void:
 	player.apply_gravity(delta)
 
 func _on_damage_received(hit: CombatHit, amount: int) -> void:
+	if health.is_dead(): return # Lethal hits preserve the fall instead of launching a hurt reaction.
 	player.interrupt_for_damage()
 	var knockback := hit.knockback if hit.knockback != Vector2.ZERO else default_knockback
 	# Explicit sources supply their impact location (tiles are not room origins).
@@ -105,7 +106,7 @@ func _on_damage_received(hit: CombatHit, amount: int) -> void:
 
 func _on_died(hit: CombatHit) -> void:
 	player.interrupt_for_damage()
-	player.velocity = Vector2.ZERO
+	player.velocity = Vector2(0,maxf(player.velocity.y,0.0))
 	_reaction_until = -1
 	died.emit(hit)
 
@@ -124,7 +125,7 @@ func _process(_delta: float) -> void:
 	var color := Color.WHITE
 	var tick := Engine.get_physics_frames()
 	if is_dead():
-		color = Color(0.4, 0.4, 0.45)
+		color = Color.WHITE # Preserve the supplied death sheet colors.
 	elif tick < _parry_flash_until:
 		color = Color(0.4, 1.0, 1.0)
 	elif tick < _flash_until:

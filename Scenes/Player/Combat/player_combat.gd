@@ -10,6 +10,8 @@ signal hitstop_started(ticks: int)
 signal swing_freeze_started(ticks: int)
 
 @export var actions_enabled: bool = true
+## Mouse aim and movement are independent; facing commits only at swing start.
+@export var mouse_aim_attacks: bool = true
 @export_group("Swing")
 @export_range(0, 16, 1) var active_start_frame: int = 3
 @export_range(0, 16, 1) var active_end_frame: int = 5
@@ -156,7 +158,7 @@ func try_start_attack() -> bool:
 		return false
 	_attack_requested = false
 	_ignore_attack_until_release = not repeat_while_held
-	locked_facing = player.facing_direction
+	locked_facing = attack_facing()
 	swing_id += 1
 	_hit_targets.clear()
 	_swing_breakable_hits.clear()
@@ -174,6 +176,13 @@ func try_start_attack() -> bool:
 	_sync_phase()
 	attack_started.emit(swing_id)
 	return true
+
+func attack_facing() -> int:
+	if mouse_aim_attacks:
+		var offset_x := player.get_global_mouse_position().x - player.global_position.x
+		if absf(offset_x) > 8.0:
+			return 1 if offset_x > 0.0 else -1
+	return player.facing_direction
 
 func consume_buffered_dash() -> bool:
 	if is_attacking() and not can_dash_cancel():

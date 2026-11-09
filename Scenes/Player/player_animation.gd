@@ -8,6 +8,13 @@ extends AnimatedSprite2D
 @export var attack_offset: Vector2 = Vector2(0, 3)
 @export var dash_offset: Vector2 = Vector2(0, 3)
 @export var jump_offset: Vector2 = Vector2(0, 3)
+@export var death_offset: Vector2 = Vector2(0, -4)
+@export var grave_offset: Vector2 = Vector2(0, 3)
+signal death_animation_started
+signal death_animation_finished
+var _death_started: bool = false
+var _death_drop_released: bool = false
+
 @export_group("Jump Poses")
 @export_range(0, 5) var jump_charge_pose_frame: int = 0
 @export_range(0, 5) var jump_rise_frame: int = 1
@@ -28,7 +35,13 @@ func _ready() -> void:
 	_player.landed.connect(_on_landed)
 	_player.jumped.connect(_clear_landing)
 	_player.movement_reset.connect(_on_reset)
+	_player.get_node("Health").health_reset.connect(_on_reset)
+	animation_finished.connect(_on_animation_finished)
 	update_animation()
+
+func _on_animation_finished() -> void:
+	if animation == &"death":
+		death_animation_finished.emit()
 
 func _on_jump_charge_changed(_charging: bool) -> void:
 	update_animation()
@@ -42,6 +55,10 @@ func _clear_landing() -> void:
 func _on_reset() -> void:
 	_clear_landing()
 	_next_slash = 0
+	if is_instance_valid(_player.damage) and _player.damage.is_dead():
+		return # Departure/teleport cleanup cannot restart an already dead actor.
+	_death_started = false
+	_death_drop_released = false
 	update_animation()
 
 func _process(_delta: float) -> void:
@@ -55,8 +72,34 @@ func _pose(name: StringName, pose_frame: int, pose_offset: Vector2) -> void:
 	pause()
 
 func update_animation() -> void:
+	if is_instance_valid(_player.damage) and _player.damage.is_dead():
+		if not _death_started:
+			if not _player.is_on_floor():
+				_pose(&"jump",jump_fall_frame,jump_offset)
+				return
+			_death_started = true
+			death_animation_started.emit()
+			flip_h = true
+			get_parent().scale.x = absf(get_parent().scale.x) * _player.facing_direction
+			offset = death_offset
+			speed_scale = 1.0
+			play(&"death")
+			set_frame_and_progress(0, 0.0)
+		if frame >= 20 and not _death_drop_released:
+			var audio := _player.get_node_or_null("PlayerAudio")
+			var position: float = audio.death_playback_position() if audio != null else -1.0
+			# Frame21 is the falling stone; frame22 is contact with the ground.
+			if position >= 0.0 and position < 2.88 - 1.0/24.0:
+				_pose(&"death",20,death_offset)
+				return
+			_death_drop_released = true
+			play(&"death")
+			set_frame_and_progress(21,0.0)
+		# The settled gravestone baseline is seven pixels above the living pose.
+		offset = grave_offset if frame >= 22 else death_offset
+		return
 	if is_instance_valid(_player.damage) and _player.damage.is_action_locked():
-		_pose(&"run", 4, run_offset) # Existing temporary hurt/death indication.
+		_pose(&"run", 4, run_offset) # Temporary hurt pose.
 		return
 	if is_instance_valid(_player.combat) and _player.combat.is_attacking():
 		return # Combat owns both slash variants, including local freeze/hitstop.

@@ -24,6 +24,10 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	set_process(false)
+	var actor_health := get_parent().get_node_or_null("Health") as HealthComponent
+	if actor_health != null:
+		actor_health.health_changed.connect(_on_owner_health_changed)
+		visible = not actor_health.is_dead()
 	if not stamina_path.is_empty():
 		bind_stamina(get_node_or_null(stamina_path) as StaminaComponent)
 
@@ -115,3 +119,7 @@ func _draw_refill_block(extent: Vector2, filled_width: float) -> void:
 	var width := minf(float(regeneration_block_width), extent.x - filled_width)
 	if phase < regeneration_blink_period * 0.5 and width > 0.0:
 		draw_rect(Rect2(filled_width,0,width,extent.y),Color(1,1,1,0.65))
+
+
+func _on_owner_health_changed(current: int, _maximum: int) -> void:
+	visible = current > 0

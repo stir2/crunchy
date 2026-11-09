@@ -19,6 +19,9 @@
 
 [ext_resource type="PackedScene" path="res://Scenes/Interaction/player_interaction.tscn" id="14_interaction"]
 
+[ext_resource type="SpriteFrames" path="res://Scenes/Player/Health/heal_sprite_frames.tres" id="15_heal_frames"]
+[ext_resource type="Script" path="res://Scenes/Player/Health/player_healing_effect.gd" id="16_heal_effect"]
+
 [sub_resource type="RectangleShape2D" id="Rectangle_player"]
 resource_local_to_scene = true
 size = Vector2(30, 36)
@@ -124,3 +127,12 @@ offset_bottom = -52.0
 stamina_path = NodePath("../Stamina")
 
 [node name="InteractionController" parent="." instance=ExtResource("14_interaction")]
+
+[node name="HealingEffect" type="AnimatedSprite2D" parent="."]
+visible = false
+position = Vector2(0, -15)
+z_index = 5
+texture_filter = 1
+sprite_frames = ExtResource("15_heal_frames")
+animation = &"heal"
+script = ExtResource("16_heal_effect")

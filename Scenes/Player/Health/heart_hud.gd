@@ -19,6 +19,7 @@ func bind_health(component: HealthComponent) -> void:
 	health = component
 	if health != null:
 		health.health_changed.connect(_on_health_changed)
+	visible = is_instance_valid(health) and not health.is_dead()
 	queue_redraw()
 
 func heart_count() -> int:
@@ -28,7 +29,8 @@ func heart_count() -> int:
 func heart_fill(index: int) -> int:
 	return clampi(health.current_health - index * 2, 0, 2) if is_instance_valid(health) else 0
 
-func _on_health_changed(_current: int, _maximum: int) -> void:
+func _on_health_changed(current: int, _maximum: int) -> void:
+	visible = current > 0
 	queue_redraw()
 
 func _draw() -> void:

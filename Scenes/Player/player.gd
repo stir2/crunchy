@@ -96,7 +96,11 @@ func _physics_process(delta: float) -> void:
 	_dash_cooldown_started_this_tick = false
 	damage.begin_physics_tick()
 	if damage.is_dead():
-		return # Preserve remaining stamina; sleeping will restore it explicitly.
+		# Dead bodies still settle onto terrain; controls and stamina stay inactive.
+		velocity.x = 0.0
+		velocity.y += get_gravity().y * gravity_multiplier * delta
+		move_and_slide()
+		return
 	if combat.begin_physics_tick():
 		stamina.advance(delta, true)
 		return # Local combat freeze preserves velocity, floor history and timers.

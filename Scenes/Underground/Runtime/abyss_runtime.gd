@@ -29,6 +29,7 @@ var _dash_pressed: bool = false
 var _saved_window: Dictionary = {}
 var _day: int = -1
 var _return_pending: bool = false
+var _death_pending: bool = false
 var _state: AbyssRoomState
 @onready var entrance_return: InteractionTarget = $EntranceReturn
 @onready var flesh_hud: AbyssFleshHUD = $FleshHUD
@@ -50,6 +51,7 @@ func _ready() -> void:
 	stream.camera = camera
 	stream.container = loaded_rooms
 	stream.runtime = self
+	sprite.death_animation_finished.connect(_on_death_animation_finished)
 	if auto_start:
 		await enter_entrance()
 
@@ -70,6 +72,7 @@ func enter_entrance() -> bool:
 	var token := _serial
 	_starting = true
 	_return_pending = false
+	_death_pending = false
 	last_error = ""
 	$StartupStatusCanvas.visible = false
 	_set_visibility(false)
@@ -285,7 +288,8 @@ func _restore_presentation() -> void:
 
 func _exit_tree() -> void:
 	_serial += 1
-	_capture_vitals()
+	if not _death_pending:
+		_capture_vitals()
 	_restore_presentation()
 
 func checkpoint_primary_available(request: AbyssSpecialSpawnRequest) -> bool:
@@ -303,7 +307,7 @@ func activate_or_heal_checkpoint(request: AbyssSpecialSpawnRequest) -> String:
 	return "Restored %d HP" % healed if healed > 0 else ""
 
 func can_safe_return() -> bool:
-	return is_active() and not _return_pending and not _holding and not get_tree().paused 		and game.abyss_room_state == _state and interactions.actions_allowed()
+	return is_active() and not _death_pending and not _return_pending and not _holding and not get_tree().paused 		and game.abyss_room_state == _state and interactions.actions_allowed()
 
 func request_safe_return(source: InteractionTarget) -> bool:
 	if not can_safe_return() or not source.can_interact_for_action(player,InteractionTarget.Channel.TRAVEL): return false
@@ -341,3 +345,36 @@ func _complete_safe_return(token: int) -> void:
 		queue_free()
 	else:
 		host.change_scene("res://Scenes/Village/House/house.tscn")
+
+
+func _on_death_animation_finished() -> void:
+	if not is_active() or _death_pending or not player.damage.is_dead(): return
+	_death_pending = true
+	_complete_death_return.call_deferred(_serial)
+
+func _complete_death_return(token: int) -> void:
+	# A midair death must finish settling before its husk position is saved.
+	while token == _serial and is_active() and player.damage.is_dead() and not player.is_on_floor():
+		await get_tree().physics_frame
+	if token != _serial or not is_active() or not player.damage.is_dead(): return
+	interactions.set_enabled(false)
+	# Grave/accounting was resolved once by ExplorationTracker on the lethal hit.
+	game.health = 0
+	game.recover_from_death()
+	game.stamina = int(player.stamina.current_stamina)
+	game.return_to_stairs = true
+	var tree := get_tree()
+	var host := get_parent()
+	leave()
+	# Keep saved abyss vitals alive too; Continue must never restore a dead Chief.
+	_state.player_vitals["health"] = game.health
+	_state.player_vitals["stamina"] = game.stamina
+	get_node("/root/SoundManager").play_sfx(&"revive", -12)
+	if host.has_method("change_scene"):
+		host.change_scene("res://Scenes/Village/House/house.tscn")
+	else:
+		host = load("res://Scenes/Main/main.tscn").instantiate()
+		tree.root.add_child(host)
+		tree.current_scene = host
+		host.change_scene("res://Scenes/Village/House/house.tscn")
+		queue_free()

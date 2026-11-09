@@ -77,8 +77,8 @@ func add_descent_souls(world: String, amount: int) -> void:
 func take_descent_souls(world: String) -> int:
 	return take_descent_flesh(world)
 
-func record_death(world: String, coords: Vector2i, position: Vector2) -> Dictionary:
-	var amount := current_flesh(world) / 2
+func record_death(world: String, coords: Vector2i, position: Vector2, loss_fraction: float = 0.5) -> Dictionary:
+	var amount := floori(current_flesh(world) * clampf(loss_fraction, 0.0, 1.0))
 	descent_souls[world] = 0
 	active_descents[world] = false
 	grave_serial += 1

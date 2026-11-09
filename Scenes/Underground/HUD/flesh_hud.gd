@@ -1,7 +1,7 @@
 class_name AbyssFleshHUD
 extends CanvasLayer
 ## Display-only flight queue. No animation callback changes persistent balances.
-@export var icon_texture: Texture2D = preload("res://Assets/UI/flesh_placeholder.svg")
+@export var icon_texture: Texture2D = preload("res://uiSprites/flesh.png")
 @export var hud_position: Vector2 = Vector2(12,12)
 @export var previous_color: Color = Color(0.55,0.58,0.63)
 @export var current_color: Color = Color(0.5,0.85,1.0)

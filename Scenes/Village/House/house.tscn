@@ -7,13 +7,13 @@
 [ext_resource type="Texture2D" uid="uid://drcxyex06u2md" path="res://Assets/Sprites/House/window.jpg" id="5_window"]
 [ext_resource type="Texture2D" uid="uid://dpcmmn00u6hc0" path="res://Assets/Sprites/UI/panel_parchment.png" id="6_parchment"]
 [ext_resource type="Texture2D" uid="uid://dojwel3v7nq8w" path="res://Assets/Sprites/UI/ui_frame.png" id="7_uiframe"]
-[ext_resource type="Texture2D" uid="uid://dl5rdw2s30l7u" path="res://Assets/Sprites/UI/icon_soul.png" id="9_soul"]
-[ext_resource type="Texture2D" uid="uid://64y2a01hhawi" path="res://Assets/Sprites/UI/icon_ration.png" id="10_ration"]
+[ext_resource type="Texture2D" path="res://uiSprites/flesh.png" id="9_soul"]
+[ext_resource type="Texture2D" path="res://uiSprites/ration.png" id="10_ration"]
 [ext_resource type="Texture2D" uid="uid://cimj5kjk1qvq3" path="res://Assets/Sprites/UI/button_normal.png" id="11_btnnorm"]
 [ext_resource type="Texture2D" uid="uid://bnnmiubwxnxdr" path="res://Assets/Sprites/UI/button_hover.png" id="12_btnhover"]
 [ext_resource type="Texture2D" uid="uid://cuonmh2315nks" path="res://Assets/Sprites/UI/button_pressed.png" id="13_btnpress"]
 [ext_resource type="Texture2D" uid="uid://dsso6fkauct5" path="res://Assets/Sprites/UI/button_disabled.png" id="14_btndis"]
-[ext_resource type="Texture2D" uid="uid://bgg37nqm36lv4" path="res://Assets/Sprites/UI/icon_potion.png" id="15_potion"]
+[ext_resource type="Texture2D" path="res://uiSprites/potionGreen.png" id="15_potion"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_dis"]
 content_margin_left = 12.0

@@ -3,6 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://cqcn7jjjwmukj" path="res://Assets/Sprites/Player/chiefSlash1_100x100_24fps.png" id="attack"]
 [ext_resource type="Texture2D" uid="uid://cg55ben2ox301" path="res://Assets/Sprites/Player/chiefSlash2_100x100_24fps.png" id="attack_alt"]
 [ext_resource type="Texture2D" uid="uid://cd3p2k7a3v2p8" path="res://Assets/Sprites/Player/chiefRush_100x100_24fps.png" id="dash"]
+[ext_resource type="Texture2D" uid="uid://d0nka1p0wwgv" path="res://SpriteSheets/chiefDeath_140x260_24fps.png" id="death"]
 [ext_resource type="Texture2D" uid="uid://bsx5jra65tmc0" path="res://Assets/Sprites/Player/chiefIdle_100x100_24fps.png" id="idle"]
 [ext_resource type="Texture2D" uid="uid://d1v48p3kwq3jp" path="res://Assets/Sprites/Player/chiefJump_100x100_frames.png" id="jump"]
 [ext_resource type="Texture2D" uid="uid://dca0r5awxkbk6" path="res://Assets/Sprites/Player/chiefRun_100x100_24fps.png" id="run"]
@@ -191,6 +192,194 @@ region = Rect2(1000, 0, 100, 100)
 [sub_resource type="AtlasTexture" id="Atlas_dash_11"]
 atlas = ExtResource("dash")
 region = Rect2(1100, 0, 100, 100)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_00"]
+atlas = ExtResource("death")
+region = Rect2(0, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_01"]
+atlas = ExtResource("death")
+region = Rect2(140, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_02"]
+atlas = ExtResource("death")
+region = Rect2(280, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_03"]
+atlas = ExtResource("death")
+region = Rect2(420, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_04"]
+atlas = ExtResource("death")
+region = Rect2(560, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_05"]
+atlas = ExtResource("death")
+region = Rect2(700, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_06"]
+atlas = ExtResource("death")
+region = Rect2(840, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_07"]
+atlas = ExtResource("death")
+region = Rect2(980, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_08"]
+atlas = ExtResource("death")
+region = Rect2(1120, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_09"]
+atlas = ExtResource("death")
+region = Rect2(1260, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_10"]
+atlas = ExtResource("death")
+region = Rect2(1400, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_11"]
+atlas = ExtResource("death")
+region = Rect2(1540, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_12"]
+atlas = ExtResource("death")
+region = Rect2(1680, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_13"]
+atlas = ExtResource("death")
+region = Rect2(1820, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_14"]
+atlas = ExtResource("death")
+region = Rect2(1960, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_15"]
+atlas = ExtResource("death")
+region = Rect2(2100, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_16"]
+atlas = ExtResource("death")
+region = Rect2(2240, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_17"]
+atlas = ExtResource("death")
+region = Rect2(2380, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_18"]
+atlas = ExtResource("death")
+region = Rect2(2520, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_19"]
+atlas = ExtResource("death")
+region = Rect2(2660, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_20"]
+atlas = ExtResource("death")
+region = Rect2(2800, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_21"]
+atlas = ExtResource("death")
+region = Rect2(2940, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_22"]
+atlas = ExtResource("death")
+region = Rect2(3080, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_23"]
+atlas = ExtResource("death")
+region = Rect2(3220, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_24"]
+atlas = ExtResource("death")
+region = Rect2(3360, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_25"]
+atlas = ExtResource("death")
+region = Rect2(3500, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_26"]
+atlas = ExtResource("death")
+region = Rect2(3640, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_27"]
+atlas = ExtResource("death")
+region = Rect2(3780, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_28"]
+atlas = ExtResource("death")
+region = Rect2(3920, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_29"]
+atlas = ExtResource("death")
+region = Rect2(4060, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_30"]
+atlas = ExtResource("death")
+region = Rect2(4200, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_31"]
+atlas = ExtResource("death")
+region = Rect2(4340, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_32"]
+atlas = ExtResource("death")
+region = Rect2(4480, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_33"]
+atlas = ExtResource("death")
+region = Rect2(4620, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_34"]
+atlas = ExtResource("death")
+region = Rect2(4760, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_35"]
+atlas = ExtResource("death")
+region = Rect2(4900, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_36"]
+atlas = ExtResource("death")
+region = Rect2(5040, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_37"]
+atlas = ExtResource("death")
+region = Rect2(5180, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_38"]
+atlas = ExtResource("death")
+region = Rect2(5320, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_39"]
+atlas = ExtResource("death")
+region = Rect2(5460, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_40"]
+atlas = ExtResource("death")
+region = Rect2(5600, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_41"]
+atlas = ExtResource("death")
+region = Rect2(5740, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_42"]
+atlas = ExtResource("death")
+region = Rect2(5880, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_43"]
+atlas = ExtResource("death")
+region = Rect2(6020, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_44"]
+atlas = ExtResource("death")
+region = Rect2(6160, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_45"]
+atlas = ExtResource("death")
+region = Rect2(6300, 0, 140, 260)
+
+[sub_resource type="AtlasTexture" id="Atlas_death_46"]
+atlas = ExtResource("death")
+region = Rect2(6440, 0, 140, 260)
 
 [sub_resource type="AtlasTexture" id="Atlas_idle_00"]
 atlas = ExtResource("idle")
@@ -573,6 +762,152 @@ animations = [{
 }],
 "loop": 0,
 "name": &"dash",
+"speed": 24.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_death_00")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_01")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_02")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_03")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_04")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_05")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_06")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_07")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_08")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_09")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_10")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_11")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_12")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_13")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_14")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_15")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_16")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_17")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_18")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_19")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_20")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_21")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_22")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_23")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_24")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_25")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_26")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_27")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_28")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_29")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_30")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_31")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_32")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_33")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_34")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_35")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_36")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_37")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_38")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_39")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_40")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_41")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_42")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_43")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_44")
+}, {
+"duration": 1.0,
+"texture": SubResource("Atlas_death_45")
+}, {
+"duration": 49.0,
+"texture": SubResource("Atlas_death_46")
+}],
+"loop": 0,
+"name": &"death",
 "speed": 24.0
 }, {
 "frames": [{

@@ -15,6 +15,12 @@ func begin_day(day_number: int) -> bool:
 		return false
 	var changed_day := current_day >= 1
 	if changed_day:
+		exploration.graves.clear()
+		exploration.descent_souls.clear()
+		exploration.active_descents.clear()
+		exploration.checkpoint_heals.clear()
+		player_vitals.clear()
+		exploration.changed.emit()
 		for identity in groups.keys():
 			if not String(identity).begins_with("["):
 				continue
