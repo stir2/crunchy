@@ -63,6 +63,8 @@ func _perform_interaction(actor: Node2D) -> String:
 			if runtime != null:
 				var was_active: bool = request.progression.state.checkpoints.get(request.definition.id,{}).get("activated",false)
 				var result := runtime.activate_or_heal_checkpoint(request)
+				if not result.is_empty():
+					get_node("/root/SoundManager").play_limited(&"checkpoint", -18, 0.3)
 				if not was_active and not result.is_empty(): activated.emit()
 				return result
 		&"fragment":

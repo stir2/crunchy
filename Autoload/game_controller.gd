@@ -148,12 +148,17 @@ func collect_descent_flesh(world: String, amount: int, origin: Vector2 = Vector2
 	if not pickup_id.is_empty():
 		if abyss_room_state.markers.has(key): return false
 		abyss_room_state.markers[key] = "collected"
-	return abyss_room_state.exploration.add_descent_flesh(world,amount,origin)
+	var collected := abyss_room_state.exploration.add_descent_flesh(world,amount,origin)
+	if collected:
+		get_node("/root/SoundManager").play_limited(&"flesh_collect", -22)
+	return collected
 
 func return_abyss_descent(world: String) -> int:
 	# Clear carried Flesh before notifying bank observers; a repeated call pays zero.
 	var amount: int = abyss_room_state.exploration.take_descent_flesh(world)
-	if amount > 0: flesh += amount
+	if amount > 0:
+		flesh += amount
+		get_node("/root/SoundManager").play_sfx(&"flesh_bank", -16)
 	return amount
 
 

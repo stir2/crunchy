@@ -100,7 +100,10 @@ func _update_prompt() -> void:
 	travel_prompt.text = _prompt_for(travel_target,InteractionTarget.Channel.TRAVEL,travel_action)
 
 func _perform(target: InteractionTarget, channel: InteractionTarget.Channel) -> void:
-	if not is_instance_valid(target) or not actions_allowed() or not target.can_interact_for_action(player,channel): return
+	if not is_instance_valid(target) or not actions_allowed(): return
+	if not target.can_interact_for_action(player,channel):
+		get_node("/root/SoundManager").play_limited(&"error", -23, 0.25)
+		return
 	var result := target.interact_for_action(player,channel)
 	if not result.is_empty():
 		message.text = result

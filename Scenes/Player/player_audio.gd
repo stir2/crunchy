@@ -258,6 +258,8 @@ func _on_jumped() -> void:
 
 
 func _on_player_hurt(_hit: CombatHit, _amount: int) -> void:
+	if not player.health.is_dead():
+		sounds.play_limited(&"player_hurt", -19, 0.25)
 	_duck_movement()
 	# A spike/hit reaction is not a voluntary fall, even after hit-stun expires.
 	_damage_airborne = true

@@ -21,6 +21,8 @@ const SPACING = preload("res://Scenes/Enemies/Shared/enemy_spacing.gd")
 @export var rush_time: float = 0.4
 @export var recovery_time: float = 0.45
 @export var flesh_reward: int = 1
+## Set to a stable marker/spawn ID for enemies reconstructed by streaming.
+@export var flesh_pickup_id: String = ""
 @export_range(0.0, 1.0) var knockback_multiplier: float = 0.4
 @export var track_during_windup: bool = false
 @export var enemy_color: Color = Color(1.0, 0.35, 0.35)
@@ -245,6 +247,43 @@ func _on_died(_hit: CombatHit) -> void:
 	death.chain().tween_callback(queue_free)
 
 
+func _collect_flesh_reward() -> void:
+	var runtime: AbyssRuntime
+	var room: AbyssAuthoredRoom
+	var ancestor: Node = self
+	while ancestor != null:
+		if ancestor is AbyssAuthoredRoom: room = ancestor
+		if ancestor is AbyssRuntime:
+			runtime = ancestor
+			break
+		ancestor = ancestor.get_parent()
+	# Test scenes may put the enemy beside a Player instead of below the runtime.
+	if runtime == null and is_instance_valid(target):
+		ancestor = target
+		while ancestor != null:
+			if ancestor is AbyssRuntime:
+				runtime = ancestor
+				break
+			ancestor = ancestor.get_parent()
+	var settings: Dictionary = GameController.abyss_room_state.world_settings.get("0",{})
+	var world := ""
+	if runtime != null and runtime.stream.specials != null:
+		world = runtime.stream.specials.world
+	elif settings.has("global_seed"):
+		world = str(settings.global_seed)
+	# Enemy-only labs without a configured world must not create orphan progress.
+	if world.is_empty(): return
+	var identity := flesh_pickup_id
+	if room != null and room.construction_requirements != null:
+		var relative_path := String(room.get_path_to(self))
+		if identity.is_empty() and not relative_path.contains("@"):
+			identity = relative_path
+		if not identity.is_empty():
+			var coords := room.construction_requirements.global_coords
+			identity = JSON.stringify([coords.x,coords.y,room.scene_file_path,identity])
+	GameController.collect_descent_flesh(world,flesh_reward,global_position,identity)
+
+
 func _play_impact() -> void:
 	# Leave the sound in the room so the final hit can finish after death.
 	var sound := AudioStreamPlayer2D.new()
@@ -259,17 +298,8 @@ func _play_impact() -> void:
 
 
 func _award_flesh() -> void:
-	if flesh_reward <= 0:
-		return
-	var host := get_parent()
-	while host != null:
-		if host is AbyssRuntime:
-			if host.is_active() and host.stream.specials != null:
-				GameController.collect_descent_flesh(host.stream.specials.world, flesh_reward, global_position)
-			return
-		host = host.get_parent()
-	# Standalone enemy labs do not have an expedition balance.
-	GameController.add_flesh(flesh_reward)
+	if flesh_reward > 0:
+		_collect_flesh_reward()
 
 
 func _update_animation() -> void:

@@ -3,6 +3,13 @@ extends Node
 const PLAYER_AUDIO = preload("res://Scenes/Player/player_audio.gd")
 const ROOT := "res://Assets/Audio/SFX/"
 const SOUND_PATHS := {
+	&"checkpoint": "Progression/checkpoint.wav",
+	&"parry": "Combat/parry.wav",
+	&"flesh_collect": "Progression/flesh_collect.wav",
+	&"flesh_bank": "Progression/flesh_bank.wav",
+	&"collect_grave": "Progression/collect_grave.wav",
+	&"error": "UI/error.wav",
+	&"player_hurt": "Player/player_hurt.wav",
 	&"button_click": "UI/button_click.wav",
 	&"button_hover": "UI/button_hover.wav",
 	&"open_ledger": "UI/open_ledger.wav",
@@ -55,6 +62,8 @@ const SOUND_PATHS := {
 }
 ## Measured source peaks, before playback gain. Keep the supplied WAVs untouched.
 const SOURCE_PEAK_DB := {
+	&"checkpoint": -11.98, &"parry": 0.82, &"flesh_collect": -11.14,
+	&"flesh_bank": -7.19, &"collect_grave": -15.55, &"error": -18.39, &"player_hurt": -2.22,
 	&"bull_rush_charge": -20.61, &"bull_rush": 0.34, &"freefall": -18.55, &"jump": -12.91, &"gate_unlock": -9.23,
 	&"land_stone": -4.31, &"land_wood": -9.07,
 	&"footstep_stone": -14.86, &"footstep_wood": -14.08,
@@ -74,6 +83,7 @@ const SOURCE_PEAK_DB := {
 }
 # Skip quiet source padding without editing the supplied recordings.
 const START_OFFSETS := {
+	&"checkpoint": 0.16, &"flesh_collect": 0.04, &"collect_grave": 0.025,
 	&"open_ledger": 0.32,
 	&"gate_unlock": 0.46, &"key_fragment_pickup": 0.38, &"key_merge": 0.17,
 	&"bull_rush_charge": 0.03, &"purchase": 0.10, &"geiger_counter_tick": 0.055, &"jump": 0.015,
@@ -85,6 +95,7 @@ var transition_cues: Array[StringName] = []
 var _transition_losses: Array[Dictionary] = []
 var _last_motion_ms: int = -1000
 var _repeat_history: Dictionary = {}
+var _limited_times: Dictionary = {}
 var _greeting: AudioStreamPlayer
 var _ui_voices: Dictionary = {}
 var _streams: Dictionary = {}
@@ -287,3 +298,11 @@ func repetition_gain_for(sound: StringName) -> float:
 	var count: int = mini(4, int(recent.count) + 1) if now - int(recent.time) < 1100 else 0
 	_repeat_history[sound] = {"time": now, "count": count}
 	return -float(count)
+
+
+func play_limited(sound: StringName, volume_db: float, interval: float = 0.12) -> void:
+	var now := Time.get_ticks_msec()
+	if now - int(_limited_times.get(sound, -10000)) < interval * 1000:
+		return
+	_limited_times[sound] = now
+	play_sfx(sound, volume_db)

@@ -148,6 +148,7 @@ func upgrade_building(building_id: StringName) -> bool:
 		return false
 	var cost := sim.upgrade_cost(building_id)
 	if cost < 0 or not GameController.spend_rations(cost):
+		SoundManager.play_limited(&"error", -23, 0.25)
 		return false
 	sim.upgrade(building_id)
 	_sync_stats()
@@ -158,6 +159,7 @@ func upgrade_building(building_id: StringName) -> bool:
 
 func buy_potion() -> bool:
 	if _choosing or not GameController.spend_rations(config.potion_cost):
+		SoundManager.play_limited(&"error", -23, 0.25)
 		return false
 	GameController.add_potions(1)
 	SoundManager.play_sfx(&"purchase", -12)

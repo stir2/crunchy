@@ -4,7 +4,6 @@ extends Node
 signal damage_reaction(hit: CombatHit, amount: int)
 signal died(hit: CombatHit)
 signal attack_parried(hit: CombatHit, projectile: bool)
-const PARRY_SOUND = preload("res://Assets/Audio/SFX/Combat/cleaver_impact.wav")
 @export var default_knockback: Vector2 = Vector2(180, -160)
 @export_range(0, 120) var reaction_frames: int = 8
 @export_range(0.0, 5000.0, 10.0) var knockback_deceleration: float = 600.0
@@ -59,14 +58,7 @@ func try_dash_parry(hit: CombatHit, projectile: Node2D = null) -> bool:
 	if not _parry_sources.has(identity):
 		_parry_sources[identity] = true
 		_parry_flash_until = Engine.get_physics_frames() + 6
-		var sound := AudioStreamPlayer.new()
-		sound.stream = PARRY_SOUND
-		sound.bus = &"SFX"
-		sound.pitch_scale = 1.5
-		sound.volume_db = -8.0 + get_node("/root/SoundManager").gain_for(&"cleaver_impact")
-		add_child(sound)
-		sound.finished.connect(sound.queue_free)
-		sound.play()
+		get_node("/root/SoundManager").play_limited(&"parry", -14, 0.08)
 		attack_parried.emit(hit, projectile != null)
 	return true
 
@@ -143,9 +135,9 @@ func _process(_delta: float) -> void:
 
 ## Preserve frame-based deadlines across an explicit gameplay pause.
 func compensate_paused_ticks(start_tick: int, ticks: int) -> void:
-	if _parry_flash_until > start_tick:
-		_parry_flash_until += ticks
 	if _reaction_until > start_tick:
 		_reaction_until += ticks
 	if _flash_until > start_tick:
 		_flash_until += ticks
+	if _parry_flash_until > start_tick:
+		_parry_flash_until += ticks
