@@ -3,6 +3,8 @@ extends Node
 ## Actor reaction policy; Health owns HP/immunity, Player owns physical movement.
 signal damage_reaction(hit: CombatHit, amount: int)
 signal died(hit: CombatHit)
+signal attack_parried(hit: CombatHit, projectile: bool)
+const PARRY_SOUND = preload("res://Assets/Audio/SFX/cleaver_impact.wav")
 @export var default_knockback: Vector2 = Vector2(180, -160)
 @export_range(0, 120) var reaction_frames: int = 8
 @export_range(0.0, 5000.0, 10.0) var knockback_deceleration: float = 600.0
@@ -13,6 +15,8 @@ signal died(hit: CombatHit)
 @export var spike_knockback: Vector2 = Vector2(180, -180)
 var _reaction_until: int = -1
 var _flash_until: int = -1
+var _parry_flash_until: int = -1
+var _parry_sources: Dictionary[int, bool] = {}
 @onready var player: CharacterBody2D = get_parent()
 @onready var health: HealthComponent = player.get_node("Health")
 @onready var hurtbox: PlayerHurtbox = player.get_node("Hurtbox")
@@ -24,11 +28,51 @@ func _ready() -> void:
 	health.died.connect(_on_died)
 	health.health_reset.connect(_on_reset)
 	player.movement_reset.connect(_clear_reaction)
+	player.movement_state_changed.connect(_on_movement_state_changed)
 
 func receive_hit(hit: CombatHit) -> bool:
 	if hit == null or hit.source == player or hurtbox.invulnerable:
 		return false
+	if try_dash_parry(hit):
+		return false
 	return health.take_damage(hit)
+
+func try_dash_parry(hit: CombatHit, projectile: Node2D = null) -> bool:
+	if hit == null or is_dead() or hurtbox.invulnerable or player.movement_state != Player.MovementState.DASHING:
+		return false
+	# Melee parries apply to enemies, never floor spikes or damage volumes.
+	if projectile == null and (not is_instance_valid(hit.source) or not hit.source.is_in_group("enemies")):
+		return false
+	var offset := hit.world_position - (player.global_position + Vector2(0, -18))
+	if absf(offset.y) > 40.0:
+		return false
+	var facing: float = player.dash_direction
+	if absf(offset.x) > 2.0:
+		if offset.x * facing < 0.0:
+			return false
+	elif hit.direction.x * facing >= 0.0:
+		return false
+	if projectile != null and not projectile.reflect_from(player):
+		return false
+	var source: Node2D = projectile if projectile != null else hit.source
+	var identity := source.get_instance_id()
+	if not _parry_sources.has(identity):
+		_parry_sources[identity] = true
+		_parry_flash_until = Engine.get_physics_frames() + 6
+		var sound := AudioStreamPlayer.new()
+		sound.stream = PARRY_SOUND
+		sound.bus = &"SFX"
+		sound.pitch_scale = 1.5
+		sound.volume_db = -8.0
+		add_child(sound)
+		sound.finished.connect(sound.queue_free)
+		sound.play()
+		attack_parried.emit(hit, projectile != null)
+	return true
+
+func _on_movement_state_changed(state: int) -> void:
+	if state == Player.MovementState.DASHING:
+		_parry_sources.clear()
 
 func is_dead() -> bool:
 	return health.is_dead()
@@ -76,6 +120,8 @@ func _on_died(hit: CombatHit) -> void:
 func _clear_reaction() -> void:
 	_reaction_until = -1
 	_flash_until = -1
+	_parry_flash_until = -1
+	_parry_sources.clear()
 	sprite.self_modulate = Color.WHITE
 
 func _on_reset() -> void:
@@ -87,6 +133,8 @@ func _process(_delta: float) -> void:
 	var tick := Engine.get_physics_frames()
 	if is_dead():
 		color = Color(0.4, 0.4, 0.45)
+	elif tick < _parry_flash_until:
+		color = Color(0.4, 1.0, 1.0)
 	elif tick < _flash_until:
 		color = Color(1.0, 0.35, 0.35)
 	elif health.is_invulnerable() and (tick / blink_period_frames) % 2 == 0:
@@ -99,3 +147,5 @@ func compensate_paused_ticks(start_tick: int, ticks: int) -> void:
 		_reaction_until += ticks
 	if _flash_until > start_tick:
 		_flash_until += ticks
+	if _parry_flash_until > start_tick:
+		_parry_flash_until += ticks

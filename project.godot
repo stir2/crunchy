@@ -27,6 +27,7 @@ DebugMenu="*res://Autoload/debug_menu.gd"
 SaveManager="*res://Autoload/save_manager.gd"
 Dialogic="*uid://ds2q0uclmolvu"
 DialogueManager="*res://Autoload/dialogue_manager.gd"
+SoundManager="*res://Autoload/sound_manager.gd"
 
 [dialogic]
 

@@ -138,6 +138,8 @@ func assign(villager_id: int, target: StringName) -> bool:
 	_sync_stats()
 	villagers_changed.emit()
 	buildings_changed.emit()
+	if cost > 0:
+		SoundManager.play_sfx(&"purchase", -12)
 	return true
 
 
@@ -150,6 +152,7 @@ func upgrade_building(building_id: StringName) -> bool:
 	sim.upgrade(building_id)
 	_sync_stats()
 	buildings_changed.emit()
+	SoundManager.play_sfx(&"purchase", -12)
 	return true
 
 
@@ -157,6 +160,7 @@ func buy_potion() -> bool:
 	if _choosing or not GameController.spend_rations(config.potion_cost):
 		return false
 	GameController.add_potions(1)
+	SoundManager.play_sfx(&"purchase", -12)
 	return true
 
 

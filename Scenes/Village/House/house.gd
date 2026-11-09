@@ -106,6 +106,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func set_panel(p: RoomPanel) -> void:
 	if DialogueManager.is_busy():
 		return
+	if current_panel != p:
+		SoundManager.play_sfx(&"panel_transition", -18)
 	current_panel = p
 	stairs_panel.visible = (p == RoomPanel.STAIRS)
 	desk_panel.visible = (p == RoomPanel.DESK)
@@ -157,10 +159,13 @@ func _open_blueprint() -> void:
 		if not is_inside_tree():
 			return
 	village_panel.refresh()
+	SoundManager.play_sfx(&"open_ledger", -16)
 	village_panel.show()
 
 
 func _close_blueprint() -> void:
+	if village_panel.visible:
+		SoundManager.play_sfx(&"close_ledger", -16)
 	village_panel.hide()
 
 
@@ -355,22 +360,14 @@ func _build_dialogs() -> void:
 
 
 func _investigate_window() -> void:
-	# A short low rumble, made in memory for the temporary scene.
-	var samples := PackedByteArray()
-	var rate := 22050
-	var duration := 2.0
-	samples.resize(int(rate * duration) * 2)
-	for i in samples.size() / 2:
-		var time := float(i) / rate
-		var envelope := sin(PI * time / duration)
-		var value := (sin(TAU * 38.0 * time) + sin(TAU * 53.0 * time) * 0.5) * envelope * 0.25
-		samples.encode_s16(i * 2, int(value * 32767.0))
-	var stream := AudioStreamWAV.new()
-	stream.format = AudioStreamWAV.FORMAT_16_BITS
-	stream.mix_rate = rate
-	stream.data = samples
-	_rumble.stream = stream
+	_rumble.stream = SoundManager.next_rumble()
+	_rumble.volume_db = -12.0
 	_rumble.play()
+	# Use a short swell here; the supplied recordings are over thirty seconds.
+	var fade := create_tween()
+	fade.tween_interval(2.0)
+	fade.tween_property(_rumble, "volume_db", -45.0, 0.6)
+	fade.tween_callback(_rumble.stop)
 	var panels: Control = $Panels
 	var origin := panels.position
 	var shake := create_tween()
