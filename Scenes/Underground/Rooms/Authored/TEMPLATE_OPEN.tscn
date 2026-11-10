@@ -1,4 +1,4 @@
-[gd_scene format=4 uid="uid://bslf1rucrakua"]
+[gd_scene format=3 uid="uid://bslf1rucrakua"]
 
 [ext_resource type="Script" uid="uid://bg8lhs2k6oonn" path="res://Scenes/Underground/Rooms/authored_room.gd" id="1_qid8q"]
 [ext_resource type="TileSet" uid="uid://dsxrhc8fbe5le" path="res://Assets/Tiles/room_placeholders.tres" id="2_pwk3j"]
@@ -6,6 +6,7 @@
 [node name="OpenRoom" type="Node2D" unique_id=247041278]
 script = ExtResource("1_qid8q")
 room_size = Vector2i(40, 40)
+protect_interior_routes = null
 
 [node name="Solid" type="TileMapLayer" parent="." unique_id=1033750265]
 texture_filter = 1

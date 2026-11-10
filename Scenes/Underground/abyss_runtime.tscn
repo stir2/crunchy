@@ -8,8 +8,8 @@
 [ext_resource type="PackedScene" path="res://Scenes/Underground/Map/abyss_map.tscn" id="6_map"]
 [ext_resource type="Script" uid="uid://1nltxt4d4clk" path="res://Scenes/Underground/Map/exploration_tracker.gd" id="7_exploration"]
 [ext_resource type="PackedScene" path="res://Scenes/Underground/HUD/flesh_hud.tscn" id="8_flesh_hud"]
-
-[ext_resource type="Script" path="res://Scenes/Interaction/entrance_return.gd" id="9_entrance_return"]
+[ext_resource type="Script" uid="uid://blwbp2x456mmg" path="res://Scenes/Interaction/entrance_return.gd" id="9_entrance_return"]
+[ext_resource type="Script" uid="uid://d1pwahiyti1lu" path="res://Scenes/Underground/Enemies/enemy_population.gd" id="10_population"]
 
 [node name="AbyssRuntime" type="Node2D" unique_id=678067981]
 script = ExtResource("1_runtime")
@@ -81,5 +81,8 @@ script = ExtResource("7_exploration")
 
 [node name="FleshHUD" parent="." unique_id=1881410424 instance=ExtResource("8_flesh_hud")]
 
-[node name="EntranceReturn" type="Node2D" parent="."]
+[node name="EntranceReturn" type="Node2D" parent="." unique_id=839803781]
 script = ExtResource("9_entrance_return")
+
+[node name="EnemyPopulation" type="Node2D" parent="." unique_id=711212018]
+script = ExtResource("10_population")

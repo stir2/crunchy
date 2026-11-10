@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://bugek6iwfr7wo"]
+
+[ext_resource type="Script" uid="uid://da22xq3ubd2cs" path="res://Scenes/Underground/Enemies/flesh_drop.gd" id="1"]
+
+[node name="FleshDrop" type="Area2D" unique_id=185873338]
+script = ExtResource("1")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1296058466]
+texture_filter = 1
