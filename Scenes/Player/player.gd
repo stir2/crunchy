@@ -91,6 +91,13 @@ var _buffered_dash_start_tick: int = -1
 @onready var climbing: PlayerClimbing = $ClimbingController
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("Use Potion") and not event.is_echo():
+		if is_physics_processing() and not get_tree().paused and not damage.is_dead():
+			GameController.use_potion(health)
+		get_viewport().set_input_as_handled()
+
+
 func _physics_process(delta: float) -> void:
 	refresh_input_release_guards()
 	_dash_cooldown_started_this_tick = false
