@@ -150,6 +150,38 @@ func _physics_process(delta: float) -> void:
 	_update_animation()
 
 
+# Find a descending arc to a body origin just above a landing surface.
+func _plan_leap(destination: Vector2, max_speed: float, max_height: float, delay: float = 0.0) -> Vector2:
+	var offset := destination - global_position
+	var gravity := get_gravity().y
+	if gravity <= 0.0:
+		return Vector2.ZERO
+	var minimum_height := maxf(18.0, 16.0 - offset.y)
+	for extra_height in [0.0, 18.0, 40.0, 68.0]:
+		var height: float = minimum_height + extra_height
+		if height > max_height:
+			break
+		var rise := sqrt(2.0 * gravity * height)
+		var fall := sqrt(2.0 * gravity * maxf(0.0, height + offset.y))
+		var duration := (rise + fall) / gravity
+		var launch := Vector2(offset.x / (duration - delay), -rise)
+		if absf(launch.x) > max_speed:
+			continue
+		var steps := ceili(duration * 40.0)
+		var from := global_transform
+		var clear := true
+		for step in range(1, steps + 1):
+			var t := duration * step / steps
+			var point := global_position + Vector2(launch.x * maxf(0, t - delay), launch.y * t + 0.5 * gravity * t * t)
+			if test_move(from, point - from.origin):
+				clear = false
+				break
+			from.origin = point
+		if clear:
+			return launch
+	return Vector2.ZERO
+
+
 func _can_see_target() -> bool:
 	if not is_instance_valid(target):
 		return false

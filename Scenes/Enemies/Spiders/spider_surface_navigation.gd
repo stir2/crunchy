@@ -1,7 +1,8 @@
 extends RefCounted
 ## A small local graph of exposed terrain faces, sampled from actual collision.
 const CELL := 16.0
-const CLEARANCE := 13.0
+const BODY_RADIUS := 12.0
+const CLEARANCE := BODY_RADIUS + 1.0
 const NORMALS := [Vector2.UP, Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT]
 var _space: PhysicsDirectSpaceState2D
 var _shape := CircleShape2D.new()
@@ -10,18 +11,18 @@ var _nodes: Array[Dictionary] = []
 
 func find_path(space: PhysicsDirectSpaceState2D, start: Vector2, target: Vector2) -> Array[Dictionary]:
 	_space = space
-	_shape.radius = 12.0
+	_shape.radius = BODY_RADIUS
 	_nodes.clear()
-	var lo := Vector2i(floori(minf(start.x, target.x) / CELL) - 16, floori(minf(start.y, target.y) / CELL) - 16)
-	var hi := Vector2i(ceili(maxf(start.x, target.x) / CELL) + 16, ceili(maxf(start.y, target.y) / CELL) + 16)
+	var local_target := start + (target - start).limit_length(440.0)
+	var lo := Vector2i(floori(minf(start.x, local_target.x) / CELL) - 9, floori(minf(start.y, local_target.y) / CELL) - 9)
+	var hi := Vector2i(ceili(maxf(start.x, local_target.x) / CELL) + 9, ceili(maxf(start.y, local_target.y) / CELL) + 9)
 	var solid: Dictionary = {}
+	var query := PhysicsPointQueryParameters2D.new()
+	query.collision_mask = 1
 	for y in range(lo.y - 1, hi.y + 2):
 		for x in range(lo.x - 1, hi.x + 2):
 			var cell := Vector2i(x, y)
-			var query := PhysicsPointQueryParameters2D.new()
 			query.position = (Vector2(cell) + Vector2(0.5, 0.5)) * CELL
-			query.collision_mask = 1
-			query.collide_with_areas = false
 			if not _space.intersect_point(query, 1).is_empty():
 				solid[cell] = true
 	var buckets: Dictionary = {}
