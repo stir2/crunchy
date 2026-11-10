@@ -4,13 +4,15 @@ signal finished
 const PORTRAITS = preload("res://Scenes/Village/villager_portraits.gd")
 var losses: Array[Dictionary] = []
 var _content: VBoxContainer
+var _veil: ColorRect
 
 
 func _ready() -> void:
 	name = "VillagerLossNotice"
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var black := ColorRect.new()
-	black.color = Color.BLACK
+	black.color = Color(0, 0, 0, 0)
+	_veil = black
 	black.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(black)
 	var center := CenterContainer.new()
@@ -18,6 +20,7 @@ func _ready() -> void:
 	add_child(center)
 	var content := VBoxContainer.new()
 	_content = content
+	content.modulate.a = 0.0
 	content.custom_minimum_size.x = 480
 	content.add_theme_constant_override("separation", 24)
 	center.add_child(content)
@@ -58,9 +61,14 @@ void fragment() {
 		caption.add_theme_font_size_override("font_size", 32)
 		card.add_child(caption)
 
+	var reveal := create_tween().set_parallel(true)
+	reveal.tween_property(_veil, "color:a", 0.65, 0.65)
+	reveal.tween_property(_content, "modulate:a", 1.0, 0.65).set_trans(Tween.TRANS_SINE)
+
 
 func fade_out() -> void:
-	var fade := create_tween()
-	fade.tween_property(_content, "modulate:a", 0.0, 0.55)
+	var fade := create_tween().set_parallel(true)
+	fade.tween_property(_content, "modulate:a", 0.0, 0.75)
+	fade.tween_property(_veil, "color:a", 0.0, 0.75)
 	await fade.finished
 	finished.emit()

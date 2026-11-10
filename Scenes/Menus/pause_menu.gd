@@ -3,17 +3,24 @@ extends CanvasLayer
 
 @onready var panel: Control = $Panel
 @onready var status_label: Label = %StatusLabel
-@onready var leave_dialog: ConfirmationDialog = $LeaveDialog
+@onready var leave_dialog: Control = $LeaveDialog
 var _quit := false
 
 
 func _ready() -> void:
+	panel.theme = preload("res://Scenes/Menus/menu_style.gd").make_theme()
+	leave_dialog.theme = panel.theme
+	get_viewport().size_changed.connect(_fit_layout)
+	_fit_layout()
 	panel.hide()
 	%ResumeButton.pressed.connect(resume)
 	%SaveButton.pressed.connect(_save)
 	%MainMenuButton.pressed.connect(_confirm_leave.bind(false))
 	%QuitButton.pressed.connect(_confirm_leave.bind(true))
-	leave_dialog.confirmed.connect(_leave)
+	%ConfirmLeaveButton.pressed.connect(_leave)
+	%CancelLeaveButton.pressed.connect(func():
+		leave_dialog.hide()
+		%ResumeButton.grab_focus())
 
 
 func _input(event: InputEvent) -> void:
@@ -29,7 +36,10 @@ func toggle() -> void:
 	if panel.visible:
 		resume()
 		return
+	%Day.text = "DAY %d" % GameController.day
+	panel.modulate.a = 0
 	panel.show()
+	create_tween().tween_property(panel, "modulate:a", 1.0, 0.18)
 	DebugMenu.close()
 	get_tree().paused = true
 	Dialogic.paused = true
@@ -56,7 +66,9 @@ func _save() -> void:
 
 func _confirm_leave(quit_game: bool) -> void:
 	_quit = quit_game
-	leave_dialog.popup_centered()
+	leave_dialog.show()
+	%ConfirmLeaveButton.text = "Quit game" if _quit else "Leave run"
+	%CancelLeaveButton.grab_focus()
 
 
 func _leave() -> void:
@@ -65,3 +77,12 @@ func _leave() -> void:
 		get_tree().quit()
 	else:
 		get_tree().current_scene.change_scene("res://Scenes/Menus/main_menu.tscn")
+
+
+func _fit_layout() -> void:
+	if not is_inside_tree(): return
+	var viewport_size := get_viewport().get_visible_rect().size
+	var factor := minf(viewport_size.x / 960.0, viewport_size.y / 540.0)
+	for layout in [$Panel/Layout, $LeaveDialog/Layout]:
+		layout.scale = Vector2.ONE * factor
+		layout.position = (viewport_size - Vector2(960, 540) * factor) * 0.5

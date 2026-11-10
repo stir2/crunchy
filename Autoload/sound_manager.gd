@@ -272,6 +272,7 @@ func play_transition_cues(host: Node) -> void:
 		if sound != &"play_button" and not String(sound).begins_with("Scream"):
 			await host.get_tree().create_timer(0.35, false).timeout
 	if is_instance_valid(notice):
+		await host.get_tree().create_timer(0.6, false).timeout
 		await notice.fade_out()
 		notice.queue_free()
 

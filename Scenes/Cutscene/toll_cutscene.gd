@@ -1,7 +1,6 @@
 extends Control
 ## Mechanical slot-style number wheel cutscene.
-## Black void + silence -> reels spin and agonizingly decelerate with Geiger clicks
-## -> heavy latch impact + housing shudder -> hard silence hold -> Chief's house.
+## Night atmosphere -> loss notices -> reels, impact and hold -> waking house.
 ## Day 10: the number counts up from 1, accelerating into a blur, then brakes onto "∞".
 
 signal finished
@@ -37,6 +36,8 @@ enum Phase { PRELUDE, SPINNING, HOLD, DONE }
 @onready var bottom_shadow: ColorRect = %BottomShadow
 @onready var click_audio_player: AudioStreamPlayer = %ClickAudioPlayer
 
+var _night_backdrop: TextureRect
+var _quota_caption: Label
 var _intro_running: bool = true
 var _phase := Phase.PRELUDE
 var _is_infinity := false
@@ -243,7 +244,8 @@ func _ready() -> void:
 	_setup_shadow_gradients()
 	_build_audio()
 
-	# Pure black void until the reels lurch to life
+	_build_night_backdrop()
+	housing.modulate.a = 0.0
 	housing.visible = false
 	_run_sequence()
 
@@ -314,17 +316,52 @@ func _setup_reels(quota_str: String) -> void:
 		_reels.append(reel)
 
 
+func _build_night_backdrop() -> void:
+	_night_backdrop = TextureRect.new()
+	_night_backdrop.name = "NightBackdrop"
+	_night_backdrop.texture = preload("res://Assets/Sprites/House/desk.png")
+	_night_backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_night_backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	_night_backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_night_backdrop.modulate = Color(0.09, 0.085, 0.08, 1)
+	add_child(_night_backdrop)
+	move_child(_night_backdrop, 1)
+	_night_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_quota_caption = Label.new()
+	_quota_caption.name = "QuotaCaption"
+	_quota_caption.text = "DAY %d" % GameController.day
+	_quota_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_quota_caption.add_theme_font_size_override("font_size", 28)
+	_quota_caption.add_theme_color_override("font_color", Color("b4aaa0"))
+	_quota_caption.modulate.a = 0.0
+	add_child(_quota_caption)
+	_quota_caption.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_quota_caption.anchor_top = 0.5
+	_quota_caption.anchor_bottom = 0.5
+	_quota_caption.offset_left = -220
+	_quota_caption.offset_right = 220
+	_quota_caption.offset_top = -200
+	_quota_caption.offset_bottom = -156
+
+
 func _run_sequence() -> void:
+	var opening := SoundManager.transition_cues.has(&"play_button")
+	_night_backdrop.visible = not opening
 	var has_intro: bool = not SoundManager.transition_cues.is_empty()
+	var night := create_tween()
+	night.tween_property(_night_backdrop, "modulate", Color(0.025, 0.025, 0.03, 1), 1.2 if opening else 2.0)
 	await SoundManager.play_transition_cues(self)
 	if not is_inside_tree() or _phase != Phase.PRELUDE:
 		return
 	_intro_running = false
-	await get_tree().create_timer(0.15 if has_intro else PRELUDE_TIME).timeout
+	await get_tree().create_timer(0.25 if opening else 0.12 if has_intro else PRELUDE_TIME).timeout
 	if _phase != Phase.PRELUDE or not is_inside_tree():
 		return # skipped during the prelude
 	_phase = Phase.SPINNING
 	housing.visible = true
+	var reveal := create_tween().set_parallel(true)
+	reveal.tween_property(housing, "modulate:a", 1.0, 0.45)
+	reveal.tween_property(_quota_caption, "modulate:a", 1.0, 0.6)
 
 	if _is_infinity:
 		_reels[0].spin_counting(INFINITY_COUNT_TIME, INFINITY_LAND_TIME)
@@ -348,6 +385,8 @@ func _on_reel_landed() -> void:
 
 func _skip_to_landed() -> void:
 	housing.visible = true
+	housing.modulate.a = 1.0
+	_quota_caption.modulate.a = 1.0
 	for reel in _reels:
 		reel.snap_to_final()
 	_play_impact()
@@ -361,7 +400,7 @@ func _begin_hold() -> void:
 	_phase = Phase.HOLD
 	# Hold the number while the impact fades into the dark.
 	await get_tree().create_timer(HOLD_TIME).timeout
-	if is_inside_tree():
+	if is_inside_tree() and _phase == Phase.HOLD:
 		_transition_to_house()
 
 
@@ -437,11 +476,17 @@ func _transition_to_house() -> void:
 		return
 	_phase = Phase.DONE
 
+	var fade := create_tween().set_parallel(true)
+	fade.tween_property(housing, "modulate:a", 0.0, 0.4)
+	fade.tween_property(_quota_caption, "modulate:a", 0.0, 0.4)
+	await fade.finished
+	if not is_inside_tree():
+		return
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	finished.emit()
 
 	var main := get_tree().current_scene
-	if main != null and main.has_method("change_scene"):
-		main.change_scene(HOUSE_SCENE)
+	if main != null and main.has_method("transition_to_scene"):
+		main.transition_to_scene(HOUSE_SCENE, 1.0)
 	else:
 		get_tree().change_scene_to_file(HOUSE_SCENE)

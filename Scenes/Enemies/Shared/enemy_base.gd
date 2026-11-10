@@ -47,6 +47,7 @@ var _resume_animation: bool = false
 
 func _ready() -> void:
 	add_to_group("enemies")
+	add_to_group("spacing_enemies")
 	_create_health_bar()
 	health_changed.connect(_update_health_bar)
 	damageable.damaged.connect(_on_damaged)

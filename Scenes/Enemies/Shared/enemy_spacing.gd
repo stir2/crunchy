@@ -11,7 +11,7 @@ func _physics_process(delta: float) -> void:
 		return
 	if _frame != Engine.get_physics_frames():
 		_frame = Engine.get_physics_frames()
-		_actors = get_tree().get_nodes_in_group("enemies")
+		_actors = get_tree().get_nodes_in_group("spacing_enemies")
 	var axis: Vector2 = actor._spacing_axis()
 	var correction := 0.0
 	for other in _actors:

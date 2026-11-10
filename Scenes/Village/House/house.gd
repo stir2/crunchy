@@ -264,6 +264,22 @@ func _on_refugee_waiting(candidate: Dictionary) -> void:
 	var identity := str(candidate.get("id", candidate.get("name", "Traveler")))
 	if identity != _greeted_refugee:
 		_greeted_refugee = identity
+		_greet_refugee_when_visible(identity)
+
+
+func _greet_refugee_when_visible(identity: String) -> void:
+	# The house is ready underneath the wake/Continue overlay before it is visible.
+	while is_inside_tree():
+		if not refugee_modal.visible or _greeted_refugee != identity:
+			return
+		var main := get_tree().current_scene
+		if not get_tree().paused and (main == null or main.get("_transitioning") != true):
+			break
+		await get_tree().process_frame
+	if not is_inside_tree():
+		return
+	await get_tree().create_timer(0.1, false).timeout
+	if is_inside_tree() and refugee_modal.is_visible_in_tree() and _greeted_refugee == identity:
 		SoundManager.greet_refugee()
 
 
@@ -345,9 +361,13 @@ func _on_night_resolved(report: Dictionary) -> void:
 
 
 func _transition_to_morning_cutscene() -> void:
+	# Let the closed blueprint and resolved popups leave the frame before capture.
+	await get_tree().process_frame
+	if not is_inside_tree():
+		return
 	var main := get_tree().current_scene
-	if main != null and main.has_method("change_scene"):
-		main.change_scene(CUTSCENE_SCENE)
+	if main != null and main.has_method("transition_to_scene"):
+		main.transition_to_scene(CUTSCENE_SCENE)
 	else:
 		get_tree().change_scene_to_file(CUTSCENE_SCENE)
 
@@ -361,10 +381,12 @@ func _present_village_wiped() -> void:
 	var screen := CanvasLayer.new()
 	screen.layer = 100
 	var black := ColorRect.new()
-	black.color = Color.BLACK
+	black.color = Color(0, 0, 0, 0)
 	black.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	screen.add_child(black)
 	add_child(screen)
+	var night := create_tween()
+	night.tween_property(black, "color:a", 0.97, 0.9).set_trans(Tween.TRANS_SINE)
 	await SoundManager.play_transition_cues(screen)
 	if not is_inside_tree():
 		return
