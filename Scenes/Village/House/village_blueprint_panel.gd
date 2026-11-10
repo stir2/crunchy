@@ -7,7 +7,7 @@ signal sleep_requested
 
 const MAP = preload("res://Assets/Sprites/UI/Village/Untitled.png")
 const PAPER = preload("res://Assets/Sprites/UI/Village/Untitled copy.png")
-const PORTRAIT = preload("res://Assets/Sprites/UI/Village/villager_placeholder.jpg")
+const PORTRAITS = preload("res://Scenes/Village/villager_portraits.gd")
 const CHIEF_IDLE = preload("res://Assets/Sprites/UI/Village/chief_idle.tres")
 const INK = Color("392b24")
 const HOTSPOTS = {
@@ -157,11 +157,11 @@ func _build_layout() -> void:
 	assigned_box.add_child(_label("Assigned villagers", 28))
 	_assigned = _scroll_list(assigned_box, false) as VBoxContainer
 	_make_drop_target(_canvas.get_node("AssignedPaper"), &"selected")
-	var bench_box := _paper_box(Rect2(24, 828, 822, 228), "Bench")
+	var bench_box := _paper_box(Rect2(24, 828, 822, 228), "Bench", 12)
 	bench_box.add_child(_label("On bench", 25))
 	_bench = _scroll_list(bench_box, true) as HBoxContainer
 	_make_drop_target(_canvas.get_node("BenchPaper"), Villager.QUEUE)
-	var bum_box := _paper_box(Rect2(864, 828, 420, 228), "Bums")
+	var bum_box := _paper_box(Rect2(864, 828, 420, 228), "Bums", 12)
 	bum_box.add_child(_label("Bums", 25))
 	_bums = _scroll_list(bum_box, true) as HBoxContainer
 	_chief = _paper_box(Rect2(1302, 90, 594, 846), "Chief")
@@ -179,7 +179,7 @@ func _place(node: Control, rect: Rect2, parent: Node) -> void:
 	node.size = rect.size
 
 
-func _paper_box(rect: Rect2, title: String) -> VBoxContainer:
+func _paper_box(rect: Rect2, title: String, padding: int = 28) -> VBoxContainer:
 	var paper := NinePatchRect.new()
 	paper.name = title + "Paper"
 	paper.texture = PAPER
@@ -191,7 +191,7 @@ func _paper_box(rect: Rect2, title: String) -> VBoxContainer:
 	var margin := MarginContainer.new()
 	_place(margin, Rect2(Vector2.ZERO, rect.size), paper)
 	for edge in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + edge, 28)
+		margin.add_theme_constant_override("margin_" + edge, padding)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 10)
 	margin.add_child(box)
@@ -332,9 +332,9 @@ func _refresh_details() -> void:
 		_details.add_child(assign)
 
 
-func _portrait() -> TextureRect:
+func _portrait(worker: Villager) -> TextureRect:
 	var image := TextureRect.new()
-	image.texture = PORTRAIT
+	image.texture = PORTRAITS.texture_for(worker.display_name)
 	image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	image.custom_minimum_size = Vector2(72, 76)
@@ -342,20 +342,29 @@ func _portrait() -> TextureRect:
 	return image
 
 
+func _portrait_button_style(button: Button) -> void:
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color.TRANSPARENT
+		if state == "hover" or state == "focus":
+			style.border_color = Color("efd09b")
+			style.set_border_width_all(2)
+		button.add_theme_stylebox_override(state, style)
+
+
 func _portrait_card(worker: Villager, selectable: bool) -> Control:
 	var box := VBoxContainer.new()
-	box.custom_minimum_size.x = 132
+	box.custom_minimum_size.x = 160
+	box.add_theme_constant_override("separation", 4)
 	var button := _button("", _pick_worker.bind(worker.id))
 	_make_draggable(button, worker.id)
 	button.tooltip_text = _worker_info(worker)
-	button.custom_minimum_size = Vector2(100, 94)
-	var portrait := _portrait()
+	button.custom_minimum_size = Vector2(126, 133)
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_portrait_button_style(button)
+	var portrait := _portrait(worker)
 	button.add_child(portrait)
 	portrait.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	portrait.offset_left = 8
-	portrait.offset_right = -8
-	portrait.offset_top = 8
-	portrait.offset_bottom = -8
 	box.add_child(button)
 	var caption := worker.display_name
 	if selectable and assignment_target != &"":
@@ -363,7 +372,8 @@ func _portrait_card(worker: Villager, selectable: bool) -> Control:
 		caption += " · " + ("Free" if cost == 0 else "%dR" % cost if cost > 0 else "Full")
 	var name_label := _label(caption, 19)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.custom_minimum_size.x = 116
+	name_label.custom_minimum_size.x = 160
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	name_label.clip_text = true
 	box.add_child(name_label)
 	return box
@@ -374,9 +384,10 @@ func _worker_row(worker: Villager) -> Control:
 	row.add_theme_constant_override("separation", 12)
 	_make_draggable(row, worker.id)
 	var choose := _button("", _pick_worker.bind(worker.id))
-	choose.custom_minimum_size = Vector2(76, 80)
+	choose.custom_minimum_size = Vector2(144, 152)
+	_portrait_button_style(choose)
 	_make_draggable(choose, worker.id)
-	var image := _portrait()
+	var image := _portrait(worker)
 	choose.add_child(image)
 	image.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	row.add_child(choose)
@@ -391,7 +402,9 @@ func _worker_row(worker: Villager) -> Control:
 		var cost := VillageManager.assignment_cost(worker.id, assignment_target)
 		row.add_child(_button("Pick · " + ("Free" if cost == 0 else "%dR" % cost if cost > 0 else "Full"), _pick_worker.bind(worker.id)))
 	else:
-		row.add_child(_button("Bench", func(): VillageManager.assign(worker.id, Villager.QUEUE)))
+		var bench_button := _button("Bench", func(): VillageManager.assign(worker.id, Villager.QUEUE))
+		bench_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(bench_button)
 	return row
 
 
@@ -484,7 +497,7 @@ func _refresh_badges() -> void:
 		row.add_child(_label("Lv %d · %d/%d" % [VillageManager.get_building_level(id), workers.size(), VillageManager.get_building_capacity(id)], 20))
 		var names := PackedStringArray()
 		for worker: Villager in workers:
-			var image := _portrait()
+			var image := _portrait(worker)
 			image.custom_minimum_size = Vector2(24, 26)
 			image.mouse_filter = Control.MOUSE_FILTER_STOP
 			image.tooltip_text = worker.display_name
@@ -574,7 +587,7 @@ func _create_drag(_position: Vector2, worker_id: int, source: Control) -> Varian
 		return null
 	var preview := VBoxContainer.new()
 	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	preview.add_child(_portrait())
+	preview.add_child(_portrait(worker))
 	var name_label := _label(worker.display_name, 20)
 	name_label.add_theme_color_override("font_color", Color("f0deb5"))
 	preview.add_child(name_label)

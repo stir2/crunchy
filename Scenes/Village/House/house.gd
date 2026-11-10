@@ -1,5 +1,6 @@
 extends Node2D
 
+const PORTRAITS = preload("res://Scenes/Village/villager_portraits.gd")
 const ABYSS_SCENE := "res://Scenes/Underground/abyss_runtime.tscn"
 const CUTSCENE_SCENE := "res://Scenes/Cutscene/toll_cutscene.tscn"
 
@@ -31,6 +32,7 @@ var _rumble: AudioStreamPlayer
 @onready var village_panel: VillageBlueprintPanel = %VillagePanel
 
 @onready var refugee_modal: Control = %RefugeeModal
+@onready var refugee_portrait: TextureRect = %RefugeePortrait
 @onready var refugee_name_label: Label = %RefugeeNameLabel
 @onready var refugee_desc_label: Label = %RefugeeDescLabel
 @onready var welcome_refugee_btn: Button = %WelcomeRefugeeButton
@@ -250,6 +252,7 @@ func _refresh_panel_content() -> void:
 func _on_refugee_waiting(candidate: Dictionary) -> void:
 	if GameController.is_day_10() or _morning_transition:
 		return
+	refugee_portrait.texture = PORTRAITS.texture_for(String(candidate.get("name", "Traveler")))
 	var is_bum: bool = candidate.get("is_bum", false)
 	var type_str := "Bum" if is_bum else "Worker"
 	refugee_name_label.text = "%s (%s)" % [candidate.get("name", "Traveler"), type_str]
