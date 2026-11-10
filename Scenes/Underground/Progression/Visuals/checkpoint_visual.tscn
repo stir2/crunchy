@@ -1,6 +1,11 @@
 [gd_scene format=3]
-[ext_resource type="Script" path="res://Scenes/Underground/Progression/special_placeholder.gd" id="1"]
+[ext_resource type="Script" path="res://Scenes/Underground/Progression/Visuals/checkpoint_visual.gd" id="1"]
+[ext_resource type="SpriteFrames" path="res://Scenes/Underground/Progression/Visuals/checkpoint_frames.tres" id="2"]
 [node name="Visuals" type="Node2D"]
 texture_filter = 1
 script = ExtResource("1")
-feature = "checkpoint"
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+position = Vector2(0,9)
+sprite_frames = ExtResource("2")
+animation = &"activate"

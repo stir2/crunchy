@@ -94,7 +94,7 @@ var _buffered_dash_start_tick: int = -1
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("Use Potion") and not event.is_echo():
 		if is_physics_processing() and not get_tree().paused and not damage.is_dead():
-			GameController.use_potion(health)
+			get_node("/root/GameController").use_potion(health)
 		get_viewport().set_input_as_handled()
 
 

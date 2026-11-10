@@ -1,0 +1,77 @@
+[gd_scene format=4]
+
+[ext_resource type="Script" path="res://Scenes/Underground/Rooms/authored_room.gd" id="1_qid8q"]
+[ext_resource type="TileSet" path="res://Assets/Tiles/room_placeholders.tres" id="2_pwk3j"]
+
+[node name="CheckpointRoom" type="Node2D" unique_id=350375221]
+script = ExtResource("1_qid8q")
+room_size = Vector2i(40, 40)
+
+[node name="Solid" type="TileMapLayer" parent="." unique_id=201994069]
+texture_filter = 1
+tile_set = ExtResource("2_pwk3j")
+
+[node name="Platforms" type="TileMapLayer" parent="." unique_id=1804268237]
+texture_filter = 1
+tile_map_data = PackedByteArray("AAAOABUAAAABAAAAAAAPABUAAAABAAAAAAAQABUAAAABAAAAAAARABUAAAABAAAAAAASABUAAAABAAAAAAATABUAAAABAAAAAAAUABUAAAABAAAAAAAVABUAAAABAAAAAAAWABUAAAABAAAAAAAXABUAAAABAAAAAAAYABUAAAABAAAAAAAZABUAAAABAAAAAAAaABUAAAABAAAAAAA=")
+tile_set = ExtResource("2_pwk3j")
+
+[node name="Decorations" type="TileMapLayer" parent="." unique_id=167521157]
+texture_filter = 1
+tile_map_data = PackedByteArray("AAAUABQAAQAAAAAAAAA=")
+tile_set = ExtResource("2_pwk3j")
+collision_enabled = false
+
+[node name="ConditionalWalls" type="TileMapLayer" parent="." unique_id=435825549]
+modulate = Color(1, 0.75, 0.45, 1)
+texture_filter = 1
+tile_set = ExtResource("2_pwk3j")
+
+[node name="Climbables" type="TileMapLayer" parent="." unique_id=965665694]
+texture_filter = 1
+tile_set = ExtResource("2_pwk3j")
+
+[node name="ConditionalPlatforms" type="TileMapLayer" parent="." unique_id=2013989959]
+texture_filter = 1
+tile_set = ExtResource("2_pwk3j")
+
+[node name="BreakableWalls" type="TileMapLayer" parent="." unique_id=1832756042]
+texture_filter = 1
+tile_set = ExtResource("2_pwk3j")
+
+[node name="Hazards" type="TileMapLayer" parent="." unique_id=1950755231]
+z_index = 1
+texture_filter = 1
+tile_set = ExtResource("2_pwk3j")
+collision_enabled = false
+
+[node name="ObjectMarkers" type="Node2D" parent="." unique_id=1761669049]
+
+[node name="RoomCenter" type="Marker2D" parent="ObjectMarkers" unique_id=394610179]
+position = Vector2(320, 320)
+
+[node name="OpeningGuides" type="Node2D" parent="." unique_id=1899728796]
+
+[node name="north_0" type="Marker2D" parent="OpeningGuides" unique_id=176668642]
+position = Vector2(152, 8)
+
+[node name="north_1" type="Marker2D" parent="OpeningGuides" unique_id=456110554]
+position = Vector2(504, 8)
+
+[node name="east_0" type="Marker2D" parent="OpeningGuides" unique_id=115455069]
+position = Vector2(632, 152)
+
+[node name="east_1" type="Marker2D" parent="OpeningGuides" unique_id=1496295962]
+position = Vector2(632, 504)
+
+[node name="south_0" type="Marker2D" parent="OpeningGuides" unique_id=1770514064]
+position = Vector2(152, 632)
+
+[node name="south_1" type="Marker2D" parent="OpeningGuides" unique_id=666739312]
+position = Vector2(504, 632)
+
+[node name="west_0" type="Marker2D" parent="OpeningGuides" unique_id=1205060182]
+position = Vector2(8, 152)
+
+[node name="west_1" type="Marker2D" parent="OpeningGuides" unique_id=1492832568]
+position = Vector2(8, 504)

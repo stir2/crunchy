@@ -1,6 +1,7 @@
 [gd_resource type="TileSet" format=3 uid="uid://dsxrhc8fbe5le"]
 
 [ext_resource type="Texture2D" uid="uid://bcrm1yntjy7mh" path="res://Assets/Tiles/room_placeholders.svg" id="1_ttk8o"]
+[ext_resource type="Texture2D" uid="uid://btcu2imj26fwj" path="res://SpriteSheets/checkpoint_100x100_24fps.png" id="2_checkpoint"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_bj36v"]
 texture = ExtResource("1_ttk8o")
@@ -24,6 +25,14 @@ texture = ExtResource("1_ttk8o")
 7:0/0 = 0
 7:0/0/custom_data_1 = &"spike"
 
+[sub_resource type="TileSetAtlasSource" id="Checkpoint"]
+resource_name = "Checkpoint placement"
+texture = ExtResource("2_checkpoint")
+texture_region_size = Vector2i(100, 100)
+0:0/0 = 0
+0:0/0/texture_origin = Vector2i(0, 7)
+0:0/0/custom_data_3 = true
+
 [resource]
 physics_layer_0/collision_layer = 1
 custom_data_layer_0/name = "climbable"
@@ -32,4 +41,7 @@ custom_data_layer_1/name = "hazard_type"
 custom_data_layer_1/type = 21
 custom_data_layer_2/name = "footstep_surface"
 custom_data_layer_2/type = 21
+custom_data_layer_3/name = "checkpoint"
+custom_data_layer_3/type = 1
 sources/0 = SubResource("TileSetAtlasSource_bj36v")
+sources/1 = SubResource("Checkpoint")

@@ -38,19 +38,20 @@ func _ready() -> void:
 
 func configure(region: AbyssRegionConfig, route: AbyssRouteConfig, terrain: AbyssTerrainConfig, progression: AbyssProgressionConfig, registry: AbyssRoomTemplateRegistry, state: AbyssRoomState, progression_state: AbyssProgressionState) -> bool:
 	routes = AbyssRouteGenerator.new(region,route,progression)
+	specials = AbyssSpecialRooms.new(routes,progression,progression_state)
 	selector = AbyssRoomTemplateSelector.new(registry,region.global_seed)
+	selector.checkpoint_planner = specials
 	if not selector.registration_errors.is_empty():
 		push_error("Runtime room registry: " + "; ".join(selector.registration_errors))
 		return false
 	deferred_templates.clear()
-	for metadata in registry.templates:
+	for metadata in registry.all_templates():
 		if metadata.room_size != region.room_size or metadata.opening_schema != route.opening_schema or metadata.opening_width != route.opening_width:
 			deferred_templates.append(String(metadata.template_id))
 	_cache_chunk = Vector2i(2147483647,2147483647)
 	terrain_config = terrain
 	mutations = state
 	boundary = AbyssCavernBoundaryField.new(routes,selector,terrain)
-	specials = AbyssSpecialRooms.new(routes,progression,progression_state)
 	room_pixels = Vector2(region.room_size * registry.tile_pixels)
 	_room_size = region.room_size
 	return true

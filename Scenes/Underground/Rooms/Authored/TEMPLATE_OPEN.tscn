@@ -6,13 +6,16 @@
 [node name="OpenRoom" type="Node2D" unique_id=247041278]
 script = ExtResource("1_qid8q")
 room_size = Vector2i(40, 40)
+protect_interior_routes = null
 
 [node name="Solid" type="TileMapLayer" parent="." unique_id=1033750265]
 texture_filter = 1
+tile_map_data = PackedByteArray("AAAMAB0AAAAAAAAAAAANAB0AAAAAAAAAAAAOAB0AAAAAAAAAAAALAB0AAAAAAAAAAAA=")
 tile_set = ExtResource("2_pwk3j")
 
 [node name="Platforms" type="TileMapLayer" parent="." unique_id=925235512]
 texture_filter = 1
+tile_map_data = PackedByteArray("AAAAACIAAAABAAAAAAABACIAAAABAAAAAAACACIAAAABAAAAAAAFABgAAAABAAAAAAAGABgAAAABAAAAAAAHABgAAAABAAAAAAAKABgAAAABAAAAAAALABgAAAABAAAAAAAOABgAAAABAAAAAAAPABgAAAABAAAAAAAVABsAAAABAAAAAAAWABsAAAABAAAAAAAXABsAAAABAAAAAAAYABsAAAABAAAAAAAZABsAAAABAAAAAAAnACIAAAABAAAAAAAmACIAAAABAAAAAAAmAB0AAAABAAAAAAAnAB0AAAABAAAAAAAmABgAAAABAAAAAAAnABgAAAABAAAAAAAfAB8AAAABAAAAAAAgAB8AAAABAAAAAAAhAB8AAAABAAAAAAA=")
 tile_set = ExtResource("2_pwk3j")
 
 [node name="Decorations" type="TileMapLayer" parent="." unique_id=931767075]
@@ -27,6 +30,7 @@ tile_set = ExtResource("2_pwk3j")
 
 [node name="Climbables" type="TileMapLayer" parent="." unique_id=1969056740]
 texture_filter = 1
+tile_map_data = PackedByteArray("AAAFABgAAAADAAAAAAAFABkAAAADAAAAAAAFABoAAAADAAAAAAAGABgAAAADAAAAAAAGABkAAAADAAAAAAAGABoAAAADAAAAAAAGABsAAAADAAAAAAAHABgAAAADAAAAAAAHABkAAAADAAAAAAAHABoAAAADAAAAAAAHABsAAAADAAAAAAAHABwAAAADAAAAAAAHAB0AAAADAAAAAAAHAB4AAAADAAAAAAAFABsAAAADAAAAAAAFABwAAAADAAAAAAAmABwAAAADAAAAAAAmABsAAAADAAAAAAAmABoAAAADAAAAAAAmABkAAAADAAAAAAAmABgAAAADAAAAAAAnABwAAAADAAAAAAAnABsAAAADAAAAAAAnABoAAAADAAAAAAAnABkAAAADAAAAAAAnABgAAAADAAAAAAA=")
 tile_set = ExtResource("2_pwk3j")
 
 [node name="ConditionalPlatforms" type="TileMapLayer" parent="." unique_id=22730198]
@@ -40,6 +44,7 @@ tile_set = ExtResource("2_pwk3j")
 [node name="Hazards" type="TileMapLayer" parent="." unique_id=1683948581]
 z_index = 1
 texture_filter = 1
+tile_map_data = PackedByteArray("AAAOABwAAAAGAAAAAAANABwAAAAGAAAAAAAMABwAAAAGAAAAAAALABwAAAAGAAAAAAA=")
 tile_set = ExtResource("2_pwk3j")
 collision_enabled = false
 

@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="AbyssEnemyPool" format=3 uid="uid://b13wsy6q1r1ox"]
+
+[ext_resource type="Script" uid="uid://gcd07xetugva" path="res://Scenes/Underground/Enemies/enemy_pool.gd" id="1"]
+[ext_resource type="Script" uid="uid://dwn03105swxkp" path="res://Scenes/Underground/Enemies/enemy_pool_entry.gd" id="2"]
+[ext_resource type="PackedScene" path="res://Scenes/Enemies/Zombies/zombie_shambler.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://Scenes/Enemies/Zombies/zombie_runner.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://Scenes/Enemies/Zombies/zombie_stalker.tscn" id="5"]
+[ext_resource type="PackedScene" path="res://Scenes/Enemies/Spiders/spider_rusher.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://Scenes/Enemies/Spiders/spider_web_shooter.tscn" id="7"]
+
+[sub_resource type="Resource" id="Shambler"]
+script = ExtResource("2")
+enemy_id = &"shambler"
+scene = ExtResource("3")
+level_weights = Vector3(70, 0, 15)
+
+[sub_resource type="Resource" id="Runner"]
+script = ExtResource("2")
+enemy_id = &"runner"
+scene = ExtResource("4")
+level_weights = Vector3(25, 40, 20)
+
+[sub_resource type="Resource" id="Stalker"]
+script = ExtResource("2")
+enemy_id = &"stalker"
+scene = ExtResource("5")
+level_weights = Vector3(5, 35, 25)
+
+[sub_resource type="Resource" id="Rusher"]
+script = ExtResource("2")
+enemy_id = &"spider_rusher"
+scene = ExtResource("6")
+level_weights = Vector3(0, 25, 20)
+
+[sub_resource type="Resource" id="WebShooter"]
+script = ExtResource("2")
+enemy_id = &"web_shooter"
+scene = ExtResource("7")
+level_weights = Vector3(0, 0, 20)
+
+[resource]
+script = ExtResource("1")
+entries = Array[ExtResource("2")]([SubResource("Shambler"), SubResource("Runner"), SubResource("Stalker"), SubResource("Rusher"), SubResource("WebShooter")])

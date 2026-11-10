@@ -23,80 +23,23 @@ static func roll(request: AbyssRoomConstructionRequest, canonical: Vector2i) -> 
 		value = _mix(value, salt)
 	return float(value) / 2147483647.0
 
-static func reserved_cells(room: AbyssAuthoredRoom, req: AbyssRoomRequirements) -> Dictionary:
+static func reserved_cells(_room: AbyssAuthoredRoom, req: AbyssRoomRequirements) -> Dictionary:
 	var reserved: Dictionary = {}
-	for rect in room.reserved_route_rects:
-		for y in range(rect.position.y, rect.end.y):
-			for x in range(rect.position.x, rect.end.x):
-				reserved[Vector2i(x,y)] = true
 	# Always preserve an entrance throat, including dead ends and OPEN ports.
-	var ports: Array[Vector2i] = []
 	var openings := req.route_openings.duplicate()
 	openings.merge(req.required_openings, false)
 	var ids: Array = openings.keys()
 	ids.sort()
 	for id in ids:
 		var point: Vector2i = openings[id]
-		ports.append(point)
 		var side := ["north", "east", "south", "west"].find(String(id).get_slice(":", 0))
 		if side < 0:
 			continue
 		for cell in AbyssRouteConfig.opening_cells(id,point,req.opening_width):
 			for depth in range(-1,4):
 				reserved[cell-AbyssRegionGenerator.DIRECTIONS[side]*depth] = true
-	if not room.protect_interior_routes:
-		return reserved
-	# Reserve a deterministic tree of existing empty paths between ports. This
-	# protects baseline tile connectivity, not movement-aware traversal validity.
-	if not ports.is_empty():
-		var previous: Dictionary = {ports[0]: ports[0]}
-		var pending: Array[Vector2i] = [ports[0]]
-		var index := 0
-		while index < pending.size():
-			var cell := pending[index]
-			index += 1
-			for direction in AbyssRegionGenerator.DIRECTIONS:
-				var next := cell + direction
-				if previous.has(next) or not Rect2i(Vector2i.ZERO, req.room_size).has_point(next) or _blocked(room, next):
-					continue
-				previous[next] = cell
-				pending.append(next)
-		# A dead end still needs an interior approach, not just a clear port.
-		var targets := ports.duplicate()
-		var center := Vector2(req.room_size) * 0.5
-		var nearest := ports[0]
-		var best := INF
-		for cell: Vector2i in previous:
-			var distance := Vector2(cell).distance_squared_to(center)
-			if distance < best:
-				nearest = cell
-				best = distance
-		targets.append(nearest)
-		for port in targets:
-			if not previous.has(port):
-				continue
-			var cell: Vector2i = port
-			while cell != ports[0]:
-				_reserve_neighborhood(reserved, cell)
-				cell = previous[cell]
-			_reserve_neighborhood(reserved, cell)
+	# Authored interiors are unrestricted, including legacy reserved rectangles.
 	return reserved
-
-static func _reserve_neighborhood(reserved: Dictionary, center: Vector2i) -> void:
-	for y in range(-1, 2):
-		for x in range(-1, 2):
-			reserved[center + Vector2i(x,y)] = true
-
-static func _blocked(room: AbyssAuthoredRoom, cell: Vector2i) -> bool:
-	for key in ["Solid", "Platforms", "Climbables"]:
-		var layer := room.get_node_or_null(NodePath(key)) as TileMapLayer
-		if layer != null:
-			var data := layer.get_cell_tile_data(cell)
-			if data != null:
-				for physics in range(layer.tile_set.get_physics_layers_count()):
-					if data.get_collision_polygons_count(physics) > 0:
-						return true
-	return false
 
 static func apply(room: AbyssAuthoredRoom, request: AbyssRoomConstructionRequest) -> void:
 	var layer := room.get_node_or_null("ConditionalWalls") as TileMapLayer

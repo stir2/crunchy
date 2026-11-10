@@ -7,7 +7,7 @@
 [node name="PackedRoom" type="Node2D" unique_id=247041278]
 script = ExtResource("1_qid8q")
 room_size = Vector2i(40, 40)
-protect_interior_routes = false
+protect_interior_routes = null
 
 [node name="Solid" type="TileMapLayer" parent="." unique_id=1033750265]
 texture_filter = 1
@@ -46,7 +46,7 @@ tile_set = ExtResource("2_pwk3j")
 [node name="Hazards" type="TileMapLayer" parent="." unique_id=1683948581]
 z_index = 1
 texture_filter = 1
-tile_map_data = PackedByteArray("AAAGABsAAAAGAAAAAAAhABsAAAAHAAAAAAAhABwAAAAHAAAAAAA=")
+tile_map_data = PackedByteArray("AAAGABsAAAAGAAAAAAA=")
 tile_set = ExtResource("2_pwk3j")
 collision_enabled = false
 

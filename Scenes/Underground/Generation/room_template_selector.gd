@@ -4,18 +4,23 @@ var _templates: Array[AbyssRoomTemplateMetadata] = []
 var _seed: int
 var _tile_pixels: int
 var registration_errors: PackedStringArray = []
+const CHECKPOINT_TILE = preload("res://Scenes/Underground/Progression/checkpoint_tile.gd")
+var _checkpoint_ids: Dictionary = {}
+var checkpoint_planner: AbyssSpecialRooms
 
 
 func _init(registry: AbyssRoomTemplateRegistry, global_seed: int) -> void:
 	_seed = global_seed
 	_tile_pixels = registry.tile_pixels
+	for metadata in registry.checkpoint_templates:
+		if metadata != null: _checkpoint_ids[metadata.template_id] = true
 	# Snapshot registry inputs. Invalid/duplicate stable IDs are excluded entirely,
 	# rather than choosing whichever definition happens to be registered first.
 	var counts: Dictionary = {}
-	for metadata in registry.templates:
+	for metadata in registry.all_templates():
 		if metadata != null:
 			counts[metadata.template_id] = int(counts.get(metadata.template_id, 0)) + 1
-	for metadata in registry.templates:
+	for metadata in registry.all_templates():
 		if metadata == null:
 			registration_errors.append("Null template")
 		elif metadata.template_id == &"" or counts[metadata.template_id] != 1:
@@ -26,6 +31,7 @@ func _init(registry: AbyssRoomTemplateRegistry, global_seed: int) -> void:
 			registration_errors.append("Invalid weight: %s" % metadata.template_id)
 		else:
 			var errors := AbyssRoomTemplateValidator.validate(metadata)
+			if _checkpoint_ids.has(metadata.template_id): errors.append_array(CHECKPOINT_TILE.validate(metadata))
 			if not errors.is_empty():
 				registration_errors.append("%s: %s" % [metadata.template_id, "; ".join(errors)])
 			else:
@@ -75,7 +81,7 @@ static func compatible(metadata: AbyssRoomTemplateMetadata, profile: AbyssRoomOp
 	return profile.opening_tiles == required
 
 
-func select(request: AbyssRoomRequirements) -> AbyssRoomConstructionRequest:
+func select(request: AbyssRoomRequirements, checkpoint_room: bool = false) -> AbyssRoomConstructionRequest:
 	var result := AbyssRoomConstructionRequest.new()
 	result.requirements = request
 	result.global_seed = _seed
@@ -86,6 +92,7 @@ func select(request: AbyssRoomRequirements) -> AbyssRoomConstructionRequest:
 	var candidates: Array = []
 	var total := 0.0
 	for metadata in _templates:
+		if _checkpoint_ids.has(metadata.template_id) != checkpoint_room: continue
 		if metadata.selection_weight <= 0:
 			continue
 		var variants: Array[AbyssRoomOpeningProfile] = []
@@ -140,4 +147,10 @@ func select_room(generator: AbyssRouteGenerator, coords: Vector2i) -> AbyssRoomC
 	var neighbors: Array[AbyssRoomData] = []
 	for direction in AbyssRegionGenerator.DIRECTIONS:
 		neighbors.append(generator.get_room(coords + direction))
-	return select(AbyssRoomRequirements.from_room(room, chunk.config, chunk.route_config, neighbors, _tile_pixels))
+	var checkpoint_room := false
+	if generator.progression != null and not _checkpoint_ids.is_empty():
+		if checkpoint_planner == null or checkpoint_planner.routes != generator:
+			# has_checkpoint reads deterministic planning only, never activation state.
+			checkpoint_planner = AbyssSpecialRooms.new(generator,generator.progression,AbyssProgressionState.new())
+		checkpoint_room = checkpoint_planner.has_checkpoint(coords)
+	return select(AbyssRoomRequirements.from_room(room, chunk.config, chunk.route_config, neighbors, _tile_pixels),checkpoint_room)
