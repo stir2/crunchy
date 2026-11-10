@@ -177,9 +177,15 @@ func add_potions(amount: int) -> void:
 	potions += amount
 
 
-func use_potion() -> bool:
+func use_potion(actor_health: HealthComponent = null) -> bool:
+	if actor_health != null:
+		if potions <= 0 or actor_health.heal(POTION_HEAL) <= 0:
+			return false
+		potions -= 1
+		health = actor_health.current_health
+		return true
 	var max_hp: int = stats.get("max_health", 6)
-	if potions <= 0 or health >= max_hp:
+	if potions <= 0 or health <= 0 or health >= max_hp:
 		return false
 	potions -= 1
 	health = mini(health + POTION_HEAL, max_hp)

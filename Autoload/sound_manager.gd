@@ -1,5 +1,6 @@
 extends Node
 ## Shared one-shots survive panel changes. Player warning loops stay on the player.
+const MUSIC_CONTROLLER = preload("res://Autoload/music_controller.gd")
 const PLAYER_AUDIO = preload("res://Scenes/Player/player_audio.gd")
 const ROOT := "res://Assets/Audio/SFX/"
 const SOUND_PATHS := {
@@ -20,12 +21,14 @@ const SOUND_PATHS := {
 	&"cleaver_swing": "Combat/cleaver_swing.wav",
 	&"cleaver_swing_alt": "Combat/cleaver_swing_alt.wav",
 	&"cleaver_impact": "Combat/cleaver_impact.wav",
-	&"footstep_stone": "Movement/footstep_stone.wav",
-	&"footstep_wood": "Movement/footstep_wood.wav",
+	&"footstep_stone": "Movement/footstep_stone-1.wav",
+	&"footstep_wood": "Movement/footstep_wood-1.wav",
 	&"jump": "Movement/jump.wav",
-	&"land_stone": "Movement/land_stone.wav",
-	&"land_wood": "Movement/land_wood.wav",
-	&"freefall": "Movement/freefall.wav",
+	&"land_stone": "Movement/land_stone-1.wav",
+	&"land_wood": "Movement/land_wood-1.wav",
+	&"hard_land_stone": "Movement/hard_land_stone.wav",
+	&"hard_land_wood": "Movement/hard_land_wood.wav",
+	&"freefall": "Movement/freefall-1.wav",
 	&"bull_rush_charge": "Movement/bull_rush_charge.wav",
 	&"bull_rush": "Movement/bull_rush.wav",
 	&"low_health_initial": "Player/low_health_initial.wav",
@@ -65,8 +68,9 @@ const SOURCE_PEAK_DB := {
 	&"checkpoint": -11.98, &"parry": 0.82, &"flesh_collect": -11.14,
 	&"flesh_bank": -7.19, &"collect_grave": -15.55, &"error": -18.39, &"player_hurt": -2.22,
 	&"bull_rush_charge": -20.61, &"bull_rush": 0.34, &"freefall": -18.55, &"jump": -12.91, &"gate_unlock": -9.23,
-	&"land_stone": -4.31, &"land_wood": -9.07,
-	&"footstep_stone": -14.86, &"footstep_wood": -14.08,
+	&"land_stone": -6.59, &"land_wood": -12.13,
+	&"hard_land_stone": 2.54, &"hard_land_wood": 0.54,
+	&"footstep_stone": -19.24, &"footstep_wood": -17.81,
 	&"button_click": -8.9, &"button_hover": -5.8,
 	&"cleaver_impact": -0.3, &"cleaver_swing": -4.95, &"cleaver_swing_alt": -6.78,
 	&"open_ledger": -14.8, &"close_ledger": -27.6, &"panel_transition": -24.3,
@@ -120,6 +124,9 @@ func _ready() -> void:
 	for sound in [&"button_click", &"button_hover", &"panel_transition", &"open_ledger", &"close_ledger"]:
 		stream_for(sound)
 	_bind_progression()
+	var music := MUSIC_CONTROLLER.new()
+	music.name = "MusicController"
+	add_child(music)
 
 
 func stream_for(sound: StringName) -> AudioStream:

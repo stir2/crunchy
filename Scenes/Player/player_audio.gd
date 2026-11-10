@@ -10,7 +10,6 @@ var _heartbeat: AudioStreamPlayer
 var _footsteps: Array[AudioStreamPlayer] = []
 var _charge_audio: AudioStreamPlayer
 var _dash_audio: AudioStreamPlayer
-var _dash_tail_time: float = 0.0
 var _fall_audio: AudioStreamPlayer
 var _fall_distance: float = 0.0
 var _fall_started: bool = false
@@ -57,7 +56,7 @@ func _ready() -> void:
 	_warning = AudioStreamPlayer.new()
 	_warning.stream = sounds.stream_for(&"low_health_initial")
 	_warning.bus = &"SFX"
-	_warning.volume_db = -16 + sounds.gain_for(&"low_health_initial")
+	_warning.volume_db = -20 + sounds.gain_for(&"low_health_initial")
 	add_child(_warning)
 	_heartbeat = AudioStreamPlayer.new()
 	var loop := sounds.stream_for(&"low_health").duplicate() as AudioStreamWAV
@@ -66,11 +65,8 @@ func _ready() -> void:
 	loop.loop_end = roundi(loop.get_length() * loop.mix_rate)
 	_heartbeat.stream = loop
 	_heartbeat.bus = &"SFX"
-	_heartbeat.volume_db = -20 + sounds.gain_for(&"low_health")
+	_heartbeat.volume_db = -24 + sounds.gain_for(&"low_health")
 	add_child(_heartbeat)
-	_warning.finished.connect(func():
-		if _low_health:
-			_heartbeat.play())
 	player.combat.phase_changed.connect(_on_attack_phase)
 	player.combat.hit_confirmed.connect(_on_hit_confirmed)
 	player.health.health_changed.connect(_on_health_changed)
@@ -89,12 +85,6 @@ func _physics_process(delta: float) -> void:
 		_charge_audio.volume_db -= 300 * delta
 		if _charge_audio.volume_db < -60:
 			_charge_audio.stop()
-	if _dash_audio.playing and player.movement_state not in [Player.MovementState.DASHING, Player.MovementState.RECOVERY]:
-		_dash_tail_time += delta
-		if _dash_tail_time > 0.3:
-			_dash_audio.volume_db -= 100 * delta
-			if _dash_audio.volume_db <= -60:
-				_dash_audio.stop()
 	var distance := absf(player.global_position.x - _last_position.x)
 	_last_position = player.global_position
 	_step_cooldown = maxf(0, _step_cooldown - delta)
@@ -168,7 +158,7 @@ func _update_fall(delta: float) -> void:
 	if falling:
 		_fall_distance = drop - 48
 		var strength := clampf(_fall_distance / 240.0, 0, 1)
-		_fall_audio.volume_db = lerpf(-30, -16, strength) + sounds.gain_for(&"freefall") + _movement_duck_db
+		_fall_audio.volume_db = lerpf(-38, -24, strength) + sounds.gain_for(&"freefall") + _movement_duck_db
 		if not _fall_started:
 			_fall_started = true
 			_fall_audio.play()
@@ -219,6 +209,7 @@ func _on_health_changed(current: int, maximum: int) -> void:
 	if low and not _low_health:
 		_low_health = true
 		_warning.play()
+		_heartbeat.play()
 	elif not low:
 		_low_health = false
 		_warning.stop()
@@ -248,9 +239,8 @@ func _on_movement_state(state: int) -> void:
 		_charge_audio.pitch_scale = randf_range(0.94, 0.98)
 		_charge_audio.play(sounds.start_offset_for(&"bull_rush_charge"))
 	elif state == Player.MovementState.DASHING:
-		_dash_tail_time = 0
 		_dash_audio.volume_db = -19 + sounds.gain_for(&"bull_rush") + sounds.repetition_gain_for(&"bull_rush")
-		_dash_audio.pitch_scale = randf_range(0.92, 0.96)
+		_dash_audio.pitch_scale = 1.0
 		_dash_audio.play()
 
 
@@ -258,12 +248,12 @@ func _on_jumped() -> void:
 	_support_y = player.global_position.y
 	_airborne_peak_y = _support_y
 	_damage_airborne = false
-	sounds.play_sfx(&"jump", -14)
+	sounds.play_sfx(&"jump", -22)
 
 
 func _on_player_hurt(_hit: CombatHit, _amount: int) -> void:
 	if not player.health.is_dead():
-		sounds.play_limited(&"player_hurt", -19, 0.25)
+		sounds.play_limited(&"player_hurt", -15 if player.health.current_health <= 2 else -19, 0.25)
 	_duck_movement()
 	# A spike/hit reaction is not a voluntary fall, even after hit-stun expires.
 	_damage_airborne = true
@@ -277,7 +267,13 @@ func _on_landed(impact_speed: float) -> void:
 	_duck_movement()
 	var height := maxf(0, player.global_position.y - _airborne_peak_y)
 	var strength := clampf(height / 256.0, 0, 1)
-	var surface: StringName = &"land_wood" if _floor_sound() == &"footstep_wood" else &"land_stone"
+	var wood := _floor_sound() == &"footstep_wood"
+	var hard := height >= 160.0 or impact_speed >= 650.0
+	var surface: StringName
+	if hard:
+		surface = &"hard_land_wood" if wood else &"hard_land_stone"
+	else:
+		surface = &"land_wood" if wood else &"land_stone"
 	_landing_audio.stream = sounds.stream_for(surface)
 	_landing_audio.pitch_scale = lerpf(1.0, 0.86, strength) * randf_range(0.98, 1.02)
 	_landing_audio.volume_db = lerpf(-29, -14, strength) + sounds.gain_for(surface)
