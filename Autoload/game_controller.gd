@@ -42,6 +42,7 @@ var abyss_progression_state := AbyssProgressionState.new()
 var day: int = 1
 var night_in_progress := false
 var monster_missing := false
+var boss_defeated := false
 var return_to_stairs := false
 var window_history: Dictionary = {}
 var trips_left: int = TRIPS_PER_DAY:
@@ -123,6 +124,11 @@ func recalculate_stats() -> void:
 	health = mini(health, max_hp)
 	stamina = mini(stamina, max_sta)
 	stats_changed.emit(stats)
+
+
+## Regular enemies and the finale use different base attack damage.
+func abyss_attack_damage(base_damage: int = 1) -> int:
+	return base_damage + int(stat_bonuses.get("damage", 0))
 
 
 func heal_to_full() -> void:
@@ -221,6 +227,7 @@ func reset_run() -> void:
 	day = 1
 	abyss_room_state = AbyssRoomState.new()
 	monster_missing = false
+	boss_defeated = false
 	return_to_stairs = false
 	window_history.clear()
 	night_in_progress = false

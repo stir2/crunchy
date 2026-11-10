@@ -8,6 +8,7 @@ enum RoomPanel { STAIRS = 0, DESK = 1, WINDOW = 2 }
 
 var current_panel: RoomPanel = RoomPanel.DESK
 var ending_dialog: AcceptDialog
+var sleep_dialog: ConfirmationDialog
 var _morning_transition: bool = false
 var _greeted_refugee: String = ""
 var _rumble: AudioStreamPlayer
@@ -178,11 +179,10 @@ func _close_blueprint() -> void:
 
 
 func _descend() -> void:
-	if DialogueManager.is_busy() or GameController.night_in_progress or refugee_modal.visible:
+	if _morning_transition or DialogueManager.is_busy() or GameController.night_in_progress or refugee_modal.visible:
 		return
 	if GameController.is_day_10():
-		if GameController.monster_missing:
-			GameController.return_to_stairs = true
+		if GameController.monster_missing and not GameController.boss_defeated:
 			get_tree().current_scene.change_scene("res://Scenes/Boss/boss_arena.tscn")
 		return
 	var main := get_tree().current_scene
@@ -195,15 +195,27 @@ func _descend() -> void:
 		await DialogueManager.conversation_finished
 		if not is_inside_tree():
 			return
-	if not GameController.use_trip():
-		print("No trips left today. Sleep at the desk to end the day.")
+	if GameController.trips_left <= 0:
 		return
 	main.change_scene(ABYSS_SCENE)
+	var runtime := main.active_scene as AbyssRuntime
+	if runtime != null:
+		runtime.ready_for_play.connect(GameController.use_trip.unbind(1), CONNECT_ONE_SHOT)
 
 
 func _on_sleep_requested() -> void:
-	if DialogueManager.is_busy() or GameController.is_day_10() or GameController.night_in_progress or refugee_modal.visible:
+	if _morning_transition or DialogueManager.is_busy() or GameController.is_day_10() or GameController.night_in_progress or refugee_modal.visible:
 		return
+	var preview := VillageManager.night_preview()
+	if not preview.toll_met:
+		sleep_dialog.dialog_text = ("The toll is short. You will choose who the monster takes."
+			if preview.player_chooses else "The toll is short. The monster will choose who it takes.")
+		sleep_dialog.popup_centered()
+		return
+	_sleep()
+
+
+func _sleep() -> void:
 	_close_blueprint()
 	GameController.end_day()
 
@@ -216,8 +228,8 @@ func _refresh_top_hud() -> void:
 		top_potions_label.text = "%d Potions" % GameController.potions
 	top_trips_label.text = "%d/%d Trips" % [GameController.trips_left, GameController.TRIPS_PER_DAY]
 	if GameController.is_day_10():
-		top_flesh_label.text = "Toll: ∞"
-		top_trips_label.text = "Investigate the abyss" if GameController.monster_missing else "Check the window"
+		top_flesh_label.text = "Toll ended" if GameController.boss_defeated else "Toll: ∞"
+		top_trips_label.text = "The village is safe" if GameController.boss_defeated else ("Investigate the abyss" if GameController.monster_missing else "Check the window")
 	top_vitals_label.text = "Hearts: %.1f/%.1f  |  Stamina: %d/%d  |  Village Health: %d%%" % [
 		GameController.health / 2.0,
 		GameController.stats.get("max_health", 6) / 2.0,
@@ -236,10 +248,13 @@ func _refresh_panel_content() -> void:
 	if stairs_trips_label != null:
 		stairs_trips_label.text = "Trips Remaining Today: %d / %d" % [GameController.trips_left, GameController.TRIPS_PER_DAY]
 		if GameController.is_day_10():
-			stairs_trips_label.text = "The sound came from down here." if GameController.monster_missing else "Check the window first."
+			stairs_trips_label.text = "The monster has fallen." if GameController.boss_defeated else ("The sound came from down here." if GameController.monster_missing else "Check the window first.")
 	if descend_btn != null:
-		descend_btn.disabled = talking or GameController.night_in_progress or (not GameController.monster_missing if GameController.is_day_10() else GameController.trips_left <= 0)
-		descend_btn.text = "Investigate the abyss" if GameController.is_day_10() else "DESCEND"
+		var can_descend := GameController.trips_left > 0
+		if GameController.is_day_10():
+			can_descend = GameController.monster_missing and not GameController.boss_defeated
+		descend_btn.disabled = talking or _morning_transition or GameController.night_in_progress or not can_descend
+		descend_btn.text = "Run complete" if GameController.boss_defeated else ("Investigate the abyss" if GameController.is_day_10() else "DESCEND")
 	if window_button != null:
 		window_button.visible = not GameController.is_day_10() and not talking
 		listen_button.visible = not GameController.is_day_10() and not talking
@@ -402,6 +417,11 @@ func _return_to_menu() -> void:
 
 
 func _build_dialogs() -> void:
+	sleep_dialog = ConfirmationDialog.new()
+	sleep_dialog.title = "End the day?"
+	sleep_dialog.ok_button_text = "Sleep"
+	sleep_dialog.confirmed.connect(_sleep)
+	add_child(sleep_dialog)
 	ending_dialog = AcceptDialog.new()
 	ending_dialog.title = "Run status"
 	add_child(ending_dialog)

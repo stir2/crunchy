@@ -63,6 +63,25 @@ static func apply(saved: Dictionary, configs: Array[Resource]) -> bool:
 			configs[i].set(info.name,value)
 	return true
 
+## The caller supplies disposable configs. No run state is changed during validation.
+static func restore_configuration(saved: Dictionary, configs: Array[Resource]) -> Dictionary:
+	var region := configs[0] as AbyssRegionConfig
+	var routes := configs[1] as AbyssRouteConfig
+	var progression := configs[3] as AbyssProgressionConfig
+	var mismatch := compatibility_error(saved, region, routes)
+	if not mismatch.is_empty():
+		return {"error": mismatch}
+	if not apply(saved, configs) or not region.is_valid() or not routes.is_valid(region.room_size) or not progression.is_valid():
+		return {"error": "Saved Abyss world settings are incomplete or invalid."}
+	var registry_path: String = saved.registry
+	if not ResourceLoader.exists(registry_path):
+		return {"error": "The room library for this Abyss save is missing."}
+	var registry := load(registry_path) as AbyssRoomTemplateRegistry
+	if registry == null or region.chunk_size != Vector2i(8, 8) or registry.tile_pixels != 16:
+		return {"error": "The room library for this Abyss save is incompatible."}
+	return {"error": "", "registry": registry}
+
+
 ## Reject before touching room mutations, progression, day state or actor vitals.
 static func compatibility_error(saved: Dictionary, region: AbyssRegionConfig, routes: AbyssRouteConfig) -> String:
 	if saved.get("version") != VERSION:

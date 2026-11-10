@@ -5,6 +5,7 @@ const ABYSS := "res://Assets/Audio/Music/theme_abyss.wav"
 const ABYSS_LOW := "res://Assets/Audio/Music/theme_abyss_lowhealth.wav"
 const LOW_STEM_GAIN_DB := 14.0 # The supplied filtered stem is substantially quieter.
 const CROSSFADE_SECONDS := 0.65
+const LOW_HEALTH_DUCK_DB := 8.0
 var _voice: AudioStreamPlayer
 var _pair: AudioStreamSynchronized
 var _route := ""
@@ -41,7 +42,9 @@ func _process(delta: float) -> void:
 				route = "abyss"
 	if route != _route: _set_route(route)
 	_bind_player(actor)
-	_voice.volume_db = move_toward(_voice.volume_db, _target_gain, delta * 120)
+	# Duck both stems so the warning cuts through during the crossfade too.
+	var duck_db := LOW_HEALTH_DUCK_DB if _route == "abyss" and _low_health else 0.0
+	_voice.volume_db = move_toward(_voice.volume_db, _target_gain - duck_db, delta * 120)
 	if _route.is_empty() and _voice.volume_db <= -80 and _voice.stream != null:
 		_voice.stop()
 		_voice.stream = null

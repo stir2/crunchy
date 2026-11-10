@@ -35,7 +35,6 @@ func new_game(seed_value: int = 0) -> void:
 	sim = VillageSim.new(config, seed_value)
 	_choosing = false
 	_toll = {}
-	GameController.village_health = sim.calc_village_health(true, true)
 	_sync_stats()
 	GameController.heal_to_full()
 	villagers_changed.emit()
@@ -113,13 +112,15 @@ func get_effect(key: String) -> float:
 func night_preview() -> Dictionary:
 	var flesh: int = GameController.flesh
 	var quota: int = GameController.current_quota()
-	var met: bool = flesh >= quota
+	var toll := sim.evaluate_toll(flesh, quota)
+	var met: bool = toll.met
 	return {
 		"flesh": flesh,
 		"quota": quota,
 		"toll_met": met,
+		"player_chooses": toll.player_chooses,
 		"rations": GameController.rations,
-		"food_cost": sim.population(),
+		"food_cost": maxi(0, sim.population() - int(not met)),
 		"expected_production": sim.production(),
 		"expected_bonus": sim.bonus_rations_for(flesh, quota) if met else 0,
 	}
@@ -256,5 +257,14 @@ func _grant_daily_potions() -> void:
 	GameController.add_potions(sim.free_potions())
 
 
+func refresh_village_health() -> void:
+	GameController.village_health = sim.calc_village_health(true, true)
+
+
 func _sync_stats() -> void:
 	GameController.set_stat_bonuses(sim.stat_bonuses())
+	var vitals := GameController.abyss_room_state.player_vitals
+	if not vitals.is_empty():
+		vitals.health = mini(int(vitals.health), GameController.stats.max_health)
+		vitals.stamina = minf(float(vitals.stamina), GameController.stats.max_stamina)
+	refresh_village_health()

@@ -15,6 +15,7 @@ var _entry_health := 6
 var _entry_stamina := 100.0
 var _result: PanelContainer
 var _result_title: Label
+var _retry_button: Button
 var _boss_bar: ProgressBar
 var _hud: Control
 @onready var player: Player = $Player
@@ -30,11 +31,11 @@ func _ready() -> void:
 	_entry_health = clampi(game.health, 1, player.health.max_health)
 	player.health.reset_health(_entry_health)
 	player.combat.attack_damage = int(game.stats.get("damage", 10))
-	player.run_speed += float(game.stats.get("speed", 0))
+	player.run_speed *= 1.0 + float(game.stats.get("speed", 0)) / 100.0
 	player.stamina.max_stamina = float(game.stats.get("max_stamina", 100))
 	_entry_stamina = clampf(game.stamina, 0, player.stamina.max_stamina)
 	player.stamina.reset_stamina(_entry_stamina)
-	player.stamina.regeneration_per_second *= 1.0 + get_node("/root/VillageManager").get_effect("stamina_regen_pct")
+	player.stamina.regeneration_per_second *= 1.0 + get_node("/root/VillageManager").get_effect("stamina_regen_pct") / 100.0
 	player.get_node("InteractionController").set_enabled(false)
 	player.reset_movement()
 	$Waves.completed.connect(monster.finish_waves)
@@ -101,6 +102,8 @@ func _build_hud() -> void:
 		button.text = spec[0]
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.pressed.connect(spec[1])
+		if spec[1] == _retry:
+			_retry_button = button
 		column.add_child(button)
 	_hud.add_child(_result)
 	_result.hide()
@@ -139,6 +142,9 @@ func _boss_health_changed(current: int, maximum: int) -> void:
 func _boss_defeated() -> void:
 	if _ending: return
 	_ending = true
+	if get_tree().current_scene != self:
+		get_node("/root/GameController").boss_defeated = true
+	_retry_button.hide()
 	_boss_bar.hide()
 	$Waves.stop()
 	player.combat.actions_enabled = false
@@ -161,6 +167,10 @@ func _show_result(title: String) -> void:
 	_result_title.text = title
 	_result.modulate.a = 0
 	_result.show()
+	for child in _result_title.get_parent().get_children():
+		if child is Button and child.visible:
+			child.grab_focus()
+			break
 	create_tween().tween_property(_result, "modulate:a", 1.0, 0.45)
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 

@@ -269,7 +269,7 @@ func refresh() -> void:
 	if get_viewport().gui_is_dragging():
 		return
 	var preview := VillageManager.night_preview()
-	var quota := "∞" if GameController.is_day_10() else str(GameController.current_quota())
+	var quota := "closed" if GameController.boss_defeated else ("∞" if GameController.is_day_10() else str(GameController.current_quota()))
 	_status.text = "DAY %d     Flesh %d / %s     Rations %d     Potions %d     Population %d     Village health %d%%" % [GameController.day, GameController.flesh, quota, GameController.rations, GameController.potions, VillageManager.get_population(), GameController.village_health]
 	_status.add_theme_color_override("font_color", Color("f0deb5"))
 	for id in _markers:
@@ -296,7 +296,13 @@ func refresh() -> void:
 	if _bums.get_child_count() == 0:
 		_bums.add_child(_label("No bums.", 22))
 	sleep_button.disabled = DialogueManager.is_busy() or GameController.is_day_10() or GameController.night_in_progress
-	sleep_button.tooltip_text = "Visit the window and investigate the abyss." if GameController.is_day_10() else "Harvest +%d · Upkeep %d · Sleep pays the toll automatically." % [preview.expected_production, preview.food_cost]
+	var outcome := "Toll met. Everyone survives the toll." if preview.toll_met else (
+		"You choose who is taken." if preview.player_chooses else "The monster chooses who is taken.")
+	var food := int(preview.rations + preview.expected_production + preview.expected_bonus - preview.food_cost)
+	var food_result := "%d rations after dinner" % food if food >= 0 else "Dinner is short by %d rations" % -food
+	sleep_button.tooltip_text = "%s\n%s" % [outcome, food_result]
+	if GameController.is_day_10():
+		sleep_button.tooltip_text = "The monster has fallen." if GameController.boss_defeated else "Visit the window and investigate the Abyss."
 
 
 func _refresh_details() -> void:
@@ -420,7 +426,7 @@ func _worker_info(worker: Villager) -> String:
 func _format_building_perk(building: BuildingData) -> String:
 	match building.id:
 		&"apothecary": return "+1 heart and +1 daily potion per worker."
-		&"blacksmith": return "+2 damage per worker."
+		&"blacksmith": return "+2 attack damage per worker in the Abyss and finale."
 		&"farmer": return "+15 max stamina and +10% regen per worker."
 		&"tailor": return "+8% speed per worker."
 	return ""
@@ -530,7 +536,7 @@ func _refresh_chief() -> void:
 	_chief_sprite.set_frame_and_progress(old_frame, old_progress)
 	_chief.add_child(_label("Hearts %.1f / %.1f   ·   Stamina %d / %d" % [GameController.health / 2.0, GameController.stats.max_health / 2.0, GameController.stamina, GameController.stats.max_stamina], 22))
 	var keys := ["max_health", "damage", "max_stamina", "speed"]
-	var captions := ["Max hearts", "Damage", "Max stamina", "Movement speed"]
+	var captions := ["Max hearts", "Finale damage", "Max stamina", "Movement speed"]
 	for i in range(keys.size()):
 		var key: String = keys[i]
 		var base := float(GameController.BASE_STATS[key])

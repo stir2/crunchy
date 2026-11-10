@@ -354,7 +354,7 @@ func _run_sequence() -> void:
 	if not is_inside_tree() or _phase != Phase.PRELUDE:
 		return
 	_intro_running = false
-	await get_tree().create_timer(0.25 if opening else 0.12 if has_intro else PRELUDE_TIME).timeout
+	await get_tree().create_timer(0.25 if opening else 0.12 if has_intro else PRELUDE_TIME, false).timeout
 	if _phase != Phase.PRELUDE or not is_inside_tree():
 		return # skipped during the prelude
 	_phase = Phase.SPINNING
@@ -399,7 +399,7 @@ func _begin_hold() -> void:
 		return
 	_phase = Phase.HOLD
 	# Hold the number while the impact fades into the dark.
-	await get_tree().create_timer(HOLD_TIME).timeout
+	await get_tree().create_timer(HOLD_TIME, false).timeout
 	if is_inside_tree() and _phase == Phase.HOLD:
 		_transition_to_house()
 
