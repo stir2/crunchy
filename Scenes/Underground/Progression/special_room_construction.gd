@@ -1,6 +1,7 @@
 class_name AbyssSpecialRoomConstruction
 extends RefCounted
 const TILES = preload("res://Assets/Tiles/room_placeholders.tres")
+const CHECKPOINT_TILE = preload("res://Scenes/Underground/Progression/checkpoint_tile.gd")
 static func _blocked(room: AbyssAuthoredRoom, cell: Vector2i) -> bool:
 	if not Rect2i(Vector2i.ZERO,room.room_size).has_point(cell):
 		return true
@@ -24,6 +25,9 @@ static func spawn_area_clear(room: AbyssAuthoredRoom, point: Vector2) -> bool:
 				return false
 	return true
 static func _position(room: AbyssAuthoredRoom, kind: StringName) -> Vector2:
+	if kind == &"checkpoint":
+		var painted := CHECKPOINT_TILE.cells(room)
+		if not painted.is_empty(): return CHECKPOINT_TILE.position_for(room,painted[0])
 	for marker in AbyssRoomContent.markers(room):
 		if marker.kind() == kind:
 			var point := AbyssRoomContent.local_transform(marker,room).origin
@@ -80,6 +84,9 @@ static func apply(room: AbyssAuthoredRoom, request: AbyssRoomConstructionRequest
 			visual.position = point
 			visual.request = spawn
 			room.add_child(visual)
+	# The painted sprite is an editor preview; the live stateful visual replaces it.
+	for cell in CHECKPOINT_TILE.cells(room):
+		(room.get_node("Decorations") as TileMapLayer).erase_cell(cell)
 	var bounds := service.config.room_bounds(level,service.routes.get_chunk(Vector2i.ZERO).config.chunk_size.x)
 	# Both sides own a tile: neither side can bypass the boundary by loading
 	# only one neighbor. Outer world edges are sealed as well.
