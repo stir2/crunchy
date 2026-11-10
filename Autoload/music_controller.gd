@@ -26,6 +26,7 @@ func _process(delta: float) -> void:
 	var main := get_tree().current_scene
 	var route := ""
 	var actor: Player
+	var reviving := false
 	if is_instance_valid(main):
 		var path := main.scene_file_path
 		var active: Node = main
@@ -38,13 +39,16 @@ func _process(delta: float) -> void:
 			route = "menu"
 		elif path in ["res://Scenes/Underground/abyss_runtime.tscn", "res://Scenes/Boss/boss_arena.tscn"]:
 			actor = active.get("player") as Player
-			if is_instance_valid(actor) and not actor.health.is_dead() and active.get("_ending") != true:
+			reviving = active.get("_reviving") == true
+			if is_instance_valid(actor) and (not actor.health.is_dead() or reviving) and active.get("_ending") != true:
 				route = "abyss"
 	if route != _route: _set_route(route)
 	_bind_player(actor)
 	# Duck both stems so the warning cuts through during the crossfade too.
 	var duck_db := LOW_HEALTH_DUCK_DB if _route == "abyss" and _low_health else 0.0
-	_voice.volume_db = move_toward(_voice.volume_db, _target_gain - duck_db, delta * 120)
+	if reviving:
+		duck_db = 18.0
+	_voice.volume_db = move_toward(_voice.volume_db, _target_gain - duck_db, delta * (36.0 if reviving else 120.0))
 	if _route.is_empty() and _voice.volume_db <= -80 and _voice.stream != null:
 		_voice.stop()
 		_voice.stream = null

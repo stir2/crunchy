@@ -12,6 +12,7 @@ var source_actor: Node2D
 var _bounces_left: int = 0
 var reflected: bool = false
 var support_exit_distance: float = 0.0
+var radius: float = 0.0
 var _visual: AnimatedSprite2D
 
 
@@ -27,7 +28,7 @@ func _ready() -> void:
 	visual.sprite_frames = WEB_FRAMES
 	visual.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	visual.modulate = shot_color
-	visual.scale = Vector2(0.5, 0.5)
+	visual.scale = Vector2.ONE * (0.85 if radius > 0.0 else 0.5)
 	visual.offset = Vector2(1, -3)
 	visual.rotation = travel_velocity.angle()
 	visual.play(&"fly")
@@ -79,6 +80,19 @@ func _physics_process(delta: float) -> void:
 	ray.hit_from_inside = true
 	if contact.is_empty() and ray_start.distance_squared_to(destination) > 0.001:
 		contact = get_world_2d().direct_space_state.intersect_ray(ray)
+		if radius > 0.0:
+			var normal := (destination - ray_start).normalized().orthogonal()
+			var best := INF if contact.is_empty() else ray_start.distance_squared_to(contact.position)
+			for side in [-1, 1]:
+				var offset: Vector2 = normal * radius * side
+				ray.from = ray_start + offset
+				ray.to = destination + offset
+				var edge := get_world_2d().direct_space_state.intersect_ray(ray)
+				if not edge.is_empty():
+					var distance := ray.from.distance_squared_to(edge.position)
+					if distance < best:
+						best = distance
+						contact = edge
 	if not contact.is_empty():
 		var hurtbox := contact.collider as CombatDamageable
 		if hurtbox == null and _bounces_left > 0 and not passes_terrain:
@@ -93,9 +107,16 @@ func _physics_process(delta: float) -> void:
 			hit.source = source_actor if is_instance_valid(source_actor) else self
 			if not reflected:
 				var controller := hurtbox.damage_owner().get_node_or_null("DamageController") as PlayerDamageController
-				if controller != null and controller.try_dash_parry(hit, self):
-					return
-			hurtbox.receive_hit(hit)
+				if controller != null:
+					if radius > 0.0:
+						hit.direction = travel_velocity.normalized()
+					if controller.try_dash_parry(hit, self):
+						return
+					controller.receive_hit(hit, false)
+				else:
+					hurtbox.receive_hit(hit)
+			elif hurtbox.receive_hit(hit) and radius > 0.0 and hurtbox.damage_owner().has_method("extend_recovery_from_web"):
+				hurtbox.damage_owner().extend_recovery_from_web()
 		active = false
 		set_physics_process(false)
 		queue_free()

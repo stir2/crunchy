@@ -29,10 +29,10 @@ func _ready() -> void:
 	player.movement_reset.connect(_clear_reaction)
 	player.movement_state_changed.connect(_on_movement_state_changed)
 
-func receive_hit(hit: CombatHit) -> bool:
+func receive_hit(hit: CombatHit, allow_parry := true) -> bool:
 	if hit == null or hit.source == player or hurtbox.invulnerable:
 		return false
-	if try_dash_parry(hit):
+	if allow_parry and try_dash_parry(hit):
 		return false
 	return health.take_damage(hit)
 
@@ -46,14 +46,17 @@ func try_dash_parry(hit: CombatHit, projectile: Node2D = null) -> bool:
 	if absf(offset.y) > 40.0:
 		return false
 	var facing: float = player.dash_direction
-	if absf(offset.x) > 2.0:
-		if offset.x * facing < 0.0:
+	# A near-vertical attack centered over the Chief can be deflected either way.
+	var overhead := absf(hit.direction.y) > 0.9 and absf(offset.x) <= 8.0
+	if not overhead:
+		var approach := offset.x if absf(offset.x) > 2.0 else -hit.direction.x
+		if approach * facing <= 0.0:
 			return false
-	elif hit.direction.x * facing >= 0.0:
-		return false
 	if projectile != null and not projectile.reflect_from(player):
 		return false
-	var source: Node2D = projectile if projectile != null else hit.source
+	var source: Node2D = projectile
+	if source == null:
+		source = hit.attack_area if is_instance_valid(hit.attack_area) else hit.source
 	var identity := source.get_instance_id()
 	if not _parry_sources.has(identity):
 		_parry_sources[identity] = true

@@ -1,10 +1,13 @@
 extends Node2D
 ## One summon intermission, with separate randomized zombie and spider waves.
 signal completed
+signal wave_started(family: int)
 signal spawn_warning(point: Vector2)
+const PORTRAITS = preload("res://Scenes/Village/villager_portraits.gd")
 const ZOMBIES := [preload("res://Scenes/Enemies/Zombies/zombie_shambler.tscn"), preload("res://Scenes/Enemies/Zombies/zombie_runner.tscn"), preload("res://Scenes/Enemies/Zombies/zombie_stalker.tscn")]
 const SPIDERS := [preload("res://Scenes/Enemies/Spiders/spider_rusher.tscn"), preload("res://Scenes/Enemies/Spiders/spider_web_shooter.tscn")]
 var target: Player
+var _taken: Array[Dictionary] = []
 var active := false
 var wave_index := 0
 var _families: Array[int] = []
@@ -17,8 +20,12 @@ var _rng := RandomNumberGenerator.new()
 func start(player: Player) -> void:
 	if active: return
 	target = player
+	_taken.clear()
+	for loss: Dictionary in get_node("/root/VillageManager").get_fallen():
+		if loss.cause == "taken":
+			_taken.append(loss)
 	_rng.randomize()
-	_families.assign([0, 1] if _rng.randf() < 0.5 else [1, 0])
+	_families.assign([0, 1])
 	wave_index = 0
 	_timer = 0.8
 	active = true
@@ -53,6 +60,7 @@ func _physics_process(delta: float) -> void:
 
 func _queue_wave(family: int) -> void:
 	_clear_projectiles()
+	wave_started.emit(family)
 	var pool: Array = ZOMBIES if family == 0 else SPIDERS
 	var count := _rng.randi_range(2, 3) if family == 0 else 2
 	var spots: Array[float] = [48.0, 592.0, 120.0, 520.0]
@@ -75,6 +83,17 @@ func _spawn(entry: Dictionary) -> void:
 	_grace.append({"enemy": enemy, "time": 0.45})
 	_live.append(enemy)
 	enemy.died.connect(func(): _live.erase(enemy))
+	if not _taken.is_empty():
+		var loss: Dictionary = _taken.pop_front()
+		var memory := Sprite2D.new()
+		memory.texture = PORTRAITS.texture_for(String(loss.name))
+		memory.scale = Vector2.ONE * 0.4
+		memory.modulate = Color(0.65, 0.77, 0.9, 0.85)
+		add_child(memory)
+		memory.global_position = enemy.global_position + Vector2(0, -51)
+		var fade := memory.create_tween()
+		fade.tween_property(memory, "modulate:a", 0.0, 0.8)
+		fade.tween_callback(memory.queue_free)
 
 func _clear_projectiles() -> void:
 	for child in get_children():
