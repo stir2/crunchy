@@ -184,6 +184,8 @@ func run() -> void:
 		metadata.room_size = Vector2i(40,40)
 		metadata.opening_schema = stream.routes.get_chunk(Vector2i.ZERO).route_config.opening_schema
 		metadata.opening_width = request.requirements.opening_width
+		# Isolate this mutation fixture from the family's other authored variants.
+		metadata.opening_combinations = [AbyssRoomOpeningProfile.new()]
 		metadata.opening_combinations[0].opening_tiles = request.requirements.required_openings.duplicate()
 		metadata.opening_combinations[0].openings.assign(request.requirements.required_openings.keys())
 		check(AbyssRoomTemplateValidator.validate(metadata).is_empty(),"40x40 mutation fixture invalid")
