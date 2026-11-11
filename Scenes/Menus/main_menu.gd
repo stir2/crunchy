@@ -1,5 +1,5 @@
 extends Control
-## Temporary title screen. Continue uses the single local save slot.
+## Title screen. Continue uses the single local save slot.
 
 @onready var continue_button: Button = %ContinueButton
 @onready var status_label: Label = %StatusLabel
@@ -7,6 +7,12 @@ extends Control
 
 
 func _ready() -> void:
+	%SettingsButton.pressed.connect(func():
+		$Buttons.hide()
+		$SettingsPanel.open())
+	$SettingsPanel.closed.connect(func():
+		$Buttons.show()
+		%SettingsButton.grab_focus())
 	%NewGameButton.set_meta("own_click_sound", true)
 	continue_button.set_meta("own_click_sound", true)
 	continue_button.disabled = not SaveManager.has_save()

@@ -1,5 +1,6 @@
 [gd_scene format=3]
 
+[ext_resource type="PackedScene" path="res://Scenes/Menus/settings_panel.tscn" id="20_settings"]
 [ext_resource type="Script" path="res://Scenes/Menus/pause_menu.gd" id="1"]
 
 [node name="PauseMenu" type="CanvasLayer"]
@@ -69,6 +70,13 @@ unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(0, 44)
 text = "Main menu"
+alignment = 0
+
+[node name="SettingsButton" type="Button" parent="Panel/Layout/Paper/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 44)
+text = "Settings"
 alignment = 0
 
 [node name="QuitButton" type="Button" parent="Panel/Layout/Paper/Buttons"]
@@ -153,3 +161,5 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Leave run"
+
+[node name="SettingsPanel" parent="." instance=ExtResource("20_settings")]
