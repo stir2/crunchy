@@ -65,6 +65,7 @@ var _toll_cancel_queued := false
 const SWIPE_DROP_TIME := 0.30
 const SLAM_X := 486.0
 const CLAW_LIFT := 183.0
+const DRAG_HAND = preload("res://BossSprites/Sweep Attack/bossHandDrag.png")
 const SWIPE_WRIST := Vector2(4, -71)
 const BREAK_RETRACT_TIME := 0.90
 const SLAM_LOCK_TIME := 0.43
@@ -84,7 +85,13 @@ const RIGHT_REST := Vector2(527, 265)
 @onready var left_attack: CombatDamageArea = $SwipeHand/Attack
 @onready var right_attack: CombatDamageArea = $ClawHand/Attack
 
+@onready var _drag_sprite := Sprite2D.new()
+
 func _ready() -> void:
+	_drag_sprite.texture = DRAG_HAND
+	_drag_sprite.centered = false
+	_drag_sprite.offset = Vector2(-69, -6)
+	left.add_child(_drag_sprite)
 	add_to_group("enemies")
 	health.base_max_health = maximum_health
 	health.reset_health()
@@ -301,6 +308,9 @@ func _idle_right() -> Vector2:
 func _sweep_floor_at(x: float) -> float:
 	return sweep_floor.call(x) if lower_arena and sweep_floor.is_valid() else floor_y
 
+func sweep_direction() -> float:
+	return signf(_sweep_to - _sweep_from)
+
 func _sweep_point(x: float) -> Vector2:
 	if not lower_arena:
 		return Vector2(x, floor_y)
@@ -310,7 +320,7 @@ func _sweep_point(x: float) -> Vector2:
 	return Vector2(x, lerpf(_sweep_floor_at(left_center), _sweep_floor_at(left_center + 16.0), t))
 
 func _claw_contact() -> Vector2:
-	return Vector2(SLAM_X, _sweep_floor_at(SLAM_X))
+	return Vector2(SLAM_X, _sweep_floor_at(SLAM_X + 14.0) + 3.0)
 
 func _raised_claw() -> Vector2:
 	return Vector2(SLAM_X, floor_y - CLAW_LIFT)
@@ -423,12 +433,21 @@ func _pose() -> void:
 	$Head.rotation = 0.0
 	var shoulder: Vector2 = Vector2(252, 104) + $Body.position
 	var hand_sprite: Sprite2D = $SwipeHand/Sprite
-	var wrist_offset := SWIPE_WRIST
-	var hand_scale := 1.0
-	var hand_angle := _hand_angle
-	hand_sprite.scale = Vector2.ONE * hand_scale
-	hand_sprite.rotation = hand_angle
-	hand_sprite.position = wrist_offset - (SWIPE_WRIST * hand_scale).rotated(hand_angle)
+	var drag_blend := 0.0
+	match phase:
+		Phase.SWIPE_DROP:
+			drag_blend = smoothstep(duration - 0.12, duration, elapsed)
+		Phase.SWIPE_DRAG, Phase.SWIPE_RECOVER:
+			drag_blend = 1.0
+		Phase.SWIPE_RETRACT:
+			drag_blend = 1.0 - smoothstep(0.0, 0.16, elapsed)
+	var wrist_offset := SWIPE_WRIST.lerp(Vector2(4, -76), drag_blend)
+	hand_sprite.rotation = _hand_angle
+	hand_sprite.position = wrist_offset - SWIPE_WRIST.rotated(_hand_angle)
+	hand_sprite.modulate.a = 1.0 - drag_blend
+	_drag_sprite.visible = drag_blend > 0.0
+	_drag_sprite.modulate.a = drag_blend
+	_drag_sprite.transform = Transform2D(_hand_angle, Vector2(-1.0 if sweep_direction() < 0.0 else 1.0, 1.0), 0.0, wrist_offset)
 	var wrist := left.position + wrist_offset
 	var span: Vector2 = wrist - shoulder
 	var elbow: Vector2 = shoulder + span * 0.5 - span.normalized().orthogonal() * 52
@@ -499,15 +518,28 @@ func _drop_defeated_part(part: Sprite2D, delay: float, drift: float, heavy: bool
 	fall.tween_property(part, "global_position", landing, clampf(sqrt(drop / 440.0), 0.22, 1.0)).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	if heavy:
 		fall.tween_callback(func(): ground_impact.emit(floor_point, true))
-		fall.tween_property(part, "global_position:y", landing.y - 6.0, 0.09).set_ease(Tween.EASE_OUT)
-		var tilt := deg_to_rad(28.0)
-		var tilted_bounds: Rect2 = (part.global_transform.rotated_local(tilt)) * local_bounds
-		var rest_x := landing.x + 14.0
-		var rest_local_x := to_local(Vector2(rest_x, landing.y)).x
-		var rest_floor_y := to_global(Vector2(rest_local_x, _sweep_floor_at(rest_local_x))).y
-		var rest_y := rest_floor_y - (tilted_bounds.end.y - part.global_position.y)
-		fall.tween_property(part, "global_position", Vector2(rest_x, rest_y), 0.42).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		fall.parallel().tween_property(part, "rotation", part.rotation + tilt, 0.42).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		var start_rotation := part.rotation
+		var center := local_bounds.get_center()
+		var center_x := (part.global_transform * center).x + drift
+		var image := part.texture.get_image()
+		var contact_points := PackedVector2Array()
+		for x in range(pixels.position.x, pixels.end.x):
+			for y in range(pixels.end.y - 1, pixels.position.y - 1, -1):
+				if image.get_pixel(x, y).a > 0.5:
+					contact_points.append(bounds.position + Vector2(x + 0.5, y + 1))
+					break
+		fall.tween_method(func(progress: float):
+			part.rotation = start_rotation + deg_to_rad(28.0) * progress
+			var transform := part.global_transform
+			var horizontal_shift := center_x + 14.0 * progress - (transform * center).x
+			transform.origin.x += horizontal_shift
+			var vertical_shift := INF
+			for point in contact_points:
+				var world_point := transform * point
+				var floor_y_at_point := to_global(Vector2(0, _sweep_floor_at(to_local(world_point).x))).y
+				vertical_shift = minf(vertical_shift, floor_y_at_point - world_point.y)
+			part.global_position += Vector2(horizontal_shift, vertical_shift),
+			0.0, 1.0, 0.42).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 
 func set_target(actor: Player) -> void:

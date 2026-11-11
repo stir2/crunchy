@@ -52,7 +52,7 @@ texture_filter = 1
 sprite_frames = ExtResource("2_visual")
 animation = &"idle"
 autoplay = "idle"
-offset = Vector2(0, -4)
+offset = Vector2(0, 3)
 flip_h = true
 script = ExtResource("5_animation")
 

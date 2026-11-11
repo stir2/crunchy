@@ -8,6 +8,7 @@ const HEARTS = preload("res://Scenes/Player/Health/heart_hud.tscn")
 const WEB = preload("res://Scenes/Enemies/Spiders/web_projectile.gd")
 const REVIVAL = preload("res://Scenes/Boss/boss_village_revival.gd")
 const PORTRAITS = preload("res://Scenes/Village/villager_portraits.gd")
+const SWEEP_DUST = preload("res://BossSprites/Sweep Attack/bossSweepFxDust_160x152_24fps.png")
 const STRIKE_WARNING = preload("res://BossSprites/Strike Attack/bossFxWarningStrike.png")
 const STRIKE_FX = preload("res://BossSprites/Strike Attack/bossFxRedStrike.png")
 const LOWER_OFFSET := 1952.0
@@ -283,14 +284,37 @@ func _attack_tell(strike: bool, seconds: float) -> void:
 		_cue(&"bull_rush_charge", -6, seconds)
 		var y: float = _sweep_floor_y(monster.SLAM_X) if _lower else monster.floor_y
 		var point := monster.to_global(Vector2(monster.SLAM_X, y))
-		_fx(STRIKE_WARNING, 48, point, seconds, 0.85).add_to_group("boss_attack_warning")
+		_show_strike_warning(point, seconds - monster.SLAM_FALL_TIME)
 	else:
 		_cue(&"monster_rumbling_1", -2, seconds)
 
 
+func _show_strike_warning(point: Vector2, hold_until: float) -> void:
+	var warning := Sprite2D.new()
+	warning.texture = STRIKE_WARNING
+	warning.hframes = 6
+	warning.position = point
+	warning.offset.y = -STRIKE_WARNING.get_height() / 2.0
+	warning.scale = Vector2.ONE * 0.85
+	warning.add_to_group("boss_attack_warning")
+	$Effects.add_child(warning)
+	var timing := warning.create_tween()
+	# Play JV's flash, block, and exclamation frames at their authored cadence.
+	var frame_seconds := 1.0 / 24.0
+	for index in range(1, warning.hframes):
+		timing.tween_interval(frame_seconds)
+		timing.tween_callback(warning.set_frame.bind(index))
+	var hold := maxf(0.0, hold_until - frame_seconds * (warning.hframes - 1))
+	timing.tween_method(func(progress: float):
+		warning.modulate.a = 1.0 - 0.12 * sin(TAU * progress) ** 2,
+		0.0, 1.0, hold)
+	timing.tween_property(warning, "modulate:a", 0.0, 0.08)
+	timing.tween_callback(warning.queue_free)
+
 func _arm_impact(strike: bool, point: Vector2) -> void:
 	if strike:
-		_fx(STRIKE_FX, 184, point, 0.62, 0.72)
+		var flash := _fx(STRIKE_FX, 184, point + Vector2(14, -3), 0.62, 0.72)
+		flash.offset.y = -74.0
 		_shake = 3.7
 		_cue(&"hard_land_stone", -14)
 	else:
@@ -465,6 +489,9 @@ func _process(delta: float) -> void:
 	camera.offset = Vector2(sin(_shake_time * 53), cos(_shake_time * 71)) * _shake
 
 func _ground_impact(point: Vector2, heavy: bool) -> void:
+	if not heavy and monster.phase == monster.Phase.SWIPE_DRAG:
+		_sweep_dust(point)
+		return
 	var dust := AnimatedSprite2D.new()
 	dust.sprite_frames = MOVEMENT_FX
 	dust.position = point
@@ -477,6 +504,21 @@ func _ground_impact(point: Vector2, heavy: bool) -> void:
 	if heavy:
 		_shake = 2.2
 		get_node("/root/SoundManager").play_limited(&"land_stone", -14, 0.15)
+
+func _sweep_dust(point: Vector2) -> void:
+	var dust := Sprite2D.new()
+	dust.texture = SWEEP_DUST
+	dust.hframes = 5
+	dust.vframes = 5
+	dust.offset = Vector2(0, -28)
+	dust.position = point + Vector2(-12.0 * monster.sweep_direction(), 0)
+	dust.flip_h = monster.sweep_direction() < 0.0
+	dust.scale = Vector2.ONE * 0.70
+	dust.modulate.a = 0.72
+	$Effects.add_child(dust)
+	var trail := dust.create_tween()
+	trail.tween_method(func(index: float): dust.frame = int(index), 0.0, 24.0, 1.0)
+	trail.tween_callback(dust.queue_free)
 
 func _boss_health_changed(current: int, maximum: int) -> void:
 	_boss_bar.max_value = maximum
