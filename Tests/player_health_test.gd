@@ -246,7 +246,7 @@ func test_death_and_reset() -> void:
 	var position := player.position
 	await tick(45)
 	check(player.position == position and player.velocity == Vector2.ZERO and not player.combat.is_attacking(), "Dead player continued moving/attacking")
-	check(player.get_node("Visuals/AnimatedSprite2D").self_modulate.r < 0.5, "Death indication missing")
+	check(player.get_node("Visuals/AnimatedSprite2D").animation == &"death", "Death animation did not play")
 	check(not player.can_start_dash() and not player.can_jump(), "Dead player can start abilities")
 	check(player.get_node("Hurtbox").collision_layer == 4 and player.get_node("Hurtbox").monitoring, "Death disabled Hurtbox")
 	lab.respawn_player()
@@ -264,6 +264,7 @@ func run() -> void:
 	lab = load("res://Scenes/Player/player_test.tscn").instantiate()
 	root.add_child(lab)
 	player = lab.get_node("Player")
+	player.get_node("CombatController").mouse_aim_attacks = false
 	health = player.health
 	hud = lab.get_node("HealthCanvas/HeartHUD")
 	player.damage.died.connect(func(_hit: CombatHit): deaths += 1)

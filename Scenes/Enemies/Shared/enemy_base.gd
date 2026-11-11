@@ -150,6 +150,38 @@ func _physics_process(delta: float) -> void:
 	_update_animation()
 
 
+# Find a descending arc to a body origin just above a landing surface.
+func _plan_leap(destination: Vector2, max_speed: float, max_height: float, delay: float = 0.0) -> Vector2:
+	var offset := destination - global_position
+	var gravity := get_gravity().y
+	if gravity <= 0.0:
+		return Vector2.ZERO
+	var minimum_height := maxf(18.0, 16.0 - offset.y)
+	for extra_height in [0.0, 18.0, 40.0, 68.0]:
+		var height: float = minimum_height + extra_height
+		if height > max_height:
+			break
+		var rise := sqrt(2.0 * gravity * height)
+		var fall := sqrt(2.0 * gravity * maxf(0.0, height + offset.y))
+		var duration := (rise + fall) / gravity
+		var launch := Vector2(offset.x / (duration - delay), -rise)
+		if absf(launch.x) > max_speed:
+			continue
+		var steps := ceili(duration * 40.0)
+		var from := global_transform
+		var clear := true
+		for step in range(1, steps + 1):
+			var t := duration * step / steps
+			var point := global_position + Vector2(launch.x * maxf(0, t - delay), launch.y * t + 0.5 * gravity * t * t)
+			if test_move(from, point - from.origin):
+				clear = false
+				break
+			from.origin = point
+		if clear:
+			return launch
+	return Vector2.ZERO
+
+
 func _can_see_target() -> bool:
 	if not is_instance_valid(target):
 		return false
@@ -296,6 +328,15 @@ func _play_impact() -> void:
 	sound.global_position = global_position
 	sound.finished.connect(sound.queue_free)
 	sound.play()
+
+
+func _step_distance_gain(max_range: float = 540.0) -> float:
+	if not is_instance_valid(target):
+		return -INF
+	var distance := global_position.distance_to(target.global_position)
+	if distance > max_range:
+		return -INF
+	return lerpf(0.0, -8.0, clampf((distance - 180.0) / maxf(1.0, max_range - 180.0), 0.0, 1.0))
 
 
 func _award_flesh() -> void:

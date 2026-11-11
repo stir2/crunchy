@@ -44,6 +44,12 @@ func _initialize() -> void:
 
 
 func run() -> void:
+	# The example gallery deliberately keeps its original layout.
+	config.room_size = AbyssRegionConfig.LEGACY_ROOM_SIZE
+	routes.opening_schema = &"abyss_slots_v1"
+	routes.opening_width = 3
+	routes.horizontal_offsets = Vector2i(5, 18)
+	routes.vertical_offsets = Vector2i(5, 18)
 	registry = load("res://Scenes/Underground/Rooms/example_registry.tres")
 	var selector := AbyssRoomTemplateSelector.new(registry, 12345)
 	check(selector.registration_errors.is_empty(), "Example registration failed: %s" % selector.registration_errors)
@@ -52,7 +58,6 @@ func run() -> void:
 	var cases := [
 		[["west:0", "east:0"], AbyssRoomData.Region.PACKED, 0, "packed_horizontal"],
 		[["north:0", "south:0"], AbyssRoomData.Region.PACKED, 0, "packed_vertical"],
-		[["north:0", "west:0"], AbyssRoomData.Region.PACKED, 0, "blons"],
 		[["north:1", "east:0", "west:1"], AbyssRoomData.Region.OPEN, 15, "open_cavern"],
 		[["west:0", "east:0"], AbyssRoomData.Region.PACKED, 8, "transition_west"]]
 	for data in cases:
@@ -62,7 +67,7 @@ func run() -> void:
 		# a transition-only registry to demonstrate the intentionally open face.
 		if data[3] == "transition_west":
 			var transition_registry := AbyssRoomTemplateRegistry.new()
-			transition_registry.templates = [registry.templates[4]]
+			transition_registry.templates = [registry.templates[3]]
 			selected = AbyssRoomTemplateSelector.new(transition_registry, 12345).select(req)
 		check(selected.template_id == StringName(data[3]), "Wrong example selected: %s" % data[3])
 		var scene := AbyssRoomSceneInstantiator.instantiate_authored(selected)
@@ -77,7 +82,7 @@ func run() -> void:
 		check(fallback.global_seed == 12345 and fallback.room_seed == selector.select(requirements(ids)).room_seed, "Fallback seed missing or unstable")
 		check(AbyssRoomSceneInstantiator.instantiate_authored(fallback) == null, "Fallback unexpectedly built geometry")
 	var transition_registry := AbyssRoomTemplateRegistry.new()
-	transition_registry.templates = [registry.templates[4]]
+	transition_registry.templates = [registry.templates[3]]
 	var transition_selector := AbyssRoomTemplateSelector.new(transition_registry, 12)
 	check(transition_selector.select(requirements(["east:0"], Vector2i.ZERO, AbyssRoomData.Region.PACKED, 0)).scene == null, "Transition leaked into packed neighbor")
 	var unknown := requirements(["east:0"], Vector2i.ZERO, AbyssRoomData.Region.PACKED, 8)
@@ -192,6 +197,7 @@ func run() -> void:
 	var abyss := load("res://Scenes/Underground/abyss.tscn").instantiate() as Node2D
 	var preview := abyss.get_node("RegionPreview")
 	preview.configuration = test_config
+	preview.route_configuration = routes
 	preview.preview_origin = Vector2i.ZERO
 	preview.preview_width_chunks = 1
 	preview.preview_height_chunks = 1
@@ -204,5 +210,5 @@ func run() -> void:
 	var gallery: Node = load("res://Tests/Scenes/Underground/example_gallery.tscn").instantiate()
 	root.add_child(gallery)
 	gallery.queue_free()
-	print("Room templates: five gallery rooms and authored registry validated; weighted b selection %d/1000; seed changes %d; generated chunk %d authored / %d fallback; %d failures" % [b_count, seed_changes, authored, fallback_count, failures])
+	print("Room templates: four gallery rooms and authored registry validated; weighted b selection %d/1000; seed changes %d; generated chunk %d authored / %d fallback; %d failures" % [b_count, seed_changes, authored, fallback_count, failures])
 	quit(0 if failures == 0 else 1)

@@ -13,10 +13,11 @@ func _initialize() -> void:
 	call_deferred("run")
 func req(coords: Vector2i = Vector2i(-2,3)) -> AbyssRoomRequirements:
 	var value := AbyssRoomRequirements.new()
-	value.room_size = AbyssRegionConfig.DEFAULT_ROOM_SIZE
+	value.room_size = AbyssRegionConfig.LEGACY_ROOM_SIZE
 	value.global_coords = coords
 	value.region = AbyssRoomData.Region.OPEN
 	value.opening_schema = &"abyss_slots_v1"
+	value.opening_width = 3
 	return value
 func packed(room: AbyssAuthoredRoom) -> PackedScene:
 	var scene := PackedScene.new()
@@ -183,8 +184,9 @@ func run() -> void:
 		for marker in AbyssRoomContent.markers(fixture):
 			marker.spawn_probability = probability
 			if marker is HazardSpawnMarker:
-				marker.position = Vector2(12,12) * 16
+				marker.position = Vector2(21.5, 6.5) * 16
 		var selected := selector.select(req())
+		selected.requirements.route_openings = {&"east:0": Vector2i(23, 6)}
 		selected.conditional_platform_probability = probability
 		selected.scene = packed(fixture)
 		var built := AbyssRoomSceneInstantiator.instantiate_authored(selected)
@@ -231,7 +233,7 @@ func run() -> void:
 	var guarded_source := metadata.scene.instantiate() as AbyssAuthoredRoom
 	guarded_source.get_node("BreakableWalls").set_cell(Vector2i(0,6),0,Vector2i(5,0))
 	guarded_source.get_node("BreakableWalls").set_cell(Vector2i(1,6),0,Vector2i(5,0))
-	for x in range(8,11):
+	for x in range(1,4):
 		guarded_source.get_node("ConditionalPlatforms").set_cell(Vector2i(x,6),0,Vector2i.RIGHT)
 	selected = selector.select(req())
 	selected.conditional_platform_probability = 1
@@ -239,7 +241,7 @@ func run() -> void:
 	selected.scene = packed(guarded_source)
 	built = AbyssRoomSceneInstantiator.instantiate_authored(selected)
 	check(built.get_node("BreakableWalls").get_cell_source_id(Vector2i(0,6)) == -1,"Breakable blocks required opening")
-	check(built.get_node("ConditionalPlatforms").get_cell_source_id(Vector2i(9,6)) == -1 and not built.content_warnings.is_empty(),"Conditional support forced onto required route")
+	check(built.get_node("ConditionalPlatforms").get_cell_source_id(Vector2i(2,6)) == -1 and not built.content_warnings.is_empty(),"Conditional support forced onto required route")
 	built.free()
 	guarded_source.free()
 	check(FileAccess.get_file_as_bytes(metadata.scene.resource_path) == before,"Source template modified")

@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dikmgp7dp2top"]
 
 [ext_resource type="Script" uid="uid://b2dxxj6q44yqt" path="res://Scenes/Boss/boss_arena.gd" id="1"]
-[ext_resource type="PackedScene" path="res://Scenes/Boss/boss_monster.tscn" id="2"]
+[ext_resource type="PackedScene" uid="uid://c3slyxyl3coxj" path="res://Scenes/Boss/boss_monster.tscn" id="2"]
 [ext_resource type="PackedScene" uid="uid://bkwrdhxyioatx" path="res://Scenes/Player/player.tscn" id="3"]
 [ext_resource type="Script" uid="uid://dvrwg6x7k0ch4" path="res://Scenes/Boss/boss_waves.gd" id="4"]
 

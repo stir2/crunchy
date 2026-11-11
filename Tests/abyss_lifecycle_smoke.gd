@@ -1,5 +1,5 @@
 extends SceneTree
-## Fresh E/X channels, checkpoint healing and real host/standalone extraction.
+## Fresh E/V channels, checkpoint healing and real host/standalone extraction.
 var checks: int = 0
 var failures: int = 0
 var host: Node
@@ -89,11 +89,11 @@ func run() -> void:
 		quit(1)
 		return
 	check(controller.primary_action == &"Interact 1" and controller.travel_action == &"Interact 2","Input action names changed")
-	check((InputMap.action_get_events("Interact 1")[0] as InputEventKey).physical_keycode == KEY_E and (InputMap.action_get_events("Interact 2")[0] as InputEventKey).physical_keycode == KEY_X,"E/X bindings changed")
-	check(controller.travel_prompt.text == "X — Return to Village","Entrance travel prompt missing")
+	check((InputMap.action_get_events("Interact 1")[0] as InputEventKey).physical_keycode == KEY_E and (InputMap.action_get_events("Interact 2")[0] as InputEventKey).physical_keycode == KEY_V,"E/V bindings changed")
+	check(controller.travel_prompt.text == "V — Return to Village","Entrance travel prompt missing")
 	await press(&"Interact 1")
 	check(host.active_scene == runtime and not runtime._return_pending,"E extracted from entrance")
-	# A blocked X must not replay after combat while the key remains held.
+	# A blocked V must not replay after combat while the key remains held.
 	Input.action_press("Attack")
 	await tick()
 	Input.action_release("Attack")
@@ -104,7 +104,7 @@ func run() -> void:
 		await tick()
 		if not player.combat.is_attacking(): break
 	await tick(3)
-	check(host.active_scene == runtime and not runtime._return_pending,"Held blocked X replayed after combat")
+	check(host.active_scene == runtime and not runtime._return_pending,"Held blocked V replayed after combat")
 	Input.action_release("Interact 2")
 	await tick()
 	var found := false
@@ -135,12 +135,12 @@ func run() -> void:
 	Input.action_press("Interact 1")
 	Input.action_press("Interact 2")
 	await tick()
-	check(not game.abyss_progression_state.checkpoints.get(checkpoint_id,{}).get("activated",false) and not runtime._return_pending,"Damage reaction allowed E/X")
+	check(not game.abyss_progression_state.checkpoints.get(checkpoint_id,{}).get("activated",false) and not runtime._return_pending,"Damage reaction allowed E/V")
 	player.health.reset_health(4)
 	player.reset_movement()
 	player.global_position = checkpoint.global_position+Vector2(0,18)
 	await tick(2)
-	check(not game.abyss_progression_state.checkpoints.get(checkpoint_id,{}).get("activated",false) and not runtime._return_pending,"Held blocked E/X replayed after damage")
+	check(not game.abyss_progression_state.checkpoints.get(checkpoint_id,{}).get("activated",false) and not runtime._return_pending,"Held blocked E/V replayed after damage")
 	Input.action_release("Interact 1")
 	Input.action_release("Interact 2")
 	await tick()
@@ -151,22 +151,22 @@ func run() -> void:
 	check(controller.prompt.text.is_empty() and controller.travel_prompt.text.is_empty(),"Streaming hold retained interaction prompts")
 	runtime.set_streaming_hold(false)
 	await tick(2)
-	check(not game.abyss_progression_state.checkpoints.get(checkpoint_id,{}).get("activated",false) and not runtime._return_pending,"Held blocked E/X replayed after streaming hold")
+	check(not game.abyss_progression_state.checkpoints.get(checkpoint_id,{}).get("activated",false) and not runtime._return_pending,"Held blocked E/V replayed after streaming hold")
 	Input.action_release("Interact 1")
 	Input.action_release("Interact 2")
 	await tick()
 	await press(&"Interact 2")
-	check(not game.abyss_progression_state.checkpoints.get(checkpoint_id,{}).get("activated",false) and player.health.current_health == 4,"X activated/healed inactive checkpoint")
+	check(not game.abyss_progression_state.checkpoints.get(checkpoint_id,{}).get("activated",false) and player.health.current_health == 4,"V activated/healed inactive checkpoint")
 	# Both fresh keys together must not unlock travel mid-tick on an inactive target.
 	Input.action_press("Interact 1")
 	Input.action_press("Interact 2")
 	await tick()
-	check(host.active_scene == runtime and game.abyss_progression_state.checkpoints[checkpoint_id].activated,"Simultaneous E/X extracted through newly activated checkpoint")
+	check(host.active_scene == runtime and game.abyss_progression_state.checkpoints[checkpoint_id].activated,"Simultaneous E/V extracted through newly activated checkpoint")
 	Input.action_release("Interact 1")
 	Input.action_release("Interact 2")
 	await tick()
 	check(player.health.current_health == 6 and player.stamina.current_stamina == 37,"Activation must heal exactly 2 HP and no stamina")
-	check(controller.travel_prompt.text == "X — Return to Village","Activated checkpoint travel prompt missing")
+	check(controller.travel_prompt.text == "V — Return to Village","Activated checkpoint travel prompt missing")
 	player.health.current_health = 4
 	await press(&"Interact 1")
 	check(player.health.current_health == 4,"Checkpoint healed twice in one descent")
@@ -187,7 +187,7 @@ func run() -> void:
 	await tick(3)
 	check(host.get_instance_id() == host_id and host.active_path == host.HOUSE_SCENE,"Checkpoint return did not preserve Main/show village")
 	check(game.flesh == 170 and game.current_descent_flesh(world) == 0,"Safe return failed one-time Flesh banking")
-	check(game.health == 4 and game.stamina == 37,"X healed or changed carried vitals")
+	check(game.health == 4 and game.stamina == 37,"V healed or changed carried vitals")
 	check(game.trips_left == trips and game.day == day,"Return spent a trip or advanced day")
 	check(host.active_scene.current_panel == host.active_scene.RoomPanel.STAIRS,"Return did not show village stairs")
 	check(game.return_abyss_descent(world) == 0 and game.flesh == 170,"Return could bank twice")
@@ -199,14 +199,14 @@ func run() -> void:
 		quit(1)
 		return
 	await tick(3)
-	check(host.active_scene == runtime and not runtime._return_pending,"Held X instantly extracted on a new descent")
+	check(host.active_scene == runtime and not runtime._return_pending,"Held V instantly extracted on a new descent")
 	Input.action_release("Interact 2")
 	await tick()
 	checkpoint = await approach_checkpoint()
-	check(controller.prompt.text.contains("Heal 1 Heart") and controller.travel_prompt.text == "X — Return to Village","New descent should offer both E heal and X return")
-	# X must not consume the newly available heal or restore HP.
+	check(controller.prompt.text.contains("Heal 1 Heart") and controller.travel_prompt.text == "V — Return to Village","New descent should offer both E heal and V return")
+	# V must not consume the newly available heal or restore HP.
 	await press(&"Interact 2")
-	check(host.active_path == host.HOUSE_SCENE and game.health == 4,"X healed an already-activated checkpoint")
+	check(host.active_path == host.HOUSE_SCENE and game.health == 4,"V healed an already-activated checkpoint")
 	if not await enter_runtime():
 		quit(1)
 		return
@@ -221,7 +221,7 @@ func run() -> void:
 	player.global_position = runtime.entrance_return.global_position+Vector2(0,18)
 	await tick(2)
 	await press(&"Interact 2")
-	check(host.active_path == host.HOUSE_SCENE and game.flesh == 175,"Entrance X did not return/bank independently of activation")
+	check(host.active_path == host.HOUSE_SCENE and game.flesh == 175,"Entrance V did not return/bank independently of activation")
 	# F6 standalone extraction creates a persistent Main host without scene-tree replacement.
 	host.queue_free()
 	await tick()

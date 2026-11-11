@@ -188,8 +188,8 @@ func _run() -> void:
 	# Stable IDs and arbitrary opening positions are a construction-independent interface.
 	var custom := AbyssRouteConfig.new()
 	custom.main_route_horizontal_wander = 0.0
-	custom.horizontal_offsets = Vector2i(2, 9)
-	custom.vertical_offsets = Vector2i(2, 10) # Three-wide slots must leave capped corners.
+	custom.horizontal_offsets = Vector2i(4, 12)
+	custom.vertical_offsets = Vector2i(4, 14) # Five-wide slots must leave capped corners.
 	check(custom.is_valid(AbyssRegionConfig.new().room_size), "Valid custom slots rejected")
 	var generator := AbyssRouteGenerator.new(AbyssRegionConfig.new(), custom)
 	for room in generator.get_chunk(Vector2i.ZERO).rooms:

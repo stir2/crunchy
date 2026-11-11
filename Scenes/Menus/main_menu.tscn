@@ -1,6 +1,60 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://Scenes/Menus/main_menu.gd" id="1"]
+
+[ext_resource type="Texture2D" path="res://uiSprites/villageView.png" id="2_window"]
+
+[ext_resource type="FontFile" path="res://Assets/Fonts/Alkhemikal.ttf" id="3_title"]
+
+[sub_resource type="StyleBoxFlat" id="Plum"]
+bg_color = Color(0.14, 0.09, 0.16, 0.94)
+border_width_bottom = 2
+border_color = Color(0.39, 0.28, 0.38, 1)
+content_margin_left = 20.0
+content_margin_right = 20.0
+
+[sub_resource type="StyleBoxFlat" id="PlumHover"]
+bg_color = Color(0.28, 0.17, 0.24, 0.98)
+border_width_bottom = 2
+border_color = Color(0.83, 0.58, 0.44, 1)
+content_margin_left = 20.0
+content_margin_right = 20.0
+
+[sub_resource type="StyleBoxFlat" id="PlumDisabled"]
+bg_color = Color(0.14, 0.09, 0.16, 0.72)
+border_width_bottom = 2
+border_color = Color(0.30, 0.23, 0.31, 1)
+content_margin_left = 20.0
+content_margin_right = 20.0
+
+[sub_resource type="StyleBoxFlat" id="PlumFocus"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.88, 0.66, 0.50, 1)
+
+[sub_resource type="Theme" id="Theme_menu"]
+Button/colors/font_color = Color(0.98, 0.89, 0.82, 1)
+Button/colors/font_hover_color = Color(1, 0.94, 0.87, 1)
+Button/colors/font_focus_color = Color(1, 0.94, 0.87, 1)
+Button/colors/font_pressed_color = Color(1, 0.94, 0.87, 1)
+Button/colors/font_disabled_color = Color(0.64, 0.56, 0.61, 1)
+Button/styles/normal = SubResource("Plum")
+Button/styles/hover = SubResource("PlumHover")
+Button/styles/pressed = SubResource("PlumHover")
+Button/styles/disabled = SubResource("PlumDisabled")
+Button/styles/focus = SubResource("PlumFocus")
+
+[sub_resource type="Gradient" id="LeftFade"]
+offsets = PackedFloat32Array(0, 0.28, 0.65)
+colors = PackedColorArray(0.10, 0.055, 0.13, 0.8, 0.10, 0.055, 0.13, 0.58, 0.10, 0.055, 0.13, 0)
+
+[sub_resource type="GradientTexture2D" id="LeftShade"]
+gradient = SubResource("LeftFade")
+width = 256
+height = 1
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -8,43 +62,77 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource("1")
+theme = SubResource("Theme_menu")
 
-[node name="Center" type="CenterContainer" parent="."]
+[node name="WindowView" type="TextureRect" parent="."]
+texture_filter = 1
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("2_window")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="Buttons" type="VBoxContainer" parent="Center"]
-layout_mode = 2
-custom_minimum_size = Vector2(300, 0)
+[node name="Shade" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = SubResource("LeftShade")
+expand_mode = 1
+
+[node name="Buttons" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.16
+anchor_top = 0.84
+anchor_right = 0.16
+anchor_bottom = 0.84
+offset_top = -340.0
+offset_right = 360.0
+grow_vertical = 0
 theme_override_constants/separation = 12
 
-[node name="Title" type="Label" parent="Center/Buttons"]
+[node name="Title" type="Label" parent="Buttons"]
 layout_mode = 2
-text = "CRUNCHY"
-horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.91, 0.82, 1)
+theme_override_fonts/font = ExtResource("3_title")
+theme_override_font_sizes/font_size = 64
+text = "Paid In Flesh"
 
-[node name="NewGameButton" type="Button" parent="Center/Buttons"]
+[node name="NewGameButton" type="Button" parent="Buttons"]
 unique_name_in_owner = true
 layout_mode = 2
+custom_minimum_size = Vector2(0, 64)
+theme_override_font_sizes/font_size = 32
+alignment = 0
 text = "New Game"
 
-[node name="ContinueButton" type="Button" parent="Center/Buttons"]
+[node name="ContinueButton" type="Button" parent="Buttons"]
 unique_name_in_owner = true
 layout_mode = 2
+custom_minimum_size = Vector2(0, 64)
+theme_override_font_sizes/font_size = 32
+alignment = 0
 text = "Continue"
 
-[node name="QuitButton" type="Button" parent="Center/Buttons"]
+[node name="QuitButton" type="Button" parent="Buttons"]
 unique_name_in_owner = true
 layout_mode = 2
+custom_minimum_size = Vector2(0, 64)
+theme_override_font_sizes/font_size = 32
+alignment = 0
 text = "Quit"
 
-[node name="StatusLabel" type="Label" parent="Center/Buttons"]
+[node name="StatusLabel" type="Label" parent="Buttons"]
 unique_name_in_owner = true
 layout_mode = 2
-horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.95, 0.72, 0.65, 1)
+theme_override_font_sizes/font_size = 24
+autowrap_mode = 2
 
 [node name="NewGameDialog" type="ConfirmationDialog" parent="."]
-title = "New Game"
-dialog_text = "Start a new run? Your existing slot will be replaced the next time you save."
+title = "Start a new game?"
+dialog_text = "Your existing save will be replaced the next time you save."

@@ -14,12 +14,22 @@ var _vhealth_spin: SpinBox
 var _hp_spin: SpinBox
 var _stamina_spin: SpinBox
 var _quota_label: Label
+var _scroll: ScrollContainer
+var _root_vbox: VBoxContainer
+var _title_lbl: Label
+var _act_title: Label
+var _var_labels: Array[Label] = []
+var _action_btns: Array[Button] = []
+var _quick_btns: Array[Button] = []
+var _spin_boxes: Array[SpinBox] = []
 
 
 func _ready() -> void:
 	layer = 128
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_ui()
+	get_viewport().size_changed.connect(_fit_layout)
+	_fit_layout()
 	_panel.hide()
 
 
@@ -35,6 +45,7 @@ func toggle() -> void:
 	if _panel.visible:
 		_panel.hide()
 	else:
+		_fit_layout()
 		_refresh_values()
 		_panel.show()
 
@@ -45,16 +56,13 @@ func close() -> void:
 
 func _build_ui() -> void:
 	_panel = PanelContainer.new()
-	_panel.custom_minimum_size = Vector2(460, 480)
+	_panel.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_panel.custom_minimum_size = Vector2(680, 0)
 	_panel.anchors_preset = Control.PRESET_CENTER
 	_panel.anchor_left = 0.5
 	_panel.anchor_top = 0.5
 	_panel.anchor_right = 0.5
 	_panel.anchor_bottom = 0.5
-	_panel.offset_left = -230.0
-	_panel.offset_top = -240.0
-	_panel.offset_right = 230.0
-	_panel.offset_bottom = 240.0
 	_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 	add_child(_panel)
@@ -64,45 +72,59 @@ func _build_ui() -> void:
 	bg.border_color = Color(0.28, 0.45, 0.65, 0.9)
 	bg.set_border_width_all(2)
 	bg.set_corner_radius_all(6)
-	bg.content_margin_left = 16
-	bg.content_margin_right = 16
-	bg.content_margin_top = 12
-	bg.content_margin_bottom = 12
+	bg.content_margin_left = 20
+	bg.content_margin_right = 20
+	bg.content_margin_top = 16
+	bg.content_margin_bottom = 16
 	_panel.add_theme_stylebox_override("panel", bg)
 
-	var root_vbox := VBoxContainer.new()
-	root_vbox.add_theme_constant_override("separation", 8)
-	_panel.add_child(root_vbox)
+	var outer_vbox := VBoxContainer.new()
+	outer_vbox.add_theme_constant_override("separation", 10)
+	_panel.add_child(outer_vbox)
 
 	# Header
 	var header := HBoxContainer.new()
-	var title := Label.new()
-	title.text = "DEBUG MENU  [ = to close ]"
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_color_override("font_color", Color(0.4, 0.75, 1.0, 1))
-	title.add_theme_font_size_override("font_size", 15)
-	header.add_child(title)
+	_title_lbl = Label.new()
+	_title_lbl.text = "DEBUG MENU  [ = to close ]"
+	_title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title_lbl.add_theme_color_override("font_color", Color(0.4, 0.75, 1.0, 1))
+	_title_lbl.add_theme_font_size_override("font_size", 24)
+	header.add_child(_title_lbl)
 
 	var close_btn := Button.new()
-	close_btn.text = "✕"
-	close_btn.custom_minimum_size = Vector2(28, 24)
+	close_btn.text = "X"
+	close_btn.custom_minimum_size = Vector2(36, 32)
+	close_btn.add_theme_font_size_override("font_size", 20)
 	close_btn.pressed.connect(func(): _panel.hide())
 	header.add_child(close_btn)
-	root_vbox.add_child(header)
+	_quick_btns.append(close_btn)
+	outer_vbox.add_child(header)
 
 	var sep1 := HSeparator.new()
-	root_vbox.add_child(sep1)
+	outer_vbox.add_child(sep1)
+
+	_scroll = ScrollContainer.new()
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	outer_vbox.add_child(_scroll)
+
+	_root_vbox = VBoxContainer.new()
+	_root_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_root_vbox.add_theme_constant_override("separation", 10)
+	_scroll.add_child(_root_vbox)
+	var root_vbox := _root_vbox
 
 	# Quota status
 	_quota_label = Label.new()
 	_quota_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8, 1))
-	_quota_label.add_theme_font_size_override("font_size", 12)
+	_quota_label.add_theme_font_size_override("font_size", 20)
 	root_vbox.add_child(_quota_label)
 
 	# Spinbox rows grid
 	var grid := GridContainer.new()
 	grid.columns = 3
-	grid.add_theme_constant_override("h_separation", 8)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid.add_theme_constant_override("h_separation", 12)
 	grid.add_theme_constant_override("v_separation", 6)
 	root_vbox.add_child(grid)
 
@@ -180,11 +202,11 @@ func _build_ui() -> void:
 	root_vbox.add_child(sep2)
 
 	# Action triggers
-	var act_title := Label.new()
-	act_title.text = "ACTIONS & SIMULATION:"
-	act_title.add_theme_color_override("font_color", Color(0.6, 0.65, 0.7, 1))
-	act_title.add_theme_font_size_override("font_size", 12)
-	root_vbox.add_child(act_title)
+	_act_title = Label.new()
+	_act_title.text = "ACTIONS & SIMULATION:"
+	_act_title.add_theme_color_override("font_color", Color(0.6, 0.65, 0.7, 1))
+	_act_title.add_theme_font_size_override("font_size", 20)
+	root_vbox.add_child(_act_title)
 
 	var actions_row := HBoxContainer.new()
 	actions_row.add_theme_constant_override("separation", 8)
@@ -224,28 +246,32 @@ func _build_ui() -> void:
 func _add_var_row(grid: GridContainer, label_text: String, min_v: float, max_v: float, step_v: float, callback: Callable) -> SpinBox:
 	var lbl := Label.new()
 	lbl.text = label_text
-	lbl.add_theme_font_size_override("font_size", 12)
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lbl.add_theme_font_size_override("font_size", 20)
 	grid.add_child(lbl)
+	_var_labels.append(lbl)
 
 	var spin := SpinBox.new()
 	spin.min_value = min_v
 	spin.max_value = max_v
 	spin.step = step_v
-	spin.custom_minimum_size = Vector2(90, 26)
+	spin.custom_minimum_size = Vector2(120, 34)
 	spin.value_changed.connect(func(v: float):
 		if not _updating:
 			callback.call(v)
 	)
 	grid.add_child(spin)
+	_spin_boxes.append(spin)
 	return spin
 
 
 func _quick_btn(text: String, callback: Callable) -> Button:
 	var btn := Button.new()
 	btn.text = text
-	btn.add_theme_font_size_override("font_size", 11)
-	btn.custom_minimum_size = Vector2(50, 24)
+	btn.add_theme_font_size_override("font_size", 18)
+	btn.custom_minimum_size = Vector2(72, 32)
 	btn.pressed.connect(callback)
+	_quick_btns.append(btn)
 	return btn
 
 
@@ -253,10 +279,45 @@ func _action_btn(text: String, callback: Callable) -> Button:
 	var btn := Button.new()
 	btn.text = text
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	btn.add_theme_font_size_override("font_size", 12)
-	btn.custom_minimum_size = Vector2(0, 30)
+	btn.add_theme_font_size_override("font_size", 18)
+	btn.custom_minimum_size = Vector2(0, 38)
 	btn.pressed.connect(callback)
+	_action_btns.append(btn)
 	return btn
+
+
+func _fit_layout() -> void:
+	if _panel == null or not is_inside_tree():
+		return
+	var vp_size := get_viewport().get_visible_rect().size
+	if vp_size == Vector2.ZERO:
+		return
+	var compact := vp_size.y <= 480.0
+	var base_font := 16 if compact else 20
+	var theme := Theme.new()
+	theme.default_font_size = base_font
+	_panel.theme = theme
+	_title_lbl.add_theme_font_size_override("font_size", 16 if compact else 24)
+	_quota_label.add_theme_font_size_override("font_size", base_font)
+	_act_title.add_theme_font_size_override("font_size", base_font)
+	for lbl in _var_labels:
+		lbl.add_theme_font_size_override("font_size", base_font)
+	for btn in _quick_btns:
+		btn.add_theme_font_size_override("font_size", base_font)
+		btn.custom_minimum_size = Vector2(44 if compact else 72, 24 if compact else 32)
+	for btn in _action_btns:
+		btn.add_theme_font_size_override("font_size", base_font)
+		btn.custom_minimum_size = Vector2(0, 26 if compact else 38)
+	for spin in _spin_boxes:
+		spin.custom_minimum_size = Vector2(96 if compact else 120, 24 if compact else 34)
+	if compact:
+		_panel.custom_minimum_size = Vector2(minf(560.0, vp_size.x - 24.0), minf(320.0, vp_size.y - 24.0))
+		_scroll.custom_minimum_size = Vector2(0, _panel.custom_minimum_size.y - 68.0)
+	else:
+		_panel.custom_minimum_size = Vector2(720, 0)
+		_scroll.custom_minimum_size = Vector2(0, 480)
+	_panel.reset_size()
+	_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_MINSIZE)
 
 
 func _refresh_values() -> void:

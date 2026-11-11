@@ -106,7 +106,8 @@ func run() -> void:
 	check(actor.get("target") == home, "Pursuit did not retarget home beyond its leash")
 	manager._physics_process(0.01)
 	check(actor.process_mode == Node.PROCESS_MODE_DISABLED, "Distant actor kept processing")
-	actor.global_position = runtime.player.global_position
+	var airborne := runtime.player.global_position - Vector2(0, 32)
+	actor.global_position = airborne
 	manager._snapshot(id)
 	var bank_before: int = game.flesh
 	var carried_before: int = game.current_descent_flesh(runtime.stream.specials.world)
@@ -117,6 +118,15 @@ func run() -> void:
 	check(manager.drops.size() == 1, "Duplicate death created another drop")
 	manager._restore_ready()
 	check(not manager.actors.has(id), "Defeated enemy respawned")
+	var falling_drop: Area2D = manager.drops[id]
+	falling_drop.terrain_ready = func(_bounds: Rect2) -> bool: return false
+	await tick(5)
+	check(falling_drop.global_position.is_equal_approx(airborne), "Pickup fell into unloaded terrain")
+	falling_drop.terrain_ready = runtime.stream.is_rect_ready
+	await tick(20)
+	var landed_at := falling_drop.global_position
+	check(landed_at.y >= airborne.y + 30 and falling_drop.get("_grounded"), "Airborne pickup did not land on the floor")
+	check(not manager.records[id].drop_collected, "Falling pickup bypassed its collection delay")
 	# Uncollected drop survives a full actor/drop teardown and save round trip.
 	manager.clear_population()
 	var saved := AbyssRoomState.new()
@@ -124,9 +134,9 @@ func run() -> void:
 	check(JSON.parse_string(saved.markers[id]).defeated and not JSON.parse_string(saved.markers[id]).drop_collected, "Uncollected death/drop state lost")
 	manager._restore_ready()
 	var drop: Area2D = manager.drops[id]
-	drop.global_position = runtime.player.global_position
+	check(drop.global_position.is_equal_approx(landed_at), "Reloaded pickup lost its landing position")
 	var reward: int = manager.records[id].reward
-	await tick(40) # Real body overlap -> hover -> collect -> HUD flights.
+	await tick(ceili(float(drop.hover_seconds) * Engine.physics_ticks_per_second) + 2) # Real overlap and pickup.
 	check(manager.records[id].drop_collected, "Touch pickup did not collect")
 	check(game.current_descent_flesh(runtime.stream.specials.world) == carried_before + reward, "Touch reward amount incorrect")
 	check(not manager.collect_drop(id), "Repeated collection paid twice")

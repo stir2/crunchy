@@ -6,7 +6,6 @@ var _death_voice: WeakRef
 var _death_cue_played: bool = false
 var _last_swing: int = -1
 var _warning: AudioStreamPlayer
-var _heartbeat: AudioStreamPlayer
 var _footsteps: Array[AudioStreamPlayer] = []
 var _charge_audio: AudioStreamPlayer
 var _dash_audio: AudioStreamPlayer
@@ -26,6 +25,7 @@ var _movement_duck_db: float = 0.0
 var _movement_duck_hold: float = 0.0
 @onready var player: Player = get_parent()
 @onready var sprite: AnimatedSprite2D = player.get_node("Visuals/AnimatedSprite2D")
+@onready var boss_death_mix: bool = player.has_meta(&"boss_death_mix")
 @onready var sounds: Node = get_node("/root/SoundManager")
 
 
@@ -56,17 +56,8 @@ func _ready() -> void:
 	_warning = AudioStreamPlayer.new()
 	_warning.stream = sounds.stream_for(&"low_health_initial")
 	_warning.bus = &"SFX"
-	_warning.volume_db = -20 + sounds.gain_for(&"low_health_initial")
+	_warning.volume_db = -10 + sounds.gain_for(&"low_health_initial")
 	add_child(_warning)
-	_heartbeat = AudioStreamPlayer.new()
-	var loop := sounds.stream_for(&"low_health").duplicate() as AudioStreamWAV
-	loop.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	loop.loop_begin = 0
-	loop.loop_end = roundi(loop.get_length() * loop.mix_rate)
-	_heartbeat.stream = loop
-	_heartbeat.bus = &"SFX"
-	_heartbeat.volume_db = -24 + sounds.gain_for(&"low_health")
-	add_child(_heartbeat)
 	player.combat.phase_changed.connect(_on_attack_phase)
 	player.combat.hit_confirmed.connect(_on_hit_confirmed)
 	player.health.health_changed.connect(_on_health_changed)
@@ -158,7 +149,7 @@ func _update_fall(delta: float) -> void:
 	if falling:
 		_fall_distance = drop - 48
 		var strength := clampf(_fall_distance / 240.0, 0, 1)
-		_fall_audio.volume_db = lerpf(-38, -24, strength) + sounds.gain_for(&"freefall") + _movement_duck_db
+		_fall_audio.volume_db = lerpf(-28, -16, strength) + sounds.gain_for(&"freefall") + _movement_duck_db
 		if not _fall_started:
 			_fall_started = true
 			_fall_audio.play()
@@ -194,7 +185,7 @@ func _floor_sound() -> StringName:
 func _on_attack_phase(phase: int) -> void:
 	if phase == PlayerCombatController.AttackState.ACTIVE and _last_swing != player.combat.swing_id:
 		_last_swing = player.combat.swing_id
-		sounds.play_sfx(&"cleaver_swing_alt" if sprite.animation == &"attack_alt" else &"cleaver_swing", -12)
+		sounds.play_sfx(&"cleaver_swing_alt" if sprite.animation == &"attack_alt" else &"cleaver_swing", -11)
 
 
 func _on_hit_confirmed(target: CombatDamageable, _hit: CombatHit) -> void:
@@ -209,17 +200,15 @@ func _on_health_changed(current: int, maximum: int) -> void:
 	if low and not _low_health:
 		_low_health = true
 		_warning.play()
-		_heartbeat.play()
 	elif not low:
 		_low_health = false
 		_warning.stop()
-		_heartbeat.stop()
 
 
 func _on_health_reset() -> void:
 	if not player.health.is_dead():
 		_death_cue_played = false
-	if _was_dead and not player.health.is_dead():
+	if _was_dead and not player.health.is_dead() and not boss_death_mix:
 		sounds.play_sfx(&"revive", -12)
 	_was_dead = player.health.is_dead()
 
@@ -235,11 +224,11 @@ func _movement_voice(sound: StringName, volume_db: float) -> AudioStreamPlayer:
 
 func _on_movement_state(state: int) -> void:
 	if state == Player.MovementState.DASH_CHARGING:
-		_charge_audio.volume_db = -22 + sounds.gain_for(&"bull_rush_charge") + sounds.repetition_gain_for(&"bull_rush_charge")
+		_charge_audio.volume_db = -16 + sounds.gain_for(&"bull_rush_charge") + sounds.repetition_gain_for(&"bull_rush_charge")
 		_charge_audio.pitch_scale = randf_range(0.94, 0.98)
 		_charge_audio.play(sounds.start_offset_for(&"bull_rush_charge"))
 	elif state == Player.MovementState.DASHING:
-		_dash_audio.volume_db = -19 + sounds.gain_for(&"bull_rush") + sounds.repetition_gain_for(&"bull_rush")
+		_dash_audio.volume_db = -14 + sounds.gain_for(&"bull_rush") + sounds.repetition_gain_for(&"bull_rush")
 		_dash_audio.pitch_scale = 1.0
 		_dash_audio.play()
 
@@ -248,12 +237,12 @@ func _on_jumped() -> void:
 	_support_y = player.global_position.y
 	_airborne_peak_y = _support_y
 	_damage_airborne = false
-	sounds.play_sfx(&"jump", -22)
+	sounds.play_sfx(&"jump", -17)
 
 
 func _on_player_hurt(_hit: CombatHit, _amount: int) -> void:
 	if not player.health.is_dead():
-		sounds.play_limited(&"player_hurt", -15 if player.health.current_health <= 2 else -19, 0.25)
+		sounds.play_limited(&"player_hurt", -14 if player.health.current_health <= 2 else -17, 0.25)
 	_duck_movement()
 	# A spike/hit reaction is not a voluntary fall, even after hit-stun expires.
 	_damage_airborne = true
@@ -276,7 +265,7 @@ func _on_landed(impact_speed: float) -> void:
 		surface = &"land_wood" if wood else &"land_stone"
 	_landing_audio.stream = sounds.stream_for(surface)
 	_landing_audio.pitch_scale = lerpf(1.0, 0.86, strength) * randf_range(0.98, 1.02)
-	_landing_audio.volume_db = lerpf(-29, -14, strength) + sounds.gain_for(surface)
+	_landing_audio.volume_db = lerpf(-23, -11, strength) + sounds.gain_for(surface)
 	_landing_audio.play()
 	_step_cooldown = 0.2
 
@@ -306,4 +295,9 @@ func death_playback_position() -> float:
 func _on_death_animation_started() -> void:
 	if _death_cue_played or not player.health.is_dead(): return
 	_death_cue_played = true
-	_death_voice = weakref(sounds.play_sfx(&"death", -12))
+	var voice: AudioStreamPlayer = sounds.play_sfx(&"death", -12)
+	_death_voice = weakref(voice)
+	if boss_death_mix:
+		var level := voice.volume_db
+		voice.volume_db = level - 24.0
+		voice.create_tween().tween_property(voice, "volume_db", level, 0.45)

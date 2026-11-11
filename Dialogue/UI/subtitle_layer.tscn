@@ -3,15 +3,14 @@
 [ext_resource type="Script" path="res://Dialogue/UI/subtitle_layer.gd" id="1_layer"]
 [ext_resource type="Script" path="res://addons/dialogic/Modules/Text/node_dialog_text.gd" id="2_text"]
 [ext_resource type="Script" path="res://addons/dialogic/Modules/Text/node_next_indicator.gd" id="4_next"]
-[ext_resource type="FontFile" path="res://addons/dialogic/Example Assets/Fonts/Roboto-Regular.ttf" id="5_regular"]
-[ext_resource type="FontFile" path="res://addons/dialogic/Example Assets/Fonts/Roboto-Italic.ttf" id="6_italic"]
-[ext_resource type="FontFile" path="res://addons/dialogic/Example Assets/Fonts/Roboto-Bold.ttf" id="7_bold"]
 [ext_resource type="Script" path="res://addons/dialogic/Modules/Text/node_type_sound.gd" id="8_type_sound"]
 [ext_resource type="AudioStream" path="res://addons/dialogic/Example Assets/sound-effects/typing1.wav" id="9_type_1"]
 [ext_resource type="AudioStream" path="res://addons/dialogic/Example Assets/sound-effects/typing2.wav" id="10_type_2"]
 [ext_resource type="AudioStream" path="res://addons/dialogic/Example Assets/sound-effects/typing3.wav" id="11_type_3"]
 [ext_resource type="AudioStream" path="res://addons/dialogic/Example Assets/sound-effects/typing4.wav" id="12_type_4"]
 [ext_resource type="AudioStream" path="res://addons/dialogic/Example Assets/sound-effects/typing5.wav" id="13_type_5"]
+
+[ext_resource type="FontFile" path="res://Assets/Fonts/Alkhemikal.ttf" id="5_alkhemikal"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_frame"]
 bg_color = Color(0.025, 0.025, 0.03, 0.93)
@@ -71,10 +70,10 @@ theme_override_colors/default_color = Color(0.94, 0.925, 0.875, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
 theme_override_constants/shadow_offset_y = 2
 theme_override_constants/line_separation = 2
-theme_override_fonts/normal_font = ExtResource("5_regular")
-theme_override_fonts/bold_font = ExtResource("7_bold")
-theme_override_fonts/italics_font = ExtResource("6_italic")
-theme_override_fonts/bold_italics_font = ExtResource("6_italic")
+theme_override_fonts/normal_font = ExtResource("5_alkhemikal")
+theme_override_fonts/bold_font = ExtResource("5_alkhemikal")
+theme_override_fonts/italics_font = ExtResource("5_alkhemikal")
+theme_override_fonts/bold_italics_font = ExtResource("5_alkhemikal")
 theme_override_font_sizes/normal_font_size = 24
 theme_override_font_sizes/bold_font_size = 24
 theme_override_font_sizes/italics_font_size = 24
@@ -123,8 +122,8 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.62, 0.63, 0.58, 1)
-theme_override_fonts/font = ExtResource("5_regular")
-theme_override_font_sizes/font_size = 36
-text = "▶"
+theme_override_fonts/font = ExtResource("5_alkhemikal")
+theme_override_font_sizes/font_size = 32
+text = ">>"
 horizontal_alignment = 1
 vertical_alignment = 1

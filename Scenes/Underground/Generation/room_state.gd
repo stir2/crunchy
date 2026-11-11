@@ -29,6 +29,12 @@ func begin_day(day_number: int) -> bool:
 				groups.erase(identity)
 	current_day = day_number
 	return changed_day
+func has_layout_progress(progression: AbyssProgressionState) -> bool:
+	return not (groups.is_empty() and markers.is_empty() and progression.checkpoints.is_empty()
+		and progression.fragments.is_empty() and progression.gates.is_empty() and progression.keys.is_empty()
+		and progression.unlocked_levels.is_empty() and exploration.visited.is_empty()
+		and exploration.graves.is_empty() and exploration.descent_souls.is_empty())
+
 static func key(request: AbyssRoomConstructionRequest, kind: String, identity: String) -> String:
 	var world := request.world_id if not request.world_id.is_empty() else str(request.global_seed)
 	return JSON.stringify([world, request.requirements.global_coords.x, request.requirements.global_coords.y, String(request.template_id), kind, identity])

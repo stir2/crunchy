@@ -869,6 +869,7 @@ func run() -> void:
 	lab.start_in_climbing_section = false
 	root.add_child(lab)
 	player = lab.get_node("Player") as Player
+	player.get_node("CombatController").mouse_aim_attacks = false
 	player.jump_charge_frames = 5 # Explicitly exercise anticipation despite user tuning.
 	combat = player.get_node("CombatController") as PlayerCombatController
 	check(combat.repeat_while_held,"Held attack repetition is not enabled by default")

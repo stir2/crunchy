@@ -72,6 +72,8 @@ func nearest_target(channel: InteractionTarget.Channel = InteractionTarget.Chann
 	for target in _targets:
 		if not target.is_available_for_action(player,channel): continue
 		var candidate := origin.global_position.distance_squared_to(target.global_position)
+		if channel == InteractionTarget.Channel.TRAVEL and (candidate > distance or not can_reach_travel_target(target)):
+			continue
 		if target.can_interact_for_action(player,channel):
 			if candidate <= distance and (nearest == null or candidate < distance):
 				nearest = target
@@ -80,6 +82,18 @@ func nearest_target(channel: InteractionTarget.Channel = InteractionTarget.Chann
 			fallback = target # e.g. insufficient-fragment information, without an action prompt.
 			fallback_distance = candidate
 	return nearest if nearest != null else fallback
+
+func can_reach_travel_target(target: InteractionTarget) -> bool:
+	var start := origin.global_position
+	var end := target.global_position
+	if start.distance_squared_to(end) > interaction_radius * interaction_radius:
+		return false
+	if start.is_equal_approx(end):
+		return true
+	var ray := PhysicsRayQueryParameters2D.create(start, end, 1)
+	ray.hit_from_inside = true
+	return player.get_world_2d().direct_space_state.intersect_ray(ray).is_empty()
+
 
 func _binding_text(action: StringName) -> String:
 	for event in InputMap.action_get_events(action):

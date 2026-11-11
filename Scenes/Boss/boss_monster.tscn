@@ -1,16 +1,16 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://c3slyxyl3coxj"]
 
-[ext_resource type="Script" path="res://Scenes/Boss/boss_monster.gd" id="1"]
-[ext_resource type="Script" path="res://Scenes/Combat/health_component.gd" id="2"]
-[ext_resource type="Script" path="res://Scenes/Boss/boss_hand.gd" id="3"]
-[ext_resource type="Script" path="res://Scenes/Combat/damage_area.gd" id="4"]
-[ext_resource type="Texture2D" path="res://BossSprites/bossBody.png" id="tex0"]
-[ext_resource type="Texture2D" path="res://BossSprites/bossHead.png" id="tex1"]
-[ext_resource type="Texture2D" path="res://BossSprites/bossArmArmUpper.png" id="tex2"]
-[ext_resource type="Texture2D" path="res://BossSprites/bossArmArm.png" id="tex3"]
-[ext_resource type="Texture2D" path="res://BossSprites/bossClawArm.png" id="tex4"]
-[ext_resource type="Texture2D" path="res://BossSprites/bossArmHand.png" id="tex5"]
-[ext_resource type="Texture2D" path="res://BossSprites/bossClawHand.png" id="tex6"]
+[ext_resource type="Script" uid="uid://dqaabysjf8d4e" path="res://Scenes/Boss/boss_monster.gd" id="1"]
+[ext_resource type="Script" uid="uid://kj5y61ep5nm4" path="res://Scenes/Combat/health_component.gd" id="2"]
+[ext_resource type="Script" uid="uid://t42jw8wp2rlx" path="res://Scenes/Boss/boss_hand.gd" id="3"]
+[ext_resource type="Script" uid="uid://batu8dfhq5lps" path="res://Scenes/Combat/damage_area.gd" id="4"]
+[ext_resource type="Texture2D" uid="uid://dbvcc55o5bqq1" path="res://BossSprites/bossBody.png" id="tex0"]
+[ext_resource type="Texture2D" uid="uid://cgxnpojngpiol" path="res://BossSprites/bossHead.png" id="tex1"]
+[ext_resource type="Texture2D" uid="uid://cdf2a0droly5k" path="res://BossSprites/bossArmArmUpper.png" id="tex2"]
+[ext_resource type="Texture2D" uid="uid://cv0oqxqhty0o4" path="res://BossSprites/bossArmArm.png" id="tex3"]
+[ext_resource type="Texture2D" uid="uid://dotuga56grla1" path="res://BossSprites/bossClawArm.png" id="tex4"]
+[ext_resource type="Texture2D" uid="uid://dakdh7e8r6qr8" path="res://BossSprites/bossArmHand.png" id="tex5"]
+[ext_resource type="Texture2D" uid="uid://ctspo7c42hv8v" path="res://BossSprites/bossClawHand.png" id="tex6"]
 
 [sub_resource type="RectangleShape2D" id="Swipe"]
 size = Vector2(62, 58)
@@ -18,47 +18,47 @@ size = Vector2(62, 58)
 [sub_resource type="RectangleShape2D" id="Claw"]
 size = Vector2(44, 112)
 
-[node name="Monster" type="Node2D"]
+[node name="Monster" type="Node2D" unique_id=2063456389]
 script = ExtResource("1")
 
-[node name="Health" type="Node" parent="."]
+[node name="Health" type="Node" parent="." unique_id=1164159083]
 script = ExtResource("2")
-base_max_health = 180
+base_max_health = 300
 
-[node name="Body" type="Sprite2D" parent="."]
+[node name="Body" type="Sprite2D" parent="." unique_id=62645034]
 texture = ExtResource("tex0")
 centered = false
 
-[node name="UpperArm" type="Sprite2D" parent="."]
+[node name="UpperArm" type="Sprite2D" parent="." unique_id=1576415837]
 z_index = -1
 texture = ExtResource("tex2")
 centered = false
 
-[node name="LowerArm" type="Sprite2D" parent="."]
+[node name="LowerArm" type="Sprite2D" parent="." unique_id=1470011801]
 z_index = -1
 texture = ExtResource("tex3")
 centered = false
 
-[node name="ClawArm" type="Sprite2D" parent="."]
+[node name="ClawArm" type="Sprite2D" parent="." unique_id=342287788]
 z_index = -1
 texture = ExtResource("tex4")
 centered = false
 
-[node name="Head" type="Sprite2D" parent="."]
+[node name="Head" type="Sprite2D" parent="." unique_id=301234055]
 texture = ExtResource("tex1")
 centered = false
 
-[node name="SwipeHand" type="Node2D" parent="."]
+[node name="SwipeHand" type="Node2D" parent="." unique_id=919043979]
 position = Vector2(96, 265)
 
-[node name="Sprite" type="Sprite2D" parent="SwipeHand"]
+[node name="Sprite" type="Sprite2D" parent="SwipeHand" unique_id=882013072]
 texture = ExtResource("tex5")
 centered = false
 offset = Vector2(-36, -76)
 region_enabled = true
 region_rect = Rect2(60, 185, 72, 76)
 
-[node name="Hurtbox" type="Area2D" parent="SwipeHand"]
+[node name="Hurtbox" type="Area2D" parent="SwipeHand" unique_id=1872129688]
 position = Vector2(0, -32)
 collision_layer = 32
 collision_mask = 0
@@ -67,10 +67,10 @@ script = ExtResource("3")
 invulnerable = true
 health_component_path = NodePath("../../Health")
 
-[node name="Shape" type="CollisionShape2D" parent="SwipeHand/Hurtbox"]
+[node name="Shape" type="CollisionShape2D" parent="SwipeHand/Hurtbox" unique_id=236740644]
 shape = SubResource("Swipe")
 
-[node name="Attack" type="Area2D" parent="SwipeHand"]
+[node name="Attack" type="Area2D" parent="SwipeHand" unique_id=1446591331]
 position = Vector2(0, -32)
 collision_layer = 8
 collision_mask = 0
@@ -80,20 +80,20 @@ active = false
 damage = 2
 source_path = NodePath("../..")
 
-[node name="Shape" type="CollisionShape2D" parent="SwipeHand/Attack"]
+[node name="Shape" type="CollisionShape2D" parent="SwipeHand/Attack" unique_id=1887457664]
 shape = SubResource("Swipe")
 
-[node name="ClawHand" type="Node2D" parent="."]
+[node name="ClawHand" type="Node2D" parent="." unique_id=1208146490]
 position = Vector2(527, 265)
 
-[node name="Sprite" type="Sprite2D" parent="ClawHand"]
+[node name="Sprite" type="Sprite2D" parent="ClawHand" unique_id=1361418090]
 texture = ExtResource("tex6")
 centered = false
 offset = Vector2(-37, -133)
 region_enabled = true
 region_rect = Rect2(490, 132, 74, 133)
 
-[node name="Hurtbox" type="Area2D" parent="ClawHand"]
+[node name="Hurtbox" type="Area2D" parent="ClawHand" unique_id=611169253]
 position = Vector2(0, -58)
 collision_layer = 32
 collision_mask = 0
@@ -102,10 +102,10 @@ script = ExtResource("3")
 invulnerable = true
 health_component_path = NodePath("../../Health")
 
-[node name="Shape" type="CollisionShape2D" parent="ClawHand/Hurtbox"]
+[node name="Shape" type="CollisionShape2D" parent="ClawHand/Hurtbox" unique_id=1572537908]
 shape = SubResource("Claw")
 
-[node name="Attack" type="Area2D" parent="ClawHand"]
+[node name="Attack" type="Area2D" parent="ClawHand" unique_id=1873439613]
 position = Vector2(0, -58)
 collision_layer = 8
 collision_mask = 0
@@ -115,5 +115,5 @@ active = false
 damage = 2
 source_path = NodePath("../..")
 
-[node name="Shape" type="CollisionShape2D" parent="ClawHand/Attack"]
+[node name="Shape" type="CollisionShape2D" parent="ClawHand/Attack" unique_id=1992153024]
 shape = SubResource("Claw")

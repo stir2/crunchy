@@ -142,7 +142,8 @@ func play(id: String, file: String, loss_name: String = "", daily_key: String = 
 	DebugMenu.close()
 	conversation_started.emit()
 	_layout = Dialogic.Styles.load_style()
-	await _layout.ready
+	if not _layout.is_node_ready():
+		await _layout.ready
 	if not busy:
 		return
 	Dialogic.start(path)
@@ -162,6 +163,8 @@ func cancel() -> void:
 
 
 func _on_signal(value: Variant) -> void:
+	if busy and current_id == "boss_dawn" and value == "dawn_bell":
+		SoundManager.play_limited(&"night_bell-1", -12, 1.6)
 	if busy and current_id == "missing_monster" and value == "window_rumble":
 		window_rumbled.emit()
 

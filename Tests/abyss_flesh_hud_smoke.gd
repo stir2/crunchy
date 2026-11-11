@@ -32,6 +32,7 @@ func run() -> void:
 	var seed_before := region.global_seed
 	var configs: Array[Resource] = [region,AbyssRouteConfig.new(),AbyssTerrainConfig.new(),AbyssProgressionConfig.new()]
 	var settings := AbyssRuntimeWorldSettings.capture(configs,load("res://Scenes/Underground/Rooms/authored_registry.tres"))
+	game.abyss_room_state.world_settings = settings
 	var json_settings: Dictionary = JSON.parse_string(JSON.stringify(settings))
 	check(AbyssRuntimeWorldSettings.apply(json_settings,configs) and region.global_seed == seed_before,"World ID seed rounded on save/load")
 	var source := Node2D.new()

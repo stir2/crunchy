@@ -5,6 +5,7 @@ extends RefCounted
 ## the impact/source location. The receiver decides damage acceptance/reaction.
 var amount: int = 1
 var source: Node2D
+var attack_area: Area2D
 var direction: Vector2 = Vector2.RIGHT
 var knockback: Vector2 = Vector2.ZERO
 var world_position: Vector2

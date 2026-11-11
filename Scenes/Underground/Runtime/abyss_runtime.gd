@@ -28,6 +28,10 @@ var _jump_released: bool = false
 var _dash_pressed: bool = false
 var _saved_window: Dictionary = {}
 var _day: int = -1
+var _pause_tick := -1
+var _base_run_speed: float
+var _base_attack_damage: int
+var _base_stamina_regen: float
 var _return_pending: bool = false
 var _death_pending: bool = false
 var _state: AbyssRoomState
@@ -44,6 +48,10 @@ var _state: AbyssRoomState
 @onready var sprite: AnimatedSprite2D = $Player/Visuals/AnimatedSprite2D
 
 func _ready() -> void:
+	_base_run_speed = player.run_speed
+	_base_attack_damage = player.combat.attack_damage
+	_base_stamina_regen = player.stamina.regeneration_per_second
+	$StartupStatusCanvas/Panel/ReturnButton.pressed.connect(_return_after_startup_failure)
 	_set_visibility(false)
 	interactions.set_enabled(false)
 	player.set_physics_process(false)
@@ -74,7 +82,9 @@ func enter_entrance() -> bool:
 	_return_pending = false
 	_death_pending = false
 	last_error = ""
-	$StartupStatusCanvas.visible = false
+	$StartupStatusCanvas/Panel/Message.text = "Entering the Abyss…"
+	$StartupStatusCanvas/Panel/ReturnButton.hide()
+	$StartupStatusCanvas.show()
 	_set_visibility(false)
 	interactions.set_enabled(false)
 	player.set_physics_process(false)
@@ -88,7 +98,6 @@ func enter_entrance() -> bool:
 	state.begin_day(game.day)
 	_day = state.current_day
 	_restore_vitals(state)
-	if not player.damage.is_dead(): state.exploration.begin_descent(stream.specials.world)
 	var entrance := stream.routes.entrance_room()
 	if stream.specials.level_at(entrance) != 1:
 		fail_startup("Configured route entrance is outside Level 1")
@@ -108,11 +117,13 @@ func enter_entrance() -> bool:
 	if destination.is_empty():
 		fail_startup("No safe 30x36 entrance landing in the existing Level 1 terrain")
 		return false
+	if not player.damage.is_dead(): state.exploration.begin_descent(stream.specials.world)
 	player.global_position = destination.spawn_position
 	entrance_return.global_position = destination.spawn_position+Vector2(0,-18)
 	player.reset_movement() # Temporary abilities only; never heal/reset stamina.
 	_starting = false
 	_active = true
+	$StartupStatusCanvas.hide()
 	_set_visibility(true)
 	camera.activate(player,stream)
 	player.set_physics_process(true)
@@ -129,28 +140,18 @@ func _configure_world(state: AbyssRoomState) -> bool:
 	var settings := state.world_settings
 	if settings.is_empty():
 		var progression: AbyssProgressionState = game.abyss_progression_state
-		if not state.groups.is_empty() or not state.markers.is_empty() or not progression.checkpoints.is_empty() or not progression.fragments.is_empty() or not progression.gates.is_empty() or not progression.keys.is_empty() or not progression.unlocked_levels.is_empty() or not state.exploration.visited.is_empty() or not state.exploration.graves.is_empty() or not state.exploration.descent_souls.is_empty():
+		if state.has_layout_progress(progression):
 			fail_startup("Existing abyss progress has no layout version. It was preserved; start a separate new run for the 40x40 layout.")
 			return false
 		if template_registry.resource_path.is_empty():
 			fail_startup("Save the runtime template registry as a .tres resource first")
 			return false
 		settings = AbyssRuntimeWorldSettings.capture(configs,template_registry)
-	else:
-		var mismatch := AbyssRuntimeWorldSettings.compatibility_error(settings,configuration,route_configuration)
-		if not mismatch.is_empty():
-			fail_startup(mismatch)
-			return false
-		if not AbyssRuntimeWorldSettings.apply(settings,configs):
-			fail_startup("Saved abyss world settings are invalid or incompatible; no progress was changed")
-			return false
-	template_registry = load(settings.registry) as AbyssRoomTemplateRegistry
-	if template_registry == null or not configuration.is_valid() or not route_configuration.is_valid(configuration.room_size) or not progression_configuration.is_valid():
-		fail_startup("Invalid abyss runtime configuration")
+	var restored := AbyssRuntimeWorldSettings.restore_configuration(settings, configs)
+	if not restored.error.is_empty():
+		fail_startup(restored.error)
 		return false
-	if configuration.chunk_size != Vector2i(8,8) or template_registry.tile_pixels != 16:
-		fail_startup("Runtime requires the existing 8x8-room chunks and 16px tile grid")
-		return false
+	template_registry = restored.registry
 	if not stream.configure(configuration,route_configuration,terrain_configuration,progression_configuration,template_registry,state,game.abyss_progression_state):
 		fail_startup("Room template registration failed:\n" + "\n".join(stream.selector.registration_errors))
 		return false
@@ -211,6 +212,7 @@ func leave() -> void:
 	_capture_vitals()
 	_active = false
 	_starting = false
+	$StartupStatusCanvas.hide()
 	_holding = false
 	_jump_pressed = false
 	_jump_released = false
@@ -235,9 +237,21 @@ func fail_startup(message: String) -> void:
 	last_error = message
 	leave()
 	$StartupStatusCanvas/Panel/Message.text = "Unable to enter the abyss\n\n" + message
-	$StartupStatusCanvas.visible = true
+	$StartupStatusCanvas.show()
+	var button: Button = $StartupStatusCanvas/Panel/ReturnButton
+	button.show()
+	button.grab_focus()
 	push_error(message)
 	startup_failed.emit(message)
+
+func _return_after_startup_failure() -> void:
+	var host := get_parent()
+	if host.has_method("change_scene"):
+		game.return_to_stairs = true
+		host.change_scene("res://Scenes/Village/House/house.tscn")
+	else:
+		get_tree().change_scene_to_file("res://Scenes/Main/main.tscn")
+
 
 func get_player_vitals() -> Dictionary:
 	return {"health":player.health.current_health,"base_max_health":player.health.base_max_health,
@@ -255,11 +269,15 @@ func _restore_vitals(state: AbyssRoomState) -> void:
 	var values := state.player_vitals
 	if values.is_empty():
 		values = {"health":game.health,"stamina":game.stamina}
-	player.health.base_max_health = int(values.get("base_max_health",player.health.base_max_health))
+	player.health.base_max_health = int(game.stats.max_health)
+	player.run_speed = _base_run_speed * (1.0 + float(game.stats.speed) / 100.0)
+	player.combat.attack_damage = game.abyss_attack_damage(_base_attack_damage)
+	var village := get_node("/root/VillageManager")
+	player.stamina.regeneration_per_second = _base_stamina_regen * (1.0 + village.get_effect("stamina_regen_pct") / 100.0)
 	player.health.temporary_max_health_bonus = int(values.get("temporary_max_health_bonus",0))
 	player.health.current_health = clampi(int(values.health),0,player.health.max_health)
 	player.health.health_changed.emit(player.health.current_health,player.health.max_health)
-	player.stamina.max_stamina = float(values.get("max_stamina",player.stamina.max_stamina))
+	player.stamina.max_stamina = float(game.stats.max_stamina)
 	player.stamina.current_stamina = clampf(float(values.stamina),0.0,player.stamina.max_stamina)
 	player.stamina.regeneration_delay_remaining = float(values.get("stamina_delay",0.0))
 	player.stamina.stamina_changed.emit(player.stamina.current_stamina,player.stamina.max_stamina)
@@ -286,6 +304,19 @@ func _restore_presentation() -> void:
 			window.set(key,_saved_window[key])
 		_saved_window.clear()
 
+func _notification(what: int) -> void:
+	if not is_node_ready():
+		return
+	if what == NOTIFICATION_PAUSED:
+		_pause_tick = Engine.get_physics_frames()
+	elif what == NOTIFICATION_UNPAUSED and _pause_tick >= 0:
+		var ticks := Engine.get_physics_frames() - _pause_tick
+		player.health.compensate_paused_ticks(_pause_tick, ticks)
+		player.damage.compensate_paused_ticks(_pause_tick, ticks)
+		player.combat.compensate_paused_ticks(_pause_tick, ticks)
+		_pause_tick = -1
+
+
 func _exit_tree() -> void:
 	_serial += 1
 	if not _death_pending:
@@ -311,8 +342,7 @@ func can_safe_return() -> bool:
 
 func request_safe_return(source: InteractionTarget) -> bool:
 	if not can_safe_return() or not source.can_interact_for_action(player,InteractionTarget.Channel.TRAVEL): return false
-	var origin := player.get_node("CollisionShape2D") as Node2D
-	if origin.global_position.distance_to(source.global_position) > interactions.interaction_radius: return false
+	if not interactions.can_reach_travel_target(source): return false
 	_return_pending = true # Claim before deferring: two sources cannot extract twice.
 	interactions.set_enabled(false)
 	player.set_physics_process(false)
