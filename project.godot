@@ -10,8 +10,10 @@ config_version=5
 
 [application]
 
-config/name="crunchy"
+config/name="Paid In Flesh"
 run/main_scene="res://Scenes/Main/main.tscn"
+config/use_custom_user_dir=true
+config/custom_user_dir_name="Godot/app_userdata/crunchy"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
@@ -90,7 +92,7 @@ enabled=PackedStringArray("res://addons/dialogic/plugin.cfg")
 
 [gui]
 
-theme/default_font_multichannel_signed_distance_field=true
+theme/custom_font="res://Assets/Fonts/Alkhemikal.ttf"
 
 [input]
 

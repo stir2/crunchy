@@ -30,8 +30,10 @@ func _refresh_layout() -> void:
 	var subtitle_height := 112.0
 	if not Engine.is_editor_hint():
 		for text in get_tree().get_nodes_in_group("dialogic_dialog_text"):
-			if text.get_parent() is VBoxContainer:
-				subtitle_height = text.get_parent().get_combined_minimum_size().y
+			var box := text.get_parent() as Control
+			if box != null:
+				var measured := box.get_combined_minimum_size().y
+				subtitle_height = measured if measured > 0.0 else box.size.y
 	choices.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	choices.size = Vector2(width, choices.get_combined_minimum_size().y)
 	choices.position = Vector2((viewport_size.x - width) * 0.5, viewport_size.y - 54.0 - subtitle_height - 28.0 - choices.size.y)

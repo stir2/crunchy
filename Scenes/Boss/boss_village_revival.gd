@@ -71,6 +71,7 @@ func reveal_arena() -> void:
 
 func _add_portrait(villager_name: String, fallen: bool) -> void:
 	var portrait := TextureRect.new()
+	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	portrait.texture = PORTRAITS.texture_for(villager_name)
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.size = Vector2(29, 31)

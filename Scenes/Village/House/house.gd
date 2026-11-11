@@ -59,7 +59,14 @@ func _play_dawn() -> void:
 	await get_tree().create_timer(0.8, false).timeout
 	DialogueManager.play("boss_dawn", "Boss/dawn", survivors[0].display_name)
 
+func _fit_room_panels() -> void:
+	if not is_inside_tree():
+		return
+	$Panels.size = get_viewport_rect().size
+
 func _ready() -> void:
+	get_viewport().size_changed.connect(_fit_room_panels)
+	_fit_room_panels()
 	_build_dialogs()
 	window_button.pressed.connect(_talk_to_monster)
 	listen_button.pressed.connect(_listen_outside)
@@ -143,15 +150,15 @@ func set_panel(p: RoomPanel) -> void:
 		RoomPanel.STAIRS:
 			left_nav_btn.hide()
 			right_nav_btn.show()
-			right_nav_btn.text = "DESK  ►"
+			right_nav_btn.text = "DESK  >"
 		RoomPanel.DESK:
 			left_nav_btn.show()
-			left_nav_btn.text = "◄  STAIRS"
+			left_nav_btn.text = "<  STAIRS"
 			right_nav_btn.show()
-			right_nav_btn.text = "WINDOW  ►"
+			right_nav_btn.text = "WINDOW  >"
 		RoomPanel.WINDOW:
 			left_nav_btn.show()
-			left_nav_btn.text = "◄  DESK"
+			left_nav_btn.text = "<  DESK"
 			right_nav_btn.hide()
 
 	_refresh_panel_content()
@@ -227,7 +234,7 @@ func _on_sleep_requested() -> void:
 	if not preview.toll_met:
 		sleep_dialog.dialog_text = ("The toll is short. You will choose who the monster takes."
 			if preview.player_chooses else "The toll is short. The monster will choose who it takes.")
-		sleep_dialog.popup_centered()
+		sleep_dialog.popup_centered(Vector2i(660, 220))
 		return
 	_sleep()
 
@@ -341,16 +348,17 @@ func _on_victim_choice_requested(candidates: Array) -> void:
 
 	for v: Villager in sorted:
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 10)
+		row.add_theme_constant_override("separation", 14)
 
 		var name_lbl := Label.new()
-		name_lbl.text = "• " + v.display_name
-		name_lbl.custom_minimum_size = Vector2(130, 0)
-		name_lbl.add_theme_font_size_override("font_size", 14)
+		name_lbl.text = "- " + v.display_name
+		name_lbl.custom_minimum_size = Vector2(180, 0)
+		name_lbl.add_theme_font_size_override("font_size", 24)
 
 		var desc_lbl := Label.new()
 		desc_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		desc_lbl.add_theme_font_size_override("font_size", 12)
+		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc_lbl.add_theme_font_size_override("font_size", 22)
 
 		if v.is_bum:
 			name_lbl.add_theme_color_override("font_color", Color(0.65, 0.18, 0.18, 1))
@@ -370,9 +378,9 @@ func _on_victim_choice_requested(candidates: Array) -> void:
 
 		var sac_btn := Button.new()
 		sac_btn.text = "SACRIFICE"
-		sac_btn.custom_minimum_size = Vector2(100, 30)
-		sac_btn.add_theme_font_size_override("font_size", 11)
-		sac_btn.add_theme_color_override("font_color", Color(0.70, 0.15, 0.15, 1))
+		sac_btn.custom_minimum_size = Vector2(140, 44)
+		sac_btn.add_theme_font_size_override("font_size", 22)
+		sac_btn.add_theme_color_override("font_color", Color(0.95, 0.42, 0.38, 1))
 		sac_btn.pressed.connect(func():
 			sacrifice_modal.hide()
 			VillageManager.choose_victim(v.id)
@@ -426,7 +434,7 @@ func _present_village_wiped() -> void:
 	ending_dialog.get_ok_button().text = "Main Menu"
 	ending_dialog.confirmed.connect(_return_to_menu, CONNECT_ONE_SHOT)
 	ending_dialog.canceled.connect(_return_to_menu, CONNECT_ONE_SHOT)
-	ending_dialog.popup_centered()
+	ending_dialog.popup_centered(Vector2i(680, 240))
 
 
 func _return_to_menu() -> void:
@@ -434,13 +442,22 @@ func _return_to_menu() -> void:
 
 
 func _build_dialogs() -> void:
+	var confirm_theme := preload("res://Scenes/Menus/menu_style.gd").make_confirmation_theme()
 	sleep_dialog = ConfirmationDialog.new()
 	sleep_dialog.title = "End the day?"
 	sleep_dialog.ok_button_text = "Sleep"
+	sleep_dialog.theme = confirm_theme
+	sleep_dialog.get_label().horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sleep_dialog.get_label().vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	sleep_dialog.get_label().autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	sleep_dialog.confirmed.connect(_sleep)
 	add_child(sleep_dialog)
 	ending_dialog = AcceptDialog.new()
 	ending_dialog.title = "Run status"
+	ending_dialog.theme = confirm_theme
+	ending_dialog.get_label().horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ending_dialog.get_label().vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	ending_dialog.get_label().autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(ending_dialog)
 	_rumble = AudioStreamPlayer.new()
 	_rumble.bus = &"Dread"

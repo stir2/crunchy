@@ -33,6 +33,7 @@ var _pause_tick := -1
 var _entry_health := 6
 var _entry_stamina := 100.0
 var _result: PanelContainer
+var _result_layer: Control
 var _result_title: Label
 var _retry_button: Button
 var _boss_bar: ProgressBar
@@ -431,7 +432,7 @@ func _clear_volley() -> void:
 
 func _build_hud() -> void:
 	_hud = Control.new()
-	_hud.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_hud.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hud.size = Vector2(640, 360)
 	$HUD.add_child(_hud)
@@ -449,31 +450,39 @@ func _build_hud() -> void:
 		_boss_bar.add_theme_stylebox_override(key, style)
 	_hud.add_child(_boss_bar)
 	_boss_bar.size = Vector2(280, 5)
+	_result_layer = Control.new()
+	_result_layer.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_result_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_result_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	$HUD.add_child(_result_layer)
 	_result = PanelContainer.new()
-	_result.position = Vector2(16, 24)
+	_result.position = Vector2(36, 36)
 	_result.resized.connect(_fit_result)
-	_result.custom_minimum_size = Vector2(216, 0)
-	_result.theme = preload("res://Scenes/Menus/menu_style.gd").make_theme(0.67)
+	_result.custom_minimum_size = Vector2(460, 0)
+	_result.theme = preload("res://Scenes/Menus/menu_style.gd").make_theme(1.2, false)
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 7)
+	column.add_theme_constant_override("separation", 14)
 	_result.add_child(column)
 	_result_title = Label.new()
-	_result_title.add_theme_font_size_override("font_size", 15)
+	_result_title.add_theme_font_size_override("font_size", 34)
 	column.add_child(_result_title)
 	column.add_child(HSeparator.new())
 	for spec in [["Fight again", _retry], ["Return home", _return_home]]:
 		var button := Button.new()
 		button.text = spec[0]
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.add_theme_font_size_override("font_size", 28)
 		button.pressed.connect(spec[1])
 		if spec[1] == _retry:
 			_retry_button = button
 		column.add_child(button)
-	_hud.add_child(_result)
+	_result_layer.add_child(_result)
 	_result.hide()
 
 func _fit_result() -> void:
-	_result.position.y = maxf(24.0, _hud.size.y - _result.size.y - 16.0)
+	if not is_inside_tree() or not is_instance_valid(_result): return
+	var viewport_size := get_viewport_rect().size
+	_result.position = Vector2(36.0, maxf(36.0, viewport_size.y - _result.size.y - 36.0))
 
 func _fit_view() -> void:
 	if not is_inside_tree() or not is_instance_valid(_hud): return
@@ -482,6 +491,7 @@ func _fit_view() -> void:
 	camera.zoom = Vector2.ONE * factor
 	_hud.scale = Vector2.ONE * factor
 	_hud.position = (viewport_size - Vector2(640, 360) * factor) * 0.5
+	_fit_result()
 
 func _process(delta: float) -> void:
 	_shake_time += delta
@@ -600,19 +610,22 @@ func _show_result(title: String) -> void:
 	if not player.health.is_dead():
 		var caption := Label.new()
 		caption.text = "The village will see another dawn."
-		caption.custom_minimum_size.x = 180
+		caption.custom_minimum_size.x = 380
+		caption.add_theme_font_size_override("font_size", 26)
 		caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		var column := _result_title.get_parent()
 		column.add_child(caption)
 		column.move_child(caption, _result_title.get_index() + 1)
 		var row := GridContainer.new()
 		row.columns = 6
+		row.add_theme_constant_override("h_separation", 8)
+		row.add_theme_constant_override("v_separation", 8)
 		for villager: Villager in get_node("/root/VillageManager").get_villagers():
 			var portrait := TextureRect.new()
 			portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 			portrait.texture = PORTRAITS.texture_for(villager.display_name)
 			portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			portrait.custom_minimum_size = Vector2(24, 26)
+			portrait.custom_minimum_size = Vector2(48, 52)
 			portrait.tooltip_text = villager.display_name
 			row.add_child(portrait)
 		_result_title.get_parent().add_child(row)

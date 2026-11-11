@@ -100,6 +100,7 @@ func _on_collected(world: String, amount: int, origin: Vector2) -> void:
 		_serial += 1
 		var id := _serial
 		var flying := Sprite2D.new()
+		flying.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		flying.texture = icon_texture
 		if icon_texture != null: flying.scale = Vector2.ONE*icon_pixels/maxf(1.0,icon_texture.get_width())
 		flying.position = start

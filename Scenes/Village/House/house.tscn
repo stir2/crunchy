@@ -3,79 +3,64 @@
 [ext_resource type="Script" uid="uid://kj8p8kh20ila" path="res://Scenes/Village/House/house.gd" id="1_house"]
 [ext_resource type="Script" uid="uid://gs04lspi2kv4" path="res://Scenes/Village/House/village_blueprint_panel.gd" id="2_blueprint"]
 [ext_resource type="Texture2D" uid="uid://c7naffjguwwl3" path="res://Assets/Sprites/House/stairs.png" id="3_stairs"]
-[ext_resource type="Texture2D" uid="uid://bvx5xk208jn7j" path="res://Assets/Sprites/House/desk.png" id="4_desk"]
-[ext_resource type="Texture2D" uid="uid://drcxyex06u2md" path="res://Assets/Sprites/House/window.jpg" id="5_window"]
+[ext_resource type="Texture2D" path="res://uiSprites/deskView.png" id="4_desk"]
+[ext_resource type="Texture2D" path="res://uiSprites/villageView.png" id="5_window"]
 [ext_resource type="Texture2D" uid="uid://dpcmmn00u6hc0" path="res://Assets/Sprites/UI/panel_parchment.png" id="6_parchment"]
 [ext_resource type="Texture2D" uid="uid://dojwel3v7nq8w" path="res://Assets/Sprites/UI/ui_frame.png" id="7_uiframe"]
 [ext_resource type="Texture2D" path="res://uiSprites/flesh.png" id="9_soul"]
 [ext_resource type="Texture2D" path="res://uiSprites/ration.png" id="10_ration"]
-[ext_resource type="Texture2D" uid="uid://cimj5kjk1qvq3" path="res://Assets/Sprites/UI/button_normal.png" id="11_btnnorm"]
-[ext_resource type="Texture2D" uid="uid://bnnmiubwxnxdr" path="res://Assets/Sprites/UI/button_hover.png" id="12_btnhover"]
-[ext_resource type="Texture2D" uid="uid://cuonmh2315nks" path="res://Assets/Sprites/UI/button_pressed.png" id="13_btnpress"]
-[ext_resource type="Texture2D" uid="uid://dsso6fkauct5" path="res://Assets/Sprites/UI/button_disabled.png" id="14_btndis"]
 [ext_resource type="Texture2D" path="res://uiSprites/potionGreen.png" id="15_potion"]
 
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_dis"]
-content_margin_left = 12.0
-content_margin_top = 6.0
-content_margin_right = 12.0
-content_margin_bottom = 6.0
-texture = ExtResource("14_btndis")
-texture_margin_left = 6.0
-texture_margin_top = 5.0
-texture_margin_right = 6.0
-texture_margin_bottom = 5.0
+[sub_resource type="StyleBoxFlat" id="Plum"]
+bg_color = Color(0.14, 0.09, 0.16, 0.94)
+border_width_bottom = 2
+border_color = Color(0.39, 0.28, 0.38, 1)
+content_margin_left = 20.0
+content_margin_right = 20.0
 
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_hover"]
-content_margin_left = 12.0
-content_margin_top = 6.0
-content_margin_right = 12.0
-content_margin_bottom = 6.0
-texture = ExtResource("12_btnhover")
-texture_margin_left = 6.0
-texture_margin_top = 5.0
-texture_margin_right = 6.0
-texture_margin_bottom = 5.0
+[sub_resource type="StyleBoxFlat" id="PlumHover"]
+bg_color = Color(0.28, 0.17, 0.24, 0.98)
+border_width_bottom = 2
+border_color = Color(0.83, 0.58, 0.44, 1)
+content_margin_left = 20.0
+content_margin_right = 20.0
 
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_norm"]
-content_margin_left = 12.0
-content_margin_top = 6.0
-content_margin_right = 12.0
-content_margin_bottom = 6.0
-texture = ExtResource("11_btnnorm")
-texture_margin_left = 6.0
-texture_margin_top = 5.0
-texture_margin_right = 6.0
-texture_margin_bottom = 5.0
+[sub_resource type="StyleBoxFlat" id="PlumDisabled"]
+bg_color = Color(0.14, 0.09, 0.16, 0.72)
+border_width_bottom = 2
+border_color = Color(0.30, 0.23, 0.31, 1)
+content_margin_left = 20.0
+content_margin_right = 20.0
 
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn_press"]
-content_margin_left = 12.0
-content_margin_top = 6.0
-content_margin_right = 12.0
-content_margin_bottom = 6.0
-texture = ExtResource("13_btnpress")
-texture_margin_left = 6.0
-texture_margin_top = 5.0
-texture_margin_right = 6.0
-texture_margin_bottom = 5.0
+[sub_resource type="StyleBoxFlat" id="PlumFocus"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.88, 0.66, 0.50, 1)
 
 [sub_resource type="Theme" id="Theme_house"]
-Button/colors/font_color = Color(0.14, 0.11, 0.08, 1)
-Button/colors/font_disabled_color = Color(0.48, 0.44, 0.4, 0.75)
-Button/colors/font_focus_color = Color(0.06, 0.05, 0.04, 1)
-Button/colors/font_hover_color = Color(0.06, 0.05, 0.04, 1)
-Button/colors/font_pressed_color = Color(0.02, 0.02, 0.02, 1)
-Button/styles/disabled = SubResource("StyleBoxTexture_btn_dis")
-Button/styles/focus = SubResource("StyleBoxTexture_btn_hover")
-Button/styles/hover = SubResource("StyleBoxTexture_btn_hover")
-Button/styles/normal = SubResource("StyleBoxTexture_btn_norm")
-Button/styles/pressed = SubResource("StyleBoxTexture_btn_press")
+Button/colors/font_color = Color(0.98, 0.89, 0.82, 1)
+Button/colors/font_hover_color = Color(1, 0.94, 0.87, 1)
+Button/colors/font_focus_color = Color(1, 0.94, 0.87, 1)
+Button/colors/font_pressed_color = Color(1, 0.94, 0.87, 1)
+Button/colors/font_disabled_color = Color(0.64, 0.56, 0.61, 1)
+Button/styles/normal = SubResource("Plum")
+Button/styles/hover = SubResource("PlumHover")
+Button/styles/pressed = SubResource("PlumHover")
+Button/styles/disabled = SubResource("PlumDisabled")
+Button/styles/focus = SubResource("PlumFocus")
+
+[sub_resource type="StyleBoxFlat" id="HudPlum"]
+bg_color = Color(0.17, 0.10, 0.16, 1)
+border_width_bottom = 2
+border_color = Color(0.52, 0.34, 0.37, 1)
 
 [node name="house" type="Node2D" unique_id=139420749]
 script = ExtResource("1_house")
 
 [node name="Panels" type="Control" parent="." unique_id=424780698]
-custom_minimum_size = Vector2(1920, 1080)
 layout_mode = 3
 anchors_preset = 0
 offset_right = 1920.0
@@ -91,6 +76,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="TextureRect" type="TextureRect" parent="Panels/StairsPanel" unique_id=221826640]
+texture_filter = 1
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -103,33 +89,33 @@ stretch_mode = 6
 
 [node name="CenterBox" type="VBoxContainer" parent="Panels/StairsPanel" unique_id=1335643792]
 layout_mode = 1
-anchors_preset = 8
+anchors_preset = 7
 anchor_left = 0.5
-anchor_top = 0.5
+anchor_top = 1.0
 anchor_right = 0.5
-anchor_bottom = 0.5
+anchor_bottom = 1.0
 offset_left = -220.0
-offset_top = -60.0
+offset_top = -152.0
 offset_right = 220.0
-offset_bottom = 60.0
+offset_bottom = -30.0
 grow_horizontal = 2
-grow_vertical = 2
+grow_vertical = 0
 theme = SubResource("Theme_house")
 theme_override_constants/separation = 16
 alignment = 1
 
 [node name="DescendButton" type="Button" parent="Panels/StairsPanel/CenterBox" unique_id=652373542]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(380, 56)
+custom_minimum_size = Vector2(400, 62)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 32
 text = "DESCEND INTO THE ABYSS"
 
 [node name="StairsTripsLabel" type="Label" parent="Panels/StairsPanel/CenterBox" unique_id=1637863667]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 28
 text = "Trips Remaining Today: 3 / 3"
 horizontal_alignment = 1
 
@@ -143,6 +129,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="TextureRect" type="TextureRect" parent="Panels/DeskPanel" unique_id=124081555]
+texture_filter = 1
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -155,25 +142,25 @@ stretch_mode = 6
 
 [node name="CenterBox" type="VBoxContainer" parent="Panels/DeskPanel" unique_id=707529403]
 layout_mode = 1
-anchors_preset = 8
+anchors_preset = 7
 anchor_left = 0.5
-anchor_top = 0.5
+anchor_top = 1.0
 anchor_right = 0.5
-anchor_bottom = 0.5
+anchor_bottom = 1.0
 offset_left = -220.0
-offset_top = 80.0
+offset_top = -92.0
 offset_right = 220.0
-offset_bottom = 180.0
+offset_bottom = -30.0
 grow_horizontal = 2
-grow_vertical = 2
+grow_vertical = 0
 theme = SubResource("Theme_house")
 alignment = 1
 
 [node name="OpenBlueprintButton" type="Button" parent="Panels/DeskPanel/CenterBox" unique_id=1318742974]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(380, 56)
+custom_minimum_size = Vector2(440, 62)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 32
 text = "OPEN VILLAGE BLUEPRINT"
 
 [node name="WindowPanel" type="Control" parent="Panels" unique_id=1535310301]
@@ -186,6 +173,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="TextureRect" type="TextureRect" parent="Panels/WindowPanel" unique_id=1921896256]
+texture_filter = 1
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -196,128 +184,137 @@ texture = ExtResource("5_window")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="WindowActions" type="VBoxContainer" parent="Panels/WindowPanel"]
+[node name="WindowActions" type="HBoxContainer" parent="Panels/WindowPanel"]
 layout_mode = 1
+anchors_preset = 7
 anchor_left = 0.5
-anchor_top = 0.65
+anchor_top = 1.0
 anchor_right = 0.5
-anchor_bottom = 0.65
-offset_left = -200.0
-offset_right = 200.0
-theme_override_constants/separation = 12
+anchor_bottom = 1.0
+offset_left = -332.0
+offset_top = -92.0
+offset_right = 332.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 0
+theme = SubResource("Theme_house")
+theme_override_constants/separation = 24
 
 [node name="TalkMonsterButton" type="Button" parent="Panels/WindowPanel/WindowActions"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(400, 48)
+custom_minimum_size = Vector2(320, 62)
+theme_override_font_sizes/font_size = 32
 text = "Talk to the monster"
 
 [node name="ListenOutsideButton" type="Button" parent="Panels/WindowPanel/WindowActions"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(400, 48)
+custom_minimum_size = Vector2(320, 62)
+theme_override_font_sizes/font_size = 32
 text = "Listen outside"
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1288256571]
 
 [node name="TopHUD" type="PanelContainer" parent="UI" unique_id=937686893]
+texture_filter = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 54.0
+offset_bottom = 64.0
 grow_horizontal = 2
 
-[node name="PaperBg" type="NinePatchRect" parent="UI/TopHUD" unique_id=564300766]
-layout_mode = 2
-texture = ExtResource("6_parchment")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
-
-[node name="FrameBorder" type="NinePatchRect" parent="UI/TopHUD" unique_id=2036953022]
-layout_mode = 2
-texture = ExtResource("7_uiframe")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
+theme_override_styles/panel = SubResource("HudPlum")
 
 [node name="Margin" type="MarginContainer" parent="UI/TopHUD" unique_id=626480760]
 layout_mode = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 10
 
 [node name="HBox" type="HBoxContainer" parent="UI/TopHUD/Margin" unique_id=2105722878]
 layout_mode = 2
-theme_override_constants/separation = 28
+theme_override_constants/separation = 32
 alignment = 1
 
 [node name="TopDayLabel" type="Label" parent="UI/TopHUD/Margin/HBox" unique_id=227663414]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.98, 0.90, 0.84, 1)
+theme_override_font_sizes/font_size = 32
 text = "Day 1/10"
+vertical_alignment = 1
 
 [node name="TollBox" type="HBoxContainer" parent="UI/TopHUD/Margin/HBox" unique_id=551586481]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 8
 
 [node name="Icon" type="TextureRect" parent="UI/TopHUD/Margin/HBox/TollBox" unique_id=1430559005]
-custom_minimum_size = Vector2(18, 18)
+texture_filter = 1
+custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
+size_flags_vertical = 4
 texture = ExtResource("9_soul")
-stretch_mode = 3
+expand_mode = 1
+stretch_mode = 5
 
 [node name="TopFleshLabel" type="Label" parent="UI/TopHUD/Margin/HBox/TollBox" unique_id=1211613037]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.98, 0.90, 0.84, 1)
+theme_override_font_sizes/font_size = 32
 text = "0 / 12 Flesh"
+vertical_alignment = 1
 
 [node name="RationsBox" type="HBoxContainer" parent="UI/TopHUD/Margin/HBox" unique_id=1459372583]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 8
 
 [node name="Icon" type="TextureRect" parent="UI/TopHUD/Margin/HBox/RationsBox" unique_id=1229750750]
-custom_minimum_size = Vector2(18, 18)
+texture_filter = 1
+custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
+size_flags_vertical = 4
 texture = ExtResource("10_ration")
-stretch_mode = 3
+expand_mode = 1
+stretch_mode = 5
 
 [node name="TopRationsLabel" type="Label" parent="UI/TopHUD/Margin/HBox/RationsBox" unique_id=47114009]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.98, 0.90, 0.84, 1)
+theme_override_font_sizes/font_size = 32
 text = "8 Rations"
+vertical_alignment = 1
 
 [node name="PotionsBox" type="HBoxContainer" parent="UI/TopHUD/Margin/HBox" unique_id=2079344981]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 8
 
 [node name="Icon" type="TextureRect" parent="UI/TopHUD/Margin/HBox/PotionsBox" unique_id=765993545]
-custom_minimum_size = Vector2(18, 18)
+texture_filter = 1
+custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
+size_flags_vertical = 4
 texture = ExtResource("15_potion")
-stretch_mode = 3
+expand_mode = 1
+stretch_mode = 5
 
 [node name="TopPotionsLabel" type="Label" parent="UI/TopHUD/Margin/HBox/PotionsBox" unique_id=329298568]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.98, 0.90, 0.84, 1)
+theme_override_font_sizes/font_size = 32
 text = "0 Potions"
+vertical_alignment = 1
 
 [node name="TopTripsLabel" type="Label" parent="UI/TopHUD/Margin/HBox" unique_id=542920864]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.98, 0.90, 0.84, 1)
+theme_override_font_sizes/font_size = 32
 text = "3/3 Trips"
+vertical_alignment = 1
 
 [node name="VSeparator" type="VSeparator" parent="UI/TopHUD/Margin/HBox" unique_id=862934949]
 layout_mode = 2
@@ -326,11 +323,13 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.24, 0.2, 0.16, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.89, 0.79, 0.78, 1)
+theme_override_font_sizes/font_size = 32
 horizontal_alignment = 2
+vertical_alignment = 1
 
 [node name="NavUI" type="Control" parent="UI" unique_id=1211174550]
+texture_filter = 1
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -342,36 +341,36 @@ theme = SubResource("Theme_house")
 
 [node name="LeftNavButton" type="Button" parent="UI/NavUI" unique_id=1798808006]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(150, 56)
+custom_minimum_size = Vector2(180, 62)
 layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
 offset_left = 36.0
-offset_top = -28.0
-offset_right = 186.0
-offset_bottom = 28.0
-grow_vertical = 2
-theme_override_font_sizes/font_size = 18
-text = "◄  STAIRS"
+offset_top = -92.0
+offset_right = 216.0
+offset_bottom = -30.0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 32
+text = "<  STAIRS"
 
 [node name="RightNavButton" type="Button" parent="UI/NavUI" unique_id=819267853]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(150, 56)
+custom_minimum_size = Vector2(180, 62)
 layout_mode = 1
-anchors_preset = 6
+anchors_preset = 3
 anchor_left = 1.0
-anchor_top = 0.5
+anchor_top = 1.0
 anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -186.0
-offset_top = -28.0
+anchor_bottom = 1.0
+offset_left = -216.0
+offset_top = -92.0
 offset_right = -36.0
-offset_bottom = 28.0
+offset_bottom = -30.0
 grow_horizontal = 0
-grow_vertical = 2
-theme_override_font_sizes/font_size = 18
-text = "WINDOW  ►"
+grow_vertical = 0
+theme_override_font_sizes/font_size = 32
+text = "WINDOW  >"
 
 [node name="VillagePanel" type="Control" parent="UI"]
 unique_name_in_owner = true
@@ -386,21 +385,23 @@ script = ExtResource("2_blueprint")
 [node name="RefugeeModal" type="MarginContainer" parent="UI" unique_id=1410879781]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(560, 530)
+texture_filter = 1
+custom_minimum_size = Vector2(700, 620)
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -280.0
-offset_top = -265.0
-offset_right = 280.0
-offset_bottom = 265.0
+offset_left = -350.0
+offset_top = -310.0
+offset_right = 350.0
+offset_bottom = 310.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = SubResource("Theme_house")
 
 [node name="PaperBg" type="NinePatchRect" parent="UI/RefugeeModal" unique_id=18394433]
+texture_filter = 1
 layout_mode = 2
 texture = ExtResource("6_parchment")
 patch_margin_left = 6
@@ -409,6 +410,7 @@ patch_margin_right = 6
 patch_margin_bottom = 6
 
 [node name="FrameBorder" type="NinePatchRect" parent="UI/RefugeeModal" unique_id=47667965]
+texture_filter = 1
 layout_mode = 2
 texture = ExtResource("7_uiframe")
 patch_margin_left = 6
@@ -429,8 +431,8 @@ theme_override_constants/separation = 10
 
 [node name="Title" type="Label" parent="UI/RefugeeModal/ContentMargin/VBox" unique_id=1014148720]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.18, 0.15, 0.12, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.18, 0.14, 0.11, 1)
+theme_override_font_sizes/font_size = 32
 text = "TRAVELER AT THE GATES"
 horizontal_alignment = 1
 
@@ -451,7 +453,7 @@ stretch_mode = 5
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.15, 0.4, 0.15, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 28
 text = "Traveler Name (Able Worker)"
 horizontal_alignment = 1
 
@@ -459,14 +461,14 @@ horizontal_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.28, 0.24, 0.2, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 autowrap_mode = 2
 
 [node name="UpkeepNotice" type="Label" parent="UI/RefugeeModal/ContentMargin/VBox" unique_id=738703853]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.25, 0.25, 1)
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 22
 text = "+1 Ration of food each night."
 horizontal_alignment = 1
 
@@ -475,39 +477,43 @@ layout_mode = 2
 
 [node name="ButtonRow" type="HBoxContainer" parent="UI/RefugeeModal/ContentMargin/VBox" unique_id=368091894]
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 24
 alignment = 1
 
 [node name="WelcomeRefugeeButton" type="Button" parent="UI/RefugeeModal/ContentMargin/VBox/ButtonRow" unique_id=100043893]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(180, 42)
+custom_minimum_size = Vector2(210, 52)
 layout_mode = 2
+theme_override_font_sizes/font_size = 26
 text = "WELCOME IN"
 
 [node name="TurnAwayRefugeeButton" type="Button" parent="UI/RefugeeModal/ContentMargin/VBox/ButtonRow" unique_id=1961723278]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(140, 42)
+custom_minimum_size = Vector2(180, 52)
 layout_mode = 2
+theme_override_font_sizes/font_size = 26
 text = "TURN AWAY"
 
 [node name="SacrificeModal" type="MarginContainer" parent="UI" unique_id=1320280452]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(640, 440)
+texture_filter = 1
+custom_minimum_size = Vector2(780, 540)
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -320.0
-offset_top = -220.0
-offset_right = 320.0
-offset_bottom = 220.0
+offset_left = -390.0
+offset_top = -270.0
+offset_right = 390.0
+offset_bottom = 270.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = SubResource("Theme_house")
 
 [node name="PaperBg" type="NinePatchRect" parent="UI/SacrificeModal" unique_id=729739254]
+texture_filter = 1
 layout_mode = 2
 texture = ExtResource("6_parchment")
 patch_margin_left = 6
@@ -516,6 +522,7 @@ patch_margin_right = 6
 patch_margin_bottom = 6
 
 [node name="FrameBorder" type="NinePatchRect" parent="UI/SacrificeModal" unique_id=404452358]
+texture_filter = 1
 layout_mode = 2
 texture = ExtResource("7_uiframe")
 patch_margin_left = 6
@@ -537,9 +544,10 @@ theme_override_constants/separation = 10
 [node name="Title" type="Label" parent="UI/SacrificeModal/ContentMargin/VBox" unique_id=1218391722]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.65, 0.15, 0.15, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 32
 text = "THE TOLL WAS SHORT — OFFER A SACRIFICE"
 horizontal_alignment = 1
+autowrap_mode = 2
 
 [node name="HSeparator1" type="HSeparator" parent="UI/SacrificeModal/ContentMargin/VBox" unique_id=1127680369]
 layout_mode = 2
@@ -547,7 +555,7 @@ layout_mode = 2
 [node name="Notice" type="Label" parent="UI/SacrificeModal/ContentMargin/VBox" unique_id=1814773156]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.28, 0.22, 0.18, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 24
 text = "The toll was close. Choose who the monster takes."
 horizontal_alignment = 1
 autowrap_mode = 2

@@ -26,7 +26,7 @@ layout_mode = 0
 offset_left = 16.0
 offset_top = 12.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 16
 text = "ABYSS"
 [node name="Legend" type="Label" parent="Panel"]
 layout_mode = 1
@@ -34,21 +34,22 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 12.0
-offset_top = -42.0
+offset_top = -52.0
 offset_right = -12.0
 offset_bottom = -8.0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 12
-text = "M / Esc: close   •   Drag / movement keys: pan   •   Wheel: zoom\n◇ Checkpoint   ▯ Gate   ● Collected fragment   † Grave"
+theme_override_font_sizes/font_size = 16
+text = "M / Esc: close   ·   Drag / movement keys: pan   ·   Wheel: zoom
+◇ Checkpoint   ▯ Gate   ● Collected fragment   † Grave"
 horizontal_alignment = 1
 [node name="Center" type="Button" parent="Panel"]
 layout_mode = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -142.0
+offset_left = -168.0
 offset_top = 12.0
 offset_right = -12.0
-offset_bottom = 40.0
-theme_override_font_sizes/font_size = 12
+offset_bottom = 44.0
+theme_override_font_sizes/font_size = 16
 text = "Center on player"
 focus_mode = 0
