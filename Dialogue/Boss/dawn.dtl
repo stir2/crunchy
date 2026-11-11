@@ -1,5 +1,6 @@
-Chief: {DialogueManager.lost_name}? Is that you out there?
-Villager: Should I ring it?
-Chief: Go on. Let everyone sleep through it if they want.
+Villager: Chief? What happened?
+Chief: It's dead. There's no toll today.
+Villager: Should I ring the bell?
+Chief: Yeah. Let them know.
 [signal arg="dawn_bell"]
-Villager: I'll leave my door open. Come have breakfast when you're ready.
+Villager: Come by when you're ready. I'll make breakfast.

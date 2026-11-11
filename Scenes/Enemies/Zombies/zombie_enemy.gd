@@ -219,16 +219,17 @@ func _move_jump(delta: float) -> void:
 
 func _start_windup() -> void:
 	super._start_windup()
-	SoundManager.play_limited(&"zombie_atk_windup", -11.5, 0.2)
+	SoundManager.play_limited(&"zombie_atk_windup", -14.5, 0.2)
 
 
 func _play_impact() -> void:
-	SoundManager.play_limited(&"zombie_hit", -10.5, 0.08)
+	super._play_impact()
+	SoundManager.play_limited(&"zombie_hit", -15.5, 0.08)
 
 
 func _begin_attack() -> void:
 	super._begin_attack()
-	SoundManager.play_limited(&"zombie_atk", -10.5, 0.12)
+	SoundManager.play_limited(&"zombie_atk", -14.5, 0.12)
 	hitbox.position.x = _direction * 22
 	sprite.play(&"attack")
 	sprite.set_frame_and_progress(8, 0)
@@ -264,7 +265,7 @@ func _on_died(_hit: CombatHit) -> void:
 	if _dying:
 		return
 	_dying = true
-	SoundManager.play_limited(&"zombie_death", -10.5, 0.15)
+	SoundManager.play_limited(&"zombie_death", -15.5, 0.15)
 	velocity = Vector2.ZERO
 	_bait_left = 0
 	_resume_animation = false
@@ -325,5 +326,5 @@ func _on_zombie_frame_changed() -> void:
 	var offset := randf_range(0.0, 0.04) if _step_parity == 0 else randf_range(0.03, 0.11)
 	var base_vol := -14.5 + randf_range(-2.0, 1.0) if _step_parity == 0 else -17.0 + randf_range(-2.5, 0.5)
 	_step_parity = 1 - _step_parity
-	SoundManager.play_varied(cue, base_vol + distance_gain, pitch_min, pitch_max, offset, &"ZombieSteps")
+	SoundManager.play_varied(cue, base_vol + distance_gain - 4.0, pitch_min, pitch_max, offset, &"ZombieSteps")
 

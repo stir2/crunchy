@@ -12,6 +12,8 @@ var sleep_dialog: ConfirmationDialog
 var _morning_transition: bool = false
 var _greeted_refugee: String = ""
 var _rumble: AudioStreamPlayer
+var _window_ambience_timer := Timer.new()
+var _window_ambience_fade: Tween
 
 @onready var stairs_panel: Control = %StairsPanel
 @onready var desk_panel: Control = %DeskPanel
@@ -25,6 +27,7 @@ var _rumble: AudioStreamPlayer
 @onready var top_rations_label: Label = %TopRationsLabel
 @onready var top_potions_label: Label = %TopPotionsLabel
 @onready var top_trips_label: Label = %TopTripsLabel
+@onready var top_hearts: HeartHUD = %TopHearts
 @onready var top_vitals_label: Label = %TopVitalsLabel
 
 @onready var descend_btn: Button = %DescendButton
@@ -40,7 +43,7 @@ var _rumble: AudioStreamPlayer
 @onready var turn_away_refugee_btn: Button = %TurnAwayRefugeeButton
 
 @onready var sacrifice_modal: Control = %SacrificeModal
-@onready var sacrifice_list_container: VBoxContainer = %SacrificeListContainer
+@onready var sacrifice_list_container: GridContainer = %SacrificeListContainer
 @onready var window_button: Button = %TalkMonsterButton
 @onready var listen_button: Button = %ListenOutsideButton
 
@@ -68,6 +71,16 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_fit_room_panels)
 	_fit_room_panels()
 	_build_dialogs()
+	var menu_style := preload("res://Scenes/Menus/menu_style.gd")
+	var modal_theme := menu_style.make_theme()
+	var action_theme := menu_style.make_confirmation_theme()
+	for state in ["normal", "hover", "pressed", "focus"]:
+		modal_theme.set_stylebox(state, "Button", action_theme.get_stylebox(state, "Button"))
+	for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		modal_theme.set_color(color_name, "Button", action_theme.get_color(color_name, "Button"))
+	for modal in [refugee_modal, sacrifice_modal]:
+		modal.theme = modal_theme
+		modal.resized.connect(_position_modal.bind(modal))
 	window_button.pressed.connect(_talk_to_monster)
 	listen_button.pressed.connect(_listen_outside)
 	DialogueManager.conversation_started.connect(_refresh_panel_content)
@@ -142,6 +155,7 @@ func set_panel(p: RoomPanel) -> void:
 	if current_panel != p:
 		SoundManager.play_ui(&"panel_transition", -26)
 	current_panel = p
+	_update_window_ambience()
 	stairs_panel.visible = (p == RoomPanel.STAIRS)
 	desk_panel.visible = (p == RoomPanel.DESK)
 	window_panel.visible = (p == RoomPanel.WINDOW)
@@ -207,7 +221,7 @@ func _descend() -> void:
 		return
 	if GameController.is_day_10():
 		if GameController.monster_missing and not GameController.boss_defeated:
-			get_tree().current_scene.change_scene("res://Scenes/Boss/boss_arena.tscn")
+			get_tree().current_scene.transition_to_scene("res://Scenes/Boss/boss_arena.tscn", 0.95)
 		return
 	var main := get_tree().current_scene
 	if not ResourceLoader.exists(ABYSS_SCENE) or not main.has_method("change_scene"):
@@ -254,9 +268,8 @@ func _refresh_top_hud() -> void:
 	if GameController.is_day_10():
 		top_flesh_label.text = "Toll ended" if GameController.boss_defeated else "Toll: ∞"
 		top_trips_label.text = "The village is safe" if GameController.boss_defeated else ("Investigate the abyss" if GameController.monster_missing else "Check the window")
-	top_vitals_label.text = "Hearts: %.1f/%.1f  |  Stamina: %d/%d  |  Village Health: %d%%" % [
-		GameController.health / 2.0,
-		GameController.stats.get("max_health", 6) / 2.0,
+	top_hearts.set_display_health(GameController.health, int(GameController.stats.get("max_health", 6)))
+	top_vitals_label.text = "Stamina: %d/%d  |  Village Health: %d%%" % [
 		GameController.stamina,
 		GameController.stats.get("max_stamina", 100),
 		GameController.village_health,
@@ -293,13 +306,13 @@ func _on_refugee_waiting(candidate: Dictionary) -> void:
 		return
 	refugee_portrait.texture = PORTRAITS.texture_for(String(candidate.get("name", "Traveler")))
 	var is_bum: bool = candidate.get("is_bum", false)
-	var type_str := "Bum" if is_bum else "Worker"
-	refugee_name_label.text = "%s (%s)" % [candidate.get("name", "Traveler"), type_str]
+	refugee_name_label.text = String(candidate.get("name", "Traveler"))
 	if is_bum:
 		refugee_desc_label.text = "Won't work, but still needs food."
 	else:
 		refugee_desc_label.text = "Can learn a trade and work in a building."
 	refugee_modal.show()
+	_center_modal.call_deferred(refugee_modal)
 	var identity := str(candidate.get("id", candidate.get("name", "Traveler")))
 	if identity != _greeted_refugee:
 		_greeted_refugee = identity
@@ -346,50 +359,58 @@ func _on_victim_choice_requested(candidates: Array) -> void:
 		return false
 	)
 
+	sacrifice_list_container.columns = mini(3, maxi(1, ceili(sorted.size() / 5.0)))
 	for v: Villager in sorted:
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 14)
+		row.add_theme_constant_override("separation", 12)
+		sacrifice_list_container.add_child(row)
 
-		var name_lbl := Label.new()
-		name_lbl.text = "- " + v.display_name
-		name_lbl.custom_minimum_size = Vector2(180, 0)
-		name_lbl.add_theme_font_size_override("font_size", 24)
+		var portrait := TextureRect.new()
+		portrait.texture = PORTRAITS.texture_for(v.display_name)
+		portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		portrait.custom_minimum_size = Vector2(68, 72)
+		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		row.add_child(portrait)
 
-		var desc_lbl := Label.new()
-		desc_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		desc_lbl.add_theme_font_size_override("font_size", 22)
+		var details := VBoxContainer.new()
+		details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		details.alignment = BoxContainer.ALIGNMENT_CENTER
+		details.custom_minimum_size.x = 145
+		row.add_child(details)
 
-		if v.is_bum:
-			name_lbl.add_theme_color_override("font_color", Color(0.65, 0.18, 0.18, 1))
-			desc_lbl.text = "[Permanent Bum] — Meat shield (Recommended)"
-			desc_lbl.add_theme_color_override("font_color", Color(0.55, 0.22, 0.22, 1))
-		elif v.is_employed():
-			name_lbl.add_theme_color_override("font_color", Color(0.18, 0.15, 0.12, 1))
-			desc_lbl.text = "[%s Worker] — Active contributor" % v.assignment.capitalize()
-			desc_lbl.add_theme_color_override("font_color", Color(0.40, 0.35, 0.28, 1))
-		else:
-			name_lbl.add_theme_color_override("font_color", Color(0.18, 0.15, 0.12, 1))
-			desc_lbl.text = "[Idle Worker] — In queue"
-			desc_lbl.add_theme_color_override("font_color", Color(0.40, 0.35, 0.28, 1))
+		var name_label := Label.new()
+		name_label.text = v.display_name
+		name_label.add_theme_font_size_override("font_size", 26)
+		details.add_child(name_label)
 
-		row.add_child(name_lbl)
-		row.add_child(desc_lbl)
+		var occupation := Label.new()
+		var building := VillageManager.get_building(v.assignment) if v.is_employed() else null
+		occupation.text = "Bum" if v.is_bum else ("Idle Worker" if building == null else building.display_name)
+		occupation.add_theme_font_size_override("font_size", 22)
+		details.add_child(occupation)
 
-		var sac_btn := Button.new()
-		sac_btn.text = "SACRIFICE"
-		sac_btn.custom_minimum_size = Vector2(140, 44)
-		sac_btn.add_theme_font_size_override("font_size", 22)
-		sac_btn.add_theme_color_override("font_color", Color(0.95, 0.42, 0.38, 1))
-		sac_btn.pressed.connect(func():
+		var sacrifice := Button.new()
+		sacrifice.text = "Sacrifice"
+		sacrifice.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		sacrifice.add_theme_font_size_override("font_size", 22)
+		sacrifice.pressed.connect(func():
 			sacrifice_modal.hide()
 			VillageManager.choose_victim(v.id)
 		)
-		row.add_child(sac_btn)
-
-		sacrifice_list_container.add_child(row)
+		row.add_child(sacrifice)
 
 	sacrifice_modal.show()
+	_center_modal.call_deferred(sacrifice_modal)
+
+
+func _center_modal(modal: Control) -> void:
+	modal.reset_size()
+	_position_modal(modal)
+
+
+func _position_modal(modal: Control) -> void:
+	modal.position = (get_viewport_rect().size - modal.size) * 0.5
 
 
 func _on_night_resolved(report: Dictionary) -> void:
@@ -462,6 +483,34 @@ func _build_dialogs() -> void:
 	_rumble = AudioStreamPlayer.new()
 	_rumble.bus = &"Dread"
 	add_child(_rumble)
+	_window_ambience_timer.one_shot = true
+	_window_ambience_timer.timeout.connect(_play_window_ambience)
+	add_child(_window_ambience_timer)
+
+
+func _update_window_ambience() -> void:
+	if current_panel == RoomPanel.WINDOW and not GameController.is_day_10() and not GameController.boss_defeated:
+		_window_ambience_timer.start(0.85)
+	else:
+		_window_ambience_timer.stop()
+		if _window_ambience_fade != null and _window_ambience_fade.is_running():
+			_window_ambience_fade.kill()
+			_rumble.stop()
+
+
+func _play_window_ambience() -> void:
+	_rumble.stream = SoundManager.next_rumble()
+	var cue := StringName(_rumble.stream.resource_path.get_file().get_basename())
+	var day_gain := clampf((GameController.day - 1) * 0.45, 0.0, 3.6)
+	var level := -24.0 + day_gain + SoundManager.gain_for(cue)
+	_rumble.volume_db = -60.0
+	_rumble.play()
+	_window_ambience_fade = create_tween()
+	_window_ambience_fade.tween_property(_rumble, "volume_db", level, 0.85)
+	_window_ambience_fade.tween_interval(1.9)
+	_window_ambience_fade.tween_property(_rumble, "volume_db", -60.0, 1.2)
+	_window_ambience_fade.tween_callback(_rumble.stop)
+	_window_ambience_timer.start(randf_range(9.0, 14.0))
 
 
 func _investigate_window() -> void:

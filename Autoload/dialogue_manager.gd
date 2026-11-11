@@ -64,7 +64,9 @@ func listen_outside() -> void:
 		var key := "loss_%d" % i
 		if int(loss.day) < GameController.day - 2 or GameController.window_history.has(key):
 			continue
-		var file := "taken" if loss.cause == "taken" else "starved"
+		var file := String(loss.cause)
+		if file not in ["taken", "sacrificed", "starved"]:
+			continue
 		if loss.cause == "taken" and bool(loss.get("was_bum", false)):
 			file = "taken_bum"
 		play(key, "Rumours/" + file, String(loss.name))

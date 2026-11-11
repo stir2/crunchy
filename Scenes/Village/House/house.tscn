@@ -1,12 +1,11 @@
 [gd_scene format=3 uid="uid://dyl2qryv5kly3"]
 
+[ext_resource type="Script" path="res://Scenes/Player/Health/heart_hud.gd" id="16_heart_hud"]
 [ext_resource type="Script" uid="uid://kj8p8kh20ila" path="res://Scenes/Village/House/house.gd" id="1_house"]
 [ext_resource type="Script" uid="uid://gs04lspi2kv4" path="res://Scenes/Village/House/village_blueprint_panel.gd" id="2_blueprint"]
-[ext_resource type="Texture2D" uid="uid://c7naffjguwwl3" path="res://Assets/Sprites/House/stairs.png" id="3_stairs"]
+[ext_resource type="Texture2D" path="res://uiSprites/stairsView.png" id="3_stairs"]
 [ext_resource type="Texture2D" path="res://uiSprites/deskView.png" id="4_desk"]
 [ext_resource type="Texture2D" path="res://uiSprites/villageView.png" id="5_window"]
-[ext_resource type="Texture2D" uid="uid://dpcmmn00u6hc0" path="res://Assets/Sprites/UI/panel_parchment.png" id="6_parchment"]
-[ext_resource type="Texture2D" uid="uid://dojwel3v7nq8w" path="res://Assets/Sprites/UI/ui_frame.png" id="7_uiframe"]
 [ext_resource type="Texture2D" path="res://uiSprites/flesh.png" id="9_soul"]
 [ext_resource type="Texture2D" path="res://uiSprites/ration.png" id="10_ration"]
 [ext_resource type="Texture2D" path="res://uiSprites/potionGreen.png" id="15_potion"]
@@ -319,6 +318,13 @@ vertical_alignment = 1
 [node name="VSeparator" type="VSeparator" parent="UI/TopHUD/Margin/HBox" unique_id=862934949]
 layout_mode = 2
 
+[node name="TopHearts" type="Control" parent="UI/TopHUD/Margin/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+script = ExtResource("16_heart_hud")
+pixel_scale = 3
+
 [node name="TopVitalsLabel" type="Label" parent="UI/TopHUD/Margin/HBox" unique_id=329431159]
 unique_name_in_owner = true
 layout_mode = 2
@@ -382,48 +388,21 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_blueprint")
 
-[node name="RefugeeModal" type="MarginContainer" parent="UI" unique_id=1410879781]
+[node name="RefugeeModal" type="PanelContainer" parent="UI" unique_id=1410879781]
 unique_name_in_owner = true
 visible = false
 texture_filter = 1
-custom_minimum_size = Vector2(700, 620)
+custom_minimum_size = Vector2(620, 0)
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -350.0
-offset_top = -310.0
-offset_right = 350.0
-offset_bottom = 310.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = SubResource("Theme_house")
-
-[node name="PaperBg" type="NinePatchRect" parent="UI/RefugeeModal" unique_id=18394433]
-texture_filter = 1
-layout_mode = 2
-texture = ExtResource("6_parchment")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
-
-[node name="FrameBorder" type="NinePatchRect" parent="UI/RefugeeModal" unique_id=47667965]
-texture_filter = 1
-layout_mode = 2
-texture = ExtResource("7_uiframe")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
 
 [node name="ContentMargin" type="MarginContainer" parent="UI/RefugeeModal" unique_id=188818704]
 layout_mode = 2
-theme_override_constants/margin_left = 28
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 28
-theme_override_constants/margin_bottom = 20
 
 [node name="VBox" type="VBoxContainer" parent="UI/RefugeeModal/ContentMargin" unique_id=816734742]
 layout_mode = 2
@@ -431,7 +410,6 @@ theme_override_constants/separation = 10
 
 [node name="Title" type="Label" parent="UI/RefugeeModal/ContentMargin/VBox" unique_id=1014148720]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.18, 0.14, 0.11, 1)
 theme_override_font_sizes/font_size = 32
 text = "TRAVELER AT THE GATES"
 horizontal_alignment = 1
@@ -452,22 +430,19 @@ stretch_mode = 5
 [node name="RefugeeNameLabel" type="Label" parent="UI/RefugeeModal/ContentMargin/VBox" unique_id=2111945387]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.15, 0.4, 0.15, 1)
 theme_override_font_sizes/font_size = 28
-text = "Traveler Name (Able Worker)"
+text = "Traveler"
 horizontal_alignment = 1
 
 [node name="RefugeeDescLabel" type="Label" parent="UI/RefugeeModal/ContentMargin/VBox" unique_id=561178571]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.28, 0.24, 0.2, 1)
 theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 autowrap_mode = 2
 
 [node name="UpkeepNotice" type="Label" parent="UI/RefugeeModal/ContentMargin/VBox" unique_id=738703853]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.25, 0.25, 1)
 theme_override_font_sizes/font_size = 22
 text = "+1 Ration of food each night."
 horizontal_alignment = 1
@@ -494,48 +469,21 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 26
 text = "TURN AWAY"
 
-[node name="SacrificeModal" type="MarginContainer" parent="UI" unique_id=1320280452]
+[node name="SacrificeModal" type="PanelContainer" parent="UI" unique_id=1320280452]
 unique_name_in_owner = true
 visible = false
 texture_filter = 1
-custom_minimum_size = Vector2(780, 540)
+custom_minimum_size = Vector2(500, 0)
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -390.0
-offset_top = -270.0
-offset_right = 390.0
-offset_bottom = 270.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = SubResource("Theme_house")
-
-[node name="PaperBg" type="NinePatchRect" parent="UI/SacrificeModal" unique_id=729739254]
-texture_filter = 1
-layout_mode = 2
-texture = ExtResource("6_parchment")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
-
-[node name="FrameBorder" type="NinePatchRect" parent="UI/SacrificeModal" unique_id=404452358]
-texture_filter = 1
-layout_mode = 2
-texture = ExtResource("7_uiframe")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
 
 [node name="ContentMargin" type="MarginContainer" parent="UI/SacrificeModal" unique_id=400540019]
 layout_mode = 2
-theme_override_constants/margin_left = 28
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 28
-theme_override_constants/margin_bottom = 20
 
 [node name="VBox" type="VBoxContainer" parent="UI/SacrificeModal/ContentMargin" unique_id=105222856]
 layout_mode = 2
@@ -543,9 +491,8 @@ theme_override_constants/separation = 10
 
 [node name="Title" type="Label" parent="UI/SacrificeModal/ContentMargin/VBox" unique_id=1218391722]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.65, 0.15, 0.15, 1)
 theme_override_font_sizes/font_size = 32
-text = "THE TOLL WAS SHORT — OFFER A SACRIFICE"
+text = "The Toll Was Short\nOffer a Sacrifice"
 horizontal_alignment = 1
 autowrap_mode = 2
 
@@ -554,7 +501,6 @@ layout_mode = 2
 
 [node name="Notice" type="Label" parent="UI/SacrificeModal/ContentMargin/VBox" unique_id=1814773156]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.28, 0.22, 0.18, 1)
 theme_override_font_sizes/font_size = 24
 text = "The toll was close. Choose who the monster takes."
 horizontal_alignment = 1
@@ -563,12 +509,9 @@ autowrap_mode = 2
 [node name="HSeparator2" type="HSeparator" parent="UI/SacrificeModal/ContentMargin/VBox" unique_id=1519472280]
 layout_mode = 2
 
-[node name="Scroll" type="ScrollContainer" parent="UI/SacrificeModal/ContentMargin/VBox" unique_id=1726855746]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="SacrificeListContainer" type="VBoxContainer" parent="UI/SacrificeModal/ContentMargin/VBox/Scroll" unique_id=96785168]
+[node name="SacrificeListContainer" type="GridContainer" parent="UI/SacrificeModal/ContentMargin/VBox" unique_id=96785168]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 6
+size_flags_horizontal = 4
+theme_override_constants/h_separation = 18
+theme_override_constants/v_separation = 12

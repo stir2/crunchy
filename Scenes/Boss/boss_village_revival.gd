@@ -29,7 +29,7 @@ func play(max_hp: int, restored_hp: int, cue: Callable) -> void:
 	add_child(refill)
 	var hearts := HEARTS.instantiate() as HeartHUD
 	hearts.pixel_scale = 3
-	hearts.position = CENTER - Vector2(hearts.pixel_scale * 4.5 * ceili(max_hp / 2.0), 9)
+	hearts.position = CENTER - Vector2(hearts.pixel_scale * (9 * ceili(max_hp / 2.0) - 2) * 0.5, 9)
 	_ritual.add_child(hearts)
 	hearts.bind_health(refill)
 	hearts.show()
@@ -81,10 +81,19 @@ func _add_portrait(villager_name: String, fallen: bool) -> void:
 	_portraits.append(portrait)
 
 func _place_portraits(progress: float) -> void:
-	var rings := 2 if _portraits.size() > 15 else 1
-	for i in _portraits.size():
-		var ring := i % rings
-		var count := ceili(float(_portraits.size() - ring) / rings)
-		var angle := TAU * (float(i / rings) / count + progress) * (1.0 if ring == 0 else -1.0)
-		var radius := lerpf(134.0, 80.0, progress) + ring * 37.0
-		_portraits[i].position = CENTER + Vector2.from_angle(angle) * Vector2(radius, radius * 0.70) - _portraits[i].size * 0.5
+	var total := _portraits.size()
+	var columns := 8
+	var rows := ceili(float(total) / columns)
+	var rows_per_side := ceili(rows / 2.0)
+	var scale_factor := minf(1.0, 2.0 / maxf(1.0, rows_per_side))
+	var portrait_size := Vector2(29, 31) * scale_factor
+	var spacing := (Vector2(29, 31) + Vector2(7, 6)) * scale_factor
+	for i in total:
+		var row := floori(float(i) / columns)
+		var column := i % columns
+		var count := mini(columns, total - row * columns)
+		var side := -1.0 if row % 2 == 0 else 1.0
+		var x := (column - (count - 1) * 0.5) * spacing.x
+		var y := side * (lerpf(52.0, 33.0, progress) + floori(row / 2.0) * spacing.y)
+		_portraits[i].size = portrait_size
+		_portraits[i].position = CENTER + Vector2(x, y) - portrait_size * 0.5

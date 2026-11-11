@@ -60,6 +60,15 @@ void fragment() {
 		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		caption.add_theme_font_size_override("font_size", 32)
 		card.add_child(caption)
+		var cause := Label.new()
+		match String(loss.get("cause", "")):
+			"taken": cause.text = "Taken by the monster"
+			"sacrificed": cause.text = "Sacrificed for the toll"
+			"starved": cause.text = "Died of starvation"
+			_: cause.text = "Died"
+		cause.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cause.add_theme_font_size_override("font_size", 24)
+		card.add_child(cause)
 
 	var reveal := create_tween().set_parallel(true)
 	reveal.tween_property(_veil, "color:a", 0.65, 0.65)

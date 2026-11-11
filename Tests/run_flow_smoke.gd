@@ -208,7 +208,13 @@ func run() -> void:
 	check(host.active_path == BOSS, "Day 10 did not open the boss")
 	var arena: Node = host.active_scene
 	check(is_equal_approx(arena.player.stamina.regeneration_per_second, 3.3), "Boss Farmer percentage incorrect")
+	var dialogue := root.get_node("DialogueManager")
+	var dialogic := root.get_node("Dialogic")
 	var monster: Node = arena.monster
+	check(await wait_for(func(): return dialogue.current_id == "boss_intro" and dialogic.current_timeline != null), "Boss intro dialogue did not start")
+	check(monster.phase == monster.Phase.REST and not arena.player.combat.actions_enabled, "Combat started during the boss intro")
+	if dialogic.current_timeline != null:
+		dialogic.end_timeline()
 	var boss_cues: Array[StringName] = []
 	arena.child_entered_tree.connect(func(child: Node):
 		if child is AudioStreamPlayer:
@@ -341,8 +347,6 @@ func run() -> void:
 		await process_frame
 	check(chief_sprite.animation == &"death" and chief_sprite.frame == chief_sprite.sprite_frames.get_frame_count(&"death") - 1, "Death animation did not settle on the grave")
 	check(not arena._hud.has_node("VillageRevival"), "Villagers appeared before the grave had a beat on screen")
-	var dialogue := root.get_node("DialogueManager")
-	var dialogic := root.get_node("Dialogic")
 	check(await wait_for(func(): return dialogue.current_id == "boss_revival" and dialogic.current_timeline != null), "Villagers did not speak before the revival")
 	check(chief.health.is_dead(), "Chief healed before the villagers spoke")
 	if dialogic.current_timeline != null:
@@ -365,6 +369,9 @@ func run() -> void:
 	arena._retry()
 	arena = host.active_scene
 	arena.monster.health.take_damage(hit)
+	check(await wait_for(func(): return dialogue.current_id == "boss_aftermath" and dialogic.current_timeline != null), "Boss aftermath dialogue did not start")
+	if dialogic.current_timeline != null:
+		dialogic.end_timeline()
 	check(await wait_for(func(): return arena._result.visible), "Boss victory result did not appear")
 	check(game.boss_defeated and not arena._retry_button.visible, "Victory did not complete the run")
 	arena._return_home()

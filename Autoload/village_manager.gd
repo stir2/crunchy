@@ -171,7 +171,7 @@ func choose_victim(villager_id: int) -> bool:
 	if not _choosing or sim.get_villager(villager_id) == null:
 		return false
 	_choosing = false
-	_settle(villager_id)
+	_settle(villager_id, &"sacrificed")
 	return true
 
 
@@ -224,13 +224,13 @@ func _on_night_started(day: int, flesh: int, quota: int) -> void:
 		_settle(sim.random_villager_id())
 
 
-func _settle(taken_id: int) -> void:
+func _settle(taken_id: int, cause: StringName = &"taken") -> void:
 	var victim: Villager = sim.get_villager(taken_id) if taken_id > 0 else null
 	if victim != null:
-		villager_left.emit(victim.display_name, &"taken")
+		villager_left.emit(victim.display_name, cause)
 	var report := sim.settle_night(
 		int(_toll["day"]), int(_toll["flesh"]), int(_toll["quota"]),
-		GameController.rations, bool(_toll["met"]), taken_id)
+		GameController.rations, bool(_toll["met"]), taken_id, cause)
 	if report["starved"] != "":
 		villager_left.emit(String(report["starved"]), &"starved")
 	GameController.rations = int(report["rations"])

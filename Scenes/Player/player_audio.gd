@@ -185,14 +185,14 @@ func _floor_sound() -> StringName:
 func _on_attack_phase(phase: int) -> void:
 	if phase == PlayerCombatController.AttackState.ACTIVE and _last_swing != player.combat.swing_id:
 		_last_swing = player.combat.swing_id
-		sounds.play_sfx(&"cleaver_swing_alt" if sprite.animation == &"attack_alt" else &"cleaver_swing", -11)
+		sounds.play_sfx(&"cleaver_swing_alt" if sprite.animation == &"attack_alt" else &"cleaver_swing", -13)
 
 
 func _on_hit_confirmed(target: CombatDamageable, _hit: CombatHit) -> void:
 	_duck_movement()
 	# Live enemies already play their own spatial impact sound.
 	if not target.damage_owner().is_in_group("enemies"):
-		sounds.play_sfx(&"cleaver_impact", -10)
+		sounds.play_sfx(&"cleaver_impact", -7)
 
 
 func _on_health_changed(current: int, maximum: int) -> void:
@@ -265,7 +265,7 @@ func _on_landed(impact_speed: float) -> void:
 		surface = &"land_wood" if wood else &"land_stone"
 	_landing_audio.stream = sounds.stream_for(surface)
 	_landing_audio.pitch_scale = lerpf(1.0, 0.86, strength) * randf_range(0.98, 1.02)
-	_landing_audio.volume_db = lerpf(-23, -11, strength) + sounds.gain_for(surface)
+	_landing_audio.volume_db = lerpf(-25, -13, strength) + sounds.gain_for(surface)
 	_landing_audio.play()
 	_step_cooldown = 0.2
 

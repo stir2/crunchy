@@ -28,6 +28,7 @@ var _death_drop_released: bool = false
 var _player: Player
 var _landing_until_tick: int = -1
 var _next_slash: int = 0
+var _dialogue_idle := false
 
 func _ready() -> void:
 	_player = get_parent().get_parent() as Player
@@ -75,6 +76,11 @@ func _death_floor_offset(death_frame: int) -> Vector2:
 	var floor_offset: int = DEATH_FLOOR_OFFSETS[death_frame] if death_frame < DEATH_FLOOR_OFFSETS.size() else 3
 	return Vector2(0, floor_offset)
 
+func set_dialogue_idle(enabled: bool) -> void:
+	_dialogue_idle = enabled
+	update_animation()
+
+
 func update_animation() -> void:
 	if is_instance_valid(_player.damage) and _player.damage.is_dead():
 		if not _death_started:
@@ -100,6 +106,12 @@ func update_animation() -> void:
 			play(&"death")
 			set_frame_and_progress(21,0.0)
 		offset = _death_floor_offset(frame)
+		return
+	if _dialogue_idle:
+		offset = idle_offset
+		speed_scale = 1.0
+		if animation != &"idle" or not is_playing():
+			play(&"idle")
 		return
 	if is_instance_valid(_player.damage) and _player.damage.is_action_locked():
 		_pose(&"run", 4, run_offset) # Temporary hurt pose.

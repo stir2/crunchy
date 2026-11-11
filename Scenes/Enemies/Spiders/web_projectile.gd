@@ -7,6 +7,7 @@ const WEB_FRAMES = preload("res://Scenes/Enemies/Spiders/spider_projectile_frame
 @export var shot_color: Color = Color(1.0, 0.8, 0.3)
 @export_range(0, 2) var max_bounces: int = 1
 @export_range(0.1, 1.0) var bounce_speed_retention: float = 0.8
+var impact_volume_db: float = -16.0
 var travel_velocity: Vector2 = Vector2.ZERO
 var source_actor: Node2D
 var _bounces_left: int = 0
@@ -118,7 +119,7 @@ func _physics_process(delta: float) -> void:
 					hurtbox.receive_hit(hit)
 			elif hurtbox.receive_hit(hit) and radius > 0.0 and hurtbox.damage_owner().has_method("extend_recovery_from_web"):
 				hurtbox.damage_owner().extend_recovery_from_web()
-		SoundManager.play_limited(&"web_hit", -11.5, 0.12)
+		SoundManager.play_limited(&"web_hit", impact_volume_db, 0.12)
 		active = false
 		set_physics_process(false)
 		queue_free()
