@@ -5,6 +5,7 @@ var _seed: int
 var _tile_pixels: int
 var registration_errors: PackedStringArray = []
 const CHECKPOINT_TILE = preload("res://Scenes/Underground/Progression/checkpoint_tile.gd")
+const GATE_TILE = preload("res://Scenes/Underground/Progression/gate_tile.gd")
 var _checkpoint_ids: Dictionary = {}
 var checkpoint_planner: AbyssSpecialRooms
 
@@ -31,6 +32,7 @@ func _init(registry: AbyssRoomTemplateRegistry, global_seed: int) -> void:
 			registration_errors.append("Invalid weight: %s" % metadata.template_id)
 		else:
 			var errors := AbyssRoomTemplateValidator.validate(metadata)
+			errors.append_array(GATE_TILE.validate(metadata))
 			if _checkpoint_ids.has(metadata.template_id): errors.append_array(CHECKPOINT_TILE.validate(metadata))
 			if not errors.is_empty():
 				registration_errors.append("%s: %s" % [metadata.template_id, "; ".join(errors)])
@@ -148,9 +150,17 @@ func select_room(generator: AbyssRouteGenerator, coords: Vector2i) -> AbyssRoomC
 	for direction in AbyssRegionGenerator.DIRECTIONS:
 		neighbors.append(generator.get_room(coords + direction))
 	var checkpoint_room := false
-	if generator.progression != null and not _checkpoint_ids.is_empty():
+	if generator.progression != null:
 		if checkpoint_planner == null or checkpoint_planner.routes != generator:
 			# has_checkpoint reads deterministic planning only, never activation state.
 			checkpoint_planner = AbyssSpecialRooms.new(generator,generator.progression,AbyssProgressionState.new())
+		# Generate both gate approaches rather than carving an authored layout.
+		if not checkpoint_planner.gate_at(coords).is_empty() or not checkpoint_planner.gate_at(coords + Vector2i.LEFT).is_empty():
+			var requirements := AbyssRoomRequirements.from_room(room, chunk.config, chunk.route_config, neighbors, _tile_pixels)
+			var generated := AbyssRoomConstructionRequest.new()
+			generated.requirements = requirements
+			generated.global_seed = _seed
+			generated.room_seed = _room_seed(coords)
+			return generated
 		checkpoint_room = checkpoint_planner.has_checkpoint(coords)
 	return select(AbyssRoomRequirements.from_room(room, chunk.config, chunk.route_config, neighbors, _tile_pixels),checkpoint_room)

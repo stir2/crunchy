@@ -50,6 +50,9 @@ static func validate(room: AbyssAuthoredRoom, metadata: AbyssRoomTemplateMetadat
 			for other_key in ["Solid","Platforms","ConditionalWalls","ConditionalPlatforms","BreakableWalls"]:
 				var other := room.get_node_or_null(NodePath(other_key)) as TileMapLayer
 				if other_key != key and other != null and other.get_cell_source_id(cell) != -1:
+					# One-way supports may remain behind a wall after it is broken.
+					if key == "BreakableWalls" and other_key == "Platforms" and AbyssRoomTemplateValidator._has_collision(other,cell) and not AbyssRoomTemplateValidator._has_solid_collision(other,cell):
+						continue
 					errors.append("%s overlaps %s at %s" % [key,other_key,cell])
 	# Hazard artwork is independent of blocking terrain and future damage logic.
 	var hazards := room.get_node_or_null("Hazards") as TileMapLayer
@@ -92,8 +95,7 @@ static func validate(room: AbyssAuthoredRoom, metadata: AbyssRoomTemplateMetadat
 			errors.append("Marker outside room: %s" % marker.marker_id)
 		if marker is CheckpointMarker or marker is LevelGateMarker or marker is KeyFragmentMarker:
 			var region := int(metadata.transition_base_region) if metadata.region == AbyssRoomTemplateMetadata.Compatibility.TRANSITION else int(metadata.region)
-			var expected := AbyssRoomData.Region.PACKED if marker is KeyFragmentMarker else AbyssRoomData.Region.OPEN
-			if region != expected:
+			if (marker is KeyFragmentMarker and region != AbyssRoomData.Region.PACKED) or (marker is LevelGateMarker and region != AbyssRoomData.Region.OPEN):
 				errors.append("Special marker %s has incompatible room region" % marker.marker_id)
 		elif marker is EnemySpawnMarker:
 			if not is_finite(marker.difficulty_range.x) or not is_finite(marker.difficulty_range.y) or marker.difficulty_range.x > marker.difficulty_range.y or marker.depth_range.x > marker.depth_range.y:

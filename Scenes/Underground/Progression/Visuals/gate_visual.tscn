@@ -1,6 +1,15 @@
 [gd_scene format=3]
-[ext_resource type="Script" path="res://Scenes/Underground/Progression/special_placeholder.gd" id="1"]
+[ext_resource type="Script" path="res://Scenes/Underground/Progression/Visuals/gate_visual.gd" id="1"]
+[ext_resource type="SpriteFrames" path="res://Scenes/Underground/Progression/Visuals/gate_frames.tres" id="2"]
+[ext_resource type="Texture2D" path="res://tileSprites/door16x112.png" id="3"]
 [node name="Visuals" type="Node2D"]
 texture_filter = 1
 script = ExtResource("1")
-feature = "gate"
+[node name="ClosedDoor" type="Sprite2D" parent="."]
+texture = ExtResource("3")
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+visible = false
+position = Vector2(-59,-57)
+sprite_frames = ExtResource("2")
+animation = &"open"
+centered = false
