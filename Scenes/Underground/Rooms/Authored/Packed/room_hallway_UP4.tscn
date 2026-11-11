@@ -56,15 +56,19 @@ position = Vector2(320, 320)
 
 [node name="EnemySpawnMarker" parent="ObjectMarkers" unique_id=937753076 instance=ExtResource("3_w4he1")]
 position = Vector2(254, 190)
+marker_id = &"room_hallway_up4_enemyspawnmarker"
 
 [node name="EnemySpawnMarker2" parent="ObjectMarkers" unique_id=1755257734 instance=ExtResource("3_w4he1")]
 position = Vector2(294, 190)
+marker_id = &"room_hallway_up4_enemyspawnmarker2"
 
 [node name="EnemySpawnMarker3" parent="ObjectMarkers" unique_id=51632974 instance=ExtResource("3_w4he1")]
 position = Vector2(335, 190)
+marker_id = &"room_hallway_up4_enemyspawnmarker3"
 
 [node name="EnemySpawnMarker4" parent="ObjectMarkers" unique_id=1776892226 instance=ExtResource("3_w4he1")]
 position = Vector2(377, 190)
+marker_id = &"room_hallway_up4_enemyspawnmarker4"
 
 [node name="OpeningGuides" type="Node2D" parent="." unique_id=1400682792]
 

@@ -81,6 +81,8 @@ position = Vector2(8, 504)
 
 [node name="EnemySpawnMarker" parent="." unique_id=83882549 instance=ExtResource("3_h58u2")]
 position = Vector2(231, 433)
+marker_id = &"room_hallway_down2_enemyspawnmarker"
 
 [node name="EnemySpawnMarker2" parent="." unique_id=412963514 instance=ExtResource("3_h58u2")]
 position = Vector2(407, 432)
+marker_id = &"room_hallway_down2_enemyspawnmarker2"
