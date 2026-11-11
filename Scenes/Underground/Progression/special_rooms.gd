@@ -53,7 +53,7 @@ func _band(level: int, band: int) -> Dictionary:
 					guaranteed = _definition("fragment",level,coords)
 		if level < config.LEVEL_COUNT:
 			var left := Vector2i(bounds.y - 1,y)
-			if routes.regions.get_room(left).region == AbyssRoomData.Region.OPEN and routes.regions.get_room(left + Vector2i.RIGHT).region == AbyssRoomData.Region.OPEN:
+			if routes.regions.get_room(left).region == AbyssRoomData.Region.PACKED and routes.regions.get_room(left + Vector2i.RIGHT).region == AbyssRoomData.Region.PACKED and not routes.get_room(left).required_connections.is_empty() and not routes.get_room(left + Vector2i.RIGHT).required_connections.is_empty():
 				var rank := _roll(left,"gate")
 				if rank < gate_best:
 					gate_best = rank
@@ -72,17 +72,25 @@ func definitions_at(coords: Vector2i) -> Array[Dictionary]:
 		return result
 	var band := floori(float(coords.y) / config.FRAGMENT_INTERVAL)
 	var choices := _band(level,band)
-	var room := routes.get_room(coords)
 	if has_checkpoint(coords):
 		result.append(_definition("checkpoint",level,coords))
-	if room.region == AbyssRoomData.Region.PACKED and not room.required_connections.is_empty():
-		var required: Dictionary = choices.fragment
-		if (not required.is_empty() and Vector2i(required.x,required.y) == coords) or _roll(coords,"extra_fragment") < config.EXTRA_FRAGMENT_PROBABILITY:
-			result.append(_definition("fragment",level,coords))
+	var fragment := fragment_at(coords)
+	if not fragment.is_empty(): result.append(fragment)
 	var gate: Dictionary = choices.gate
 	if not gate.is_empty() and Vector2i(gate.x,gate.y) == coords:
 		result.append(gate.duplicate(true))
 	return result
+func fragment_at(coords: Vector2i) -> Dictionary:
+	var level := level_at(coords)
+	if level == 0 or coords.y < 0: return {}
+	var choices := _band(level,floori(float(coords.y)/config.FRAGMENT_INTERVAL))
+	var required: Dictionary = choices.fragment
+	var guaranteed := not required.is_empty() and Vector2i(required.x,required.y) == coords
+	if not guaranteed and _roll(coords,"extra_fragment") >= config.EXTRA_FRAGMENT_PROBABILITY: return {}
+	var room := routes.get_room(coords)
+	if room.region != AbyssRoomData.Region.PACKED or room.required_connections.is_empty(): return {}
+	return _definition("fragment",level,coords)
+
 func interval_definitions(level: int, interval: int) -> Dictionary:
 	if level < 1 or level > config.LEVEL_COUNT or interval < 0:
 		return {"fragment":{},"gate":{}}

@@ -2,6 +2,8 @@ class_name AbyssMapOverlay
 extends CanvasLayer
 ## Owns only its own pause. Existing pause-menu state is never taken over.
 @export_range(0.0,0.5,0.01) var fade_seconds: float = 0.12
+@export_range(0,10,1) var nearby_gate_count: int = 3
+@export_range(0,10,1) var nearby_fragment_count: int = 3
 var runtime: AbyssRuntime
 var model: AbyssMapModel
 var opened: bool = false
@@ -69,7 +71,9 @@ func _mark_dirty() -> void:
 func _refresh_graph() -> void:
 	var position := runtime.loaded_rooms.to_local(runtime.player.global_position)
 	var level := runtime.stream.specials.level_at(runtime.stream.world_to_room(runtime.player.global_position))
-	view.set_graph(model.snapshot(level),float(model.room_size.x*model.tile_pixels),position)
+	model.nearby_gate_count = nearby_gate_count
+	model.nearby_fragment_count = nearby_fragment_count
+	view.set_graph(model.snapshot(level,position),float(model.room_size.x*model.tile_pixels),position)
 	_dirty = false
 
 func _process(delta: float) -> void:

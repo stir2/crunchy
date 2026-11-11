@@ -3,8 +3,8 @@ extends Resource
 ## Three finite horizontal strips, aligned to chunk boundaries. Changing these
 ## values changes progression IDs/placement and requires a new world namespace.
 const LEVEL_COUNT := 3
-@export var first_chunk_x: int = -4
-@export_range(2, 32) var level_width_chunks: int = 8
+@export var first_chunk_x: int = -1
+@export_range(2, 32) var level_width_chunks: int = 3
 @export_range(0.0, 1.0) var checkpoint_probability: float = 0.08
 ## Minimum Euclidean distance between checkpoint room centers, in rooms.
 @export_range(1, 16) var checkpoint_min_spacing_rooms: int = 4

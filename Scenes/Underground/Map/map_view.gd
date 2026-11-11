@@ -55,7 +55,15 @@ func _refresh_positions() -> void:
 	for index in range(_icons.size()):
 		var point: Vector2 = graph.markers[index].position if index < graph.markers.size() else player_position
 		_icons[index].position = world_to_screen(point)
+		if index < graph.markers.size() and graph.markers[index].kind == "gate":
+			_icons[index].position = _gate_screen_position(point)
 	queue_redraw()
+
+func _gate_screen_position(point: Vector2) -> Vector2:
+	var offset := world_to_screen(point)-size*0.5
+	var extent := (size*0.5-Vector2(24,24)).max(Vector2.ONE)
+	var scale_down := maxf(1.0,maxf(absf(offset.x)/extent.x,absf(offset.y)/extent.y))
+	return size*0.5+offset/scale_down
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -85,3 +93,14 @@ func _draw() -> void:
 		draw_line(middle,end,edge.to_color,1.5,true)
 	for node: Dictionary in graph.nodes.values():
 		draw_circle(world_to_screen(node.position),3.5 if node.visited else 3.0,node.color,true,-1,true)
+	for marker: Dictionary in graph.markers:
+		if marker.kind != "gate": continue
+		var target := world_to_screen(marker.position)
+		var pinned := _gate_screen_position(marker.position)
+		if target.is_equal_approx(pinned): continue
+		var direction := (target-pinned).normalized()
+		var tip := pinned+direction*16.0
+		var color := Color(0.5,1,0.75) if marker.active else Color(0.8,0.65,0.45)
+		draw_line(pinned,tip,color,1.5,true)
+		draw_line(tip,tip-direction.rotated(0.6)*6.0,color,1.5,true)
+		draw_line(tip,tip-direction.rotated(-0.6)*6.0,color,1.5,true)

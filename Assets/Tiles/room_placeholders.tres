@@ -3,6 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://bcrm1yntjy7mh" path="res://Assets/Tiles/room_placeholders.svg" id="1_ttk8o"]
 [ext_resource type="Texture2D" uid="uid://btcu2imj26fwj" path="res://SpriteSheets/checkpoint_100x100_24fps.png" id="2_checkpoint"]
 [ext_resource type="Texture2D" uid="uid://7hbp7bo7cdx8" path="res://Tilesets/16x16tileset.png" id="3_rock"]
+[ext_resource type="Texture2D" uid="uid://q0k134at65tv" path="res://tileSprites/door16x112.png" id="4_door"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_bj36v"]
 texture = ExtResource("1_ttk8o")
@@ -461,6 +462,14 @@ texture = ExtResource("3_rock")
 11:3/0/terrains_peering_bit/top_side = 0
 11:3/0/custom_data_2 = &"stone"
 
+[sub_resource type="TileSetAtlasSource" id="GatePlacement"]
+resource_name = "Level gate placement"
+texture = ExtResource("4_door")
+texture_region_size = Vector2i(16, 112)
+0:0/0 = 0
+0:0/0/texture_origin = Vector2i(0, 48)
+0:0/0/custom_data_4 = true
+
 [resource]
 physics_layer_0/collision_layer = 1
 terrain_set_0/mode = 0
@@ -474,6 +483,9 @@ custom_data_layer_2/name = "footstep_surface"
 custom_data_layer_2/type = 21
 custom_data_layer_3/name = "checkpoint"
 custom_data_layer_3/type = 1
+custom_data_layer_4/name = "gate"
+custom_data_layer_4/type = 1
 sources/0 = SubResource("TileSetAtlasSource_bj36v")
 sources/1 = SubResource("Checkpoint")
 sources/2 = SubResource("AbyssRock")
+sources/3 = SubResource("GatePlacement")
