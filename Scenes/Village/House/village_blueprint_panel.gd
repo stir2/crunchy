@@ -5,18 +5,36 @@ extends Control
 signal closed
 signal sleep_requested
 
-const MAP = preload("res://Assets/Sprites/UI/Village/Untitled.png")
-const PAPER = preload("res://Assets/Sprites/UI/Village/Untitled copy.png")
+const MAP = preload("res://uiSprites/deskUi.png")
+const PAPER = preload("res://uiSprites/paper.png")
 const PORTRAITS = preload("res://Scenes/Village/villager_portraits.gd")
 const CHIEF_IDLE = preload("res://Assets/Sprites/UI/Village/chief_idle.tres")
 const INK = Color("392b24")
+const MAP_OFFSET := Vector2(0, 16)
 const HOTSPOTS = {
-	&"farmer": Rect2(18, 36, 72, 56),
-	&"blacksmith": Rect2(204, 15, 62, 58),
-	&"apothecary": Rect2(85, 160, 72, 61),
-	&"tailor": Rect2(282, 160, 72, 61),
-	&"chief": Rect2(265, 72, 82, 74),
+	&"farmer": Rect2(83, 44, 88, 63),
+	&"blacksmith": Rect2(278, 33, 77, 80),
+	&"apothecary": Rect2(75, 176, 111, 73),
+	&"tailor": Rect2(281, 177, 90, 71),
+	&"chief": Rect2(326, 120, 104, 56),
 }
+
+# Crop bounds in the original map, including props attached to each building.
+const HIGHLIGHT_SHADER = preload("res://Scenes/Village/House/building_highlight.gdshader")
+const HIGHLIGHT_REGIONS = {
+	&"farmer": Rect2(94, 42, 79, 65),
+	&"blacksmith": Rect2(276, 32, 83, 82),
+	&"apothecary": Rect2(73, 172, 117, 77),
+	&"tailor": Rect2(280, 176, 93, 73),
+	&"chief": Rect2(324, 120, 77, 55),
+}
+const BADGE_CENTERS = {
+	&"farmer": Vector2(128, 111),
+	&"blacksmith": Vector2(318, 116),
+	&"apothecary": Vector2(133, 249),
+	&"tailor": Vector2(329, 249),
+}
+
 
 var selected_building: StringName = &"farmer"
 var assignment_target: StringName = &""
@@ -66,12 +84,17 @@ func _visibility_changed() -> void:
 	if not visible:
 		assignment_target = &""
 		if _notice != null:
-			_notice.text = ""
+			_set_notice("")
 	if _chief_sprite != null:
 		if is_visible_in_tree() and selected_building == &"chief":
 			_chief_sprite.play("idle")
 		else:
 			_chief_sprite.pause()
+
+
+func _set_notice(message: String) -> void:
+	_notice.text = message
+	_notice.visible = not message.is_empty()
 
 
 func _state_changed(_value: int) -> void:
@@ -99,18 +122,36 @@ func _build_layout() -> void:
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_canvas = Control.new()
 	_canvas.size = Vector2(1920, 1080)
+	_canvas.clip_contents = true
 	add_child(_canvas)
-	_status = _label("", 36)
-	_place(_status, Rect2(40, 6, 1840, 44), _canvas)
-	_status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_notice = _label("", 28)
-	_notice.add_theme_color_override("font_color", Color("efd09b"))
-	_place(_notice, Rect2(40, 52, 1840, 34), _canvas)
 	var map_view := TextureRect.new()
 	map_view.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	map_view.texture = MAP
 	map_view.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_place(map_view, Rect2(24, 90, 1260, 720), _canvas)
+	_place(map_view, Rect2(MAP_OFFSET, Vector2(1920, 1080)), _canvas)
+	var header_art := TextureRect.new()
+	var header_crop := AtlasTexture.new()
+	header_crop.atlas = MAP
+	header_crop.region = Rect2(0, 0, 640, 1)
+	header_art.texture = header_crop
+	header_art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	header_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	header_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_place(header_art, Rect2(0, 0, 1920, MAP_OFFSET.y), _canvas)
+	map_view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_status = _label("", 36)
+	_place(_status, Rect2(160, 6, 1664, 44), _canvas)
+	_status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_notice = _label("", 28)
+	_notice.add_theme_color_override("font_color", Color("f3d8ae"))
+	var notice_style := StyleBoxFlat.new()
+	notice_style.bg_color = Color("49352e")
+	notice_style.content_margin_left = 14
+	notice_style.content_margin_right = 14
+	_notice.add_theme_stylebox_override("normal", notice_style)
+	_notice.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_place(_notice, Rect2(146, 54, 1678, 42), _canvas)
+	_notice.hide()
 	for id: StringName in HOTSPOTS:
 		var region: Rect2 = HOTSPOTS[id]
 		var hit := Button.new()
@@ -118,61 +159,70 @@ func _build_layout() -> void:
 		hit.tooltip_text = "Chief's house" if id == &"chief" else VillageManager.get_building(id).display_name
 		for state in ["normal", "hover", "pressed", "focus"]:
 			var style := StyleBoxFlat.new()
-			style.bg_color = Color(1, 0.9, 0.5, 0.12) if state == "hover" else Color(0, 0, 0, 0)
+			style.bg_color = Color.TRANSPARENT
 			if state == "focus":
 				style.border_color = Color("f1d697")
 				style.set_border_width_all(2)
 			hit.add_theme_stylebox_override(state, style)
 		hit.pressed.connect(_select_building.bind(id))
-		_place(hit, Rect2(region.position * 3 + Vector2(24, 90), region.size * 3), _canvas)
-		var marker := Panel.new()
+		_place(hit, Rect2(region.position * 3 + MAP_OFFSET, region.size * 3), _canvas)
+		var crop: Rect2 = HIGHLIGHT_REGIONS[id]
+		var atlas := AtlasTexture.new()
+		atlas.atlas = MAP
+		atlas.region = crop
+		var highlight := ShaderMaterial.new()
+		highlight.shader = HIGHLIGHT_SHADER
+		highlight.set_shader_parameter("ink_cutoff", 0.47 if crop.position.x < 200 else 0.48)
+		if id == &"farmer":
+			highlight.set_shader_parameter("left_trim", Vector2(99, 82))
+		elif id == &"tailor":
+			highlight.set_shader_parameter("left_trim", Vector2(297, 220))
+		var marker := TextureRect.new()
+		marker.texture = atlas
+		marker.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		marker.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		marker.material = highlight
 		marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var outline := StyleBoxFlat.new()
-		outline.bg_color = Color(0, 0, 0, 0)
-		outline.border_color = Color("9c4638")
-		outline.set_border_width_all(3)
-		marker.add_theme_stylebox_override("panel", outline)
-		_place(marker, Rect2(Vector2.ZERO, hit.size), hit)
+		_place(marker, Rect2(crop.position * 3.0 + MAP_OFFSET, crop.size * 3.0), _canvas)
 		_markers[id] = marker
 		if id != &"chief":
 			_make_drop_target(hit, id)
 			var badge := PanelContainer.new()
 			badge.name = "Badge_" + String(id)
 			var badge_style := StyleBoxFlat.new()
-			badge_style.bg_color = Color("efd09b")
+			badge_style.bg_color = Color.TRANSPARENT
 			badge_style.border_color = INK
-			badge_style.set_border_width_all(2)
 			badge_style.content_margin_left = 6
 			badge_style.content_margin_right = 6
 			badge_style.content_margin_top = 4
 			badge_style.content_margin_bottom = 4
 			badge.add_theme_stylebox_override("panel", badge_style)
-			_place(badge, Rect2(hit.position + Vector2(2, hit.size.y - 6), Vector2(224, 46)), _canvas)
+			_place(badge, Rect2(BADGE_CENTERS[id] * 3.0 + MAP_OFFSET - Vector2(112, 0), Vector2(224, 46)), _canvas)
 			badge.mouse_filter = Control.MOUSE_FILTER_PASS
 			badge.gui_input.connect(func(event: InputEvent):
 				if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 					_select_building(id))
 			_badges[id] = badge
 			_make_drop_target(badge, id)
-	_details = _paper_box(Rect2(1302, 90, 594, 470), "Details")
-	var assigned_box := _paper_box(Rect2(1302, 578, 594, 358), "Assigned")
+	_details = _paper_box(Rect2(1302, 110, 522, 454), "Details")
+	var assigned_box := _paper_box(Rect2(1302, 580, 522, 342), "Assigned")
 	assigned_box.add_child(_label("Assigned villagers", 34))
 	_assigned = _scroll_list(assigned_box, false) as VBoxContainer
 	_make_drop_target(_canvas.get_node("AssignedPaper"), &"selected")
-	var bench_box := _paper_box(Rect2(24, 828, 822, 228), "Bench", 12)
+	var bench_box := _paper_box(Rect2(146, 850, 716, 207), "Bench", 12, Vector2i(28, 12))
 	bench_box.add_child(_label("On bench", 30))
 	_bench = _scroll_list(bench_box, true) as HBoxContainer
 	_make_drop_target(_canvas.get_node("BenchPaper"), Villager.QUEUE)
-	var bum_box := _paper_box(Rect2(864, 828, 420, 228), "Bums", 12)
+	var bum_box := _paper_box(Rect2(880, 850, 390, 207), "Bums", 12, Vector2i(28, 12))
 	bum_box.add_child(_label("Bums", 30))
 	_bums = _scroll_list(bum_box, true) as HBoxContainer
-	_chief = _paper_box(Rect2(1302, 90, 594, 846), "Chief")
+	_chief = _paper_box(Rect2(1302, 110, 522, 812), "Chief")
 	_chief.hide()
 	var close := _button("Step away", func(): closed.emit(), 34)
-	_place(close, Rect2(1314, 960, 258, 72), _canvas)
+	_place(close, Rect2(1302, 958, 224, 72), _canvas)
 	sleep_button = _button("Sleep · End day", func(): sleep_requested.emit(), 34)
 	sleep_button.name = "SleepButton"
-	_place(sleep_button, Rect2(1590, 960, 294, 72), _canvas)
+	_place(sleep_button, Rect2(1542, 958, 282, 72), _canvas)
 
 
 func _place(node: Control, rect: Rect2, parent: Node) -> void:
@@ -181,20 +231,32 @@ func _place(node: Control, rect: Rect2, parent: Node) -> void:
 	node.size = rect.size
 
 
-func _paper_box(rect: Rect2, title: String, padding: int = 28) -> VBoxContainer:
-	var paper := NinePatchRect.new()
+func _paper_box(rect: Rect2, title: String, padding: int = 28, side_padding: Vector2i = Vector2i(54, 44)) -> VBoxContainer:
+	var paper := Control.new()
 	paper.name = title + "Paper"
-	paper.texture = PAPER
 	paper.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	paper.patch_margin_left = 14
-	paper.patch_margin_right = 14
-	paper.patch_margin_top = 14
-	paper.patch_margin_bottom = 14
+	var style := StyleBoxTexture.new()
+	style.texture = PAPER
+	style.set_texture_margin(SIDE_LEFT, 20)
+	style.set_texture_margin(SIDE_RIGHT, 16)
+	style.set_texture_margin(SIDE_TOP, 16)
+	style.set_texture_margin(SIDE_BOTTOM, 16)
 	_place(paper, rect, _canvas)
+	var shadow := Panel.new()
+	shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shadow.self_modulate = Color(0.22, 0.13, 0.10, 0.58)
+	shadow.add_theme_stylebox_override("panel", style)
+	_place(shadow, Rect2(Vector2(1, -3), rect.size + Vector2(3, 7)), paper)
+	var surface := Panel.new()
+	surface.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	surface.add_theme_stylebox_override("panel", style)
+	_place(surface, Rect2(Vector2.ZERO, rect.size), paper)
 	var margin := MarginContainer.new()
 	_place(margin, Rect2(Vector2.ZERO, rect.size), paper)
-	for edge in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + edge, padding)
+	margin.add_theme_constant_override("margin_left", side_padding.x)
+	margin.add_theme_constant_override("margin_right", side_padding.y)
+	margin.add_theme_constant_override("margin_top", padding)
+	margin.add_theme_constant_override("margin_bottom", padding)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 10)
 	margin.add_child(box)
@@ -229,23 +291,29 @@ func _button(text: String, action: Callable, font_size: int = 32) -> Button:
 	button.text = text
 	button.custom_minimum_size.y = 52
 	button.add_theme_font_size_override("font_size", font_size)
-	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+	var fills := {
+		"normal": Color("594139"),
+		"hover": Color("704c3e"),
+		"pressed": Color("47332f"),
+		"disabled": Color("80664f"),
+	}
+	for state: String in fills:
 		var style := StyleBoxFlat.new()
-		style.bg_color = Color("c59962")
-		if state == "hover" or state == "focus":
-			style.bg_color = Color("efd09b")
-		elif state == "pressed":
-			style.bg_color = Color("a77b4f")
-		elif state == "disabled":
-			style.bg_color = Color("b9a17f")
-		style.border_color = INK
-		style.set_border_width_all(2)
+		style.bg_color = fills[state]
+		style.border_color = Color("392823")
+		style.set_border_width_all(1)
+		style.border_width_bottom = 3
 		style.content_margin_left = 12
 		style.content_margin_right = 12
 		button.add_theme_stylebox_override(state, style)
+	var focus := StyleBoxFlat.new()
+	focus.draw_center = false
+	focus.border_color = Color("edca92")
+	focus.set_border_width_all(2)
+	button.add_theme_stylebox_override("focus", focus)
 	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-		button.add_theme_color_override(state, INK)
-	button.add_theme_color_override("font_disabled_color", Color("736351"))
+		button.add_theme_color_override(state, Color("f3d8ae"))
+	button.add_theme_color_override("font_disabled_color", Color("d0b69a"))
 	button.pressed.connect(action)
 	return button
 
@@ -259,7 +327,7 @@ func _clear(parent: Node) -> void:
 func _select_building(id: StringName) -> void:
 	if id == &"chief":
 		assignment_target = &""
-		_notice.text = ""
+		_set_notice("")
 	selected_building = id
 	refresh()
 	_visibility_changed()
@@ -274,7 +342,7 @@ func refresh() -> void:
 	var preview := VillageManager.night_preview()
 	var quota := "closed" if GameController.boss_defeated else ("∞" if GameController.is_day_10() else str(GameController.current_quota()))
 	_status.text = "DAY %d     Flesh %d / %s     Rations %d     Potions %d     Population %d     Village health %d%%" % [GameController.day, GameController.flesh, quota, GameController.rations, GameController.potions, VillageManager.get_population(), GameController.village_health]
-	_status.add_theme_color_override("font_color", Color("f0deb5"))
+	_status.add_theme_color_override("font_color", INK)
 	for id in _markers:
 		_markers[id].visible = id == selected_building
 	_refresh_badges()
@@ -339,6 +407,9 @@ func _refresh_details() -> void:
 		var assign := _button("Assign villager" if workers.size() < capacity else "Full", _begin_assignment)
 		assign.disabled = workers.size() >= capacity
 		_details.add_child(assign)
+	for child in _details.get_children():
+		if child is Button:
+			child.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 
 
 func _portrait(worker: Villager) -> TextureRect:
@@ -369,7 +440,7 @@ func _portrait_card(worker: Villager, selectable: bool) -> Control:
 	var button := _button("", _pick_worker.bind(worker.id))
 	_make_draggable(button, worker.id)
 	button.tooltip_text = _worker_info(worker)
-	button.custom_minimum_size = Vector2(114, 120)
+	button.custom_minimum_size = Vector2(102, 96)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_portrait_button_style(button)
 	var portrait := _portrait(worker)
@@ -445,19 +516,19 @@ func _get_worker(id: int) -> Villager:
 
 func _begin_assignment() -> void:
 	assignment_target = selected_building
-	_notice.text = "Pick a villager for " + VillageManager.get_building(assignment_target).display_name + "."
+	_set_notice("Pick a villager for " + VillageManager.get_building(assignment_target).display_name + ".")
 	_queue_refresh()
 
 
 func _cancel_assignment() -> void:
 	assignment_target = &""
-	_notice.text = ""
+	_set_notice("")
 	_queue_refresh()
 
 
 func _pick_worker(id: int) -> void:
 	if assignment_target == &"":
-		_notice.text = ""
+		_set_notice("")
 		return
 	_transfer_worker(id, assignment_target)
 
@@ -470,28 +541,28 @@ func _transfer_worker(id: int, target: StringName) -> bool:
 		return false
 	if worker.is_bum:
 		var jokes := ["%s has a full-time job avoiding full-time jobs.", "%s says they're supervising. From over there.", "%s would help, but that sounds suspiciously like work."]
-		_notice.text = jokes[_bum_attempts % jokes.size()] % worker.display_name
+		_set_notice(jokes[_bum_attempts % jokes.size()] % worker.display_name)
 		_bum_attempts += 1
 		return false
 	if worker.assignment == target:
-		_notice.text = ""
+		_set_notice("")
 		return false
 	var cost := VillageManager.assignment_cost(id, target)
 	if cost < 0:
-		_notice.text = "That hut is full."
+		_set_notice("That hut is full.")
 		return false
 	if cost > GameController.rations:
-		_notice.text = "Training %s costs %d rations. You have %d." % [worker.display_name, cost, GameController.rations]
+		_set_notice("Training %s costs %d rations. You have %d." % [worker.display_name, cost, GameController.rations])
 		return false
 	if VillageManager.assign(id, target):
 		assignment_target = &""
 		if target != Villager.QUEUE:
 			selected_building = target
-		_notice.text = ""
+		_set_notice("")
 		_queue_refresh()
 		return true
 	else:
-		_notice.text = "Couldn't assign that villager."
+		_set_notice("Couldn't assign that villager.")
 		return false
 
 
@@ -648,7 +719,7 @@ func _create_drag(_position: Vector2, worker_id: int, source: Control) -> Varian
 	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	preview.add_child(_portrait(worker))
 	var name_label := _label(worker.display_name, 25)
-	name_label.add_theme_color_override("font_color", Color("f0deb5"))
+	name_label.add_theme_color_override("font_color", INK)
 	preview.add_child(name_label)
 	source.set_drag_preview(preview)
 	return {"type": "village_worker", "panel": get_instance_id(), "id": worker_id, "from": worker.assignment}
@@ -673,13 +744,13 @@ func _can_drop_worker(_position: Vector2, data: Variant, target: StringName) -> 
 		return false
 	_drag_hint = true
 	if worker.is_bum:
-		_notice.text = ""
+		_set_notice("")
 	elif target == Villager.QUEUE:
-		_notice.text = "Bench · Free"
+		_set_notice("Bench · Free")
 	else:
 		var cost := VillageManager.assignment_cost(worker.id, target)
 		var name_text := VillageManager.get_building(target).display_name
-		_notice.text = "%s · %s" % [name_text, "Full" if cost < 0 else "Free" if cost == 0 else "%d rations" % cost]
+		_set_notice("%s · %s" % [name_text, "Full" if cost < 0 else "Free" if cost == 0 else "%d rations" % cost])
 	return true
 
 
@@ -697,6 +768,6 @@ func _drop_worker(_position: Vector2, data: Variant, target: StringName) -> void
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_DRAG_END:
 		if _drag_hint:
-			_notice.text = ""
+			_set_notice("")
 			_drag_hint = false
 		_queue_refresh()
