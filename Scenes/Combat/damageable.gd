@@ -49,6 +49,13 @@ func receive_hit(hit: CombatHit) -> bool:
 		return false
 	return health_component.take_damage(hit)
 
+## Reuse an actor's stagger/knockback reaction without damage or death rewards.
+func receive_knockback(hit: CombatHit) -> bool:
+	if hit == null or invulnerable or health <= 0 or hit.source == damage_owner():
+		return false
+	damaged.emit(hit, health)
+	return true
+
 func _on_damage_received(hit: CombatHit, _amount: int) -> void:
 	damaged.emit(hit, health)
 	hit_confirmed.emit(hit)

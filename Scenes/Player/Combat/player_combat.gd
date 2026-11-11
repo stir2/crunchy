@@ -44,10 +44,13 @@ signal swing_freeze_started(ticks: int)
 @export_range(0, 15, 1) var hitstop_frames: int = 8
 @export_range(0, 100, 1) var dash_breakable_damage: int = 3
 @export_range(0, 15, 1) var dash_breakable_hitstop_frames: int = 8
+@export var dash_enemy_knockback: Vector2 = Vector2(850, -180)
 
 var _breakable_rooms: Array[AbyssAuthoredRoom] = []
 var _swing_breakable_hits: Dictionary = {}
 var _dash_breakable_hits: Dictionary = {}
+var _dash_enemy_hits: Dictionary[int, bool] = {}
+var _motion_origin: Vector2
 
 var attack_state: AttackState = AttackState.IDLE
 var locked_facing: int = 1
@@ -110,6 +113,7 @@ func is_swing_frozen() -> bool:
 
 ## Returns true when this whole player physics tick must remain frozen.
 func begin_physics_tick() -> bool:
+	_motion_origin = player.global_position
 	if not Input.is_action_pressed("Attack"):
 		_ignore_attack_until_release = false
 	_attack_requested = Input.is_action_just_pressed("Attack") and not _ignore_attack_until_release
@@ -370,6 +374,44 @@ func _damage_swing_breakables(hit_transform: Transform2D) -> void:
 
 func begin_breakable_dash() -> void:
 	_dash_breakable_hits.clear()
+	_dash_enemy_hits.clear()
+	_motion_origin = player.global_position
+
+func connect_enemy_dash() -> void:
+	var body := player.get_node("CollisionShape2D") as CollisionShape2D
+	var rectangle := body.shape as RectangleShape2D
+	if rectangle == null or dash_enemy_knockback == Vector2.ZERO: return
+	# Sweep the actual body footprint across this tick's completed movement.
+	var travel := player.global_position - _motion_origin
+	var shape := RectangleShape2D.new()
+	shape.size = rectangle.size + travel.abs()
+	var query := PhysicsShapeQueryParameters2D.new()
+	query.shape = shape
+	query.transform = Transform2D(0, (_motion_origin + player.global_position)*0.5 + body.position)
+	query.collision_mask = 32
+	query.collide_with_bodies = false
+	query.collide_with_areas = true
+	var connected := false
+	for overlap in player.get_world_2d().direct_space_state.intersect_shape(query,64):
+		var target := overlap.collider as CombatDamageable
+		if target == null: continue
+		var enemy := target.damage_owner()
+		if not is_instance_valid(enemy) or not enemy.is_in_group("enemies"): continue
+		var identity := enemy.get_instance_id()
+		if _dash_enemy_hits.has(identity): continue
+		var hit := CombatHit.new()
+		hit.amount = 0
+		hit.source = player
+		hit.direction = Vector2(player.dash_direction,0)
+		hit.knockback = Vector2(absf(dash_enemy_knockback.x)*player.dash_direction,dash_enemy_knockback.y)
+		hit.world_position = body.global_position
+		if not target.receive_knockback(hit): continue
+		_dash_enemy_hits[identity] = true
+		if not connected:
+			_start_hitstop()
+			connected = true
+		target.begin_hitstop(maxi(0,_hitstop_until_tick - Engine.get_physics_frames()))
+		hit_confirmed.emit(target,hit)
 
 func connect_breakable_dash() -> bool:
 	var connected := false

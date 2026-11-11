@@ -17,44 +17,59 @@ breakable_group_ids = Dictionary[Vector2i, String]({
 Vector2i(17, 15): "alcove_door"
 })
 
-[node name="Solid" type="TileMapLayer" parent="." unique_id=1043100106]
-texture_filter = 1
-tile_map_data = PackedByteArray("AAAWAA4AAAAAAAAAAAAWAA8AAAAAAAAAAAAWABAAAAAAAAAAAAAWABEAAAAAAAAAAAAWABIAAAAAAAAAAAAWABMAAAAAAAAAAAAWABQAAAAAAAAAAAAWABUAAAAAAAAAAAARAA4AAAAAAAAAAAARABUAAAAAAAAAAAASAA4AAAAAAAAAAAASABUAAAAAAAAAAAATAA4AAAAAAAAAAAATABUAAAAAAAAAAAAUAA4AAAAAAAAAAAAUABUAAAAAAAAAAAAVAA4AAAAAAAAAAAAVABUAAAAAAAAAAAA=")
-tile_set = ExtResource("2_txvtv")
-
-[node name="Platforms" type="TileMapLayer" parent="." unique_id=1919925589]
-texture_filter = 1
-tile_map_data = PackedByteArray("AAADABIAAAABAAAAAAAEABIAAAABAAAAAAAFABIAAAABAAAAAAAGABIAAAABAAAAAAAHABIAAAABAAAAAAAIABIAAAABAAAAAAAGAAoAAAABAAAAAAAHAAoAAAABAAAAAAAIAAoAAAABAAAAAAAJAAoAAAABAAAAAAAKAAoAAAABAAAAAAALAAoAAAABAAAAAAAMAAoAAAABAAAAAAA=")
-tile_set = ExtResource("2_txvtv")
-
-[node name="Decorations" type="TileMapLayer" parent="." unique_id=429747816]
-texture_filter = 1
-tile_set = ExtResource("2_txvtv")
-collision_enabled = false
-
 [node name="ConditionalWalls" type="TileMapLayer" parent="." unique_id=472488740]
+z_index = 0
+z_as_relative = true
 modulate = Color(1, 0.75, 0.45, 1)
 texture_filter = 1
 tile_map_data = PackedByteArray("AAADAAMAAAAAAAAAAAAEAAMAAAAAAAAAAAAOAAMAAAAAAAAAAAAPAAMAAAAAAAAAAAA=")
 tile_set = ExtResource("2_txvtv")
 
-[node name="Climbables" type="TileMapLayer" parent="." unique_id=969067106]
-texture_filter = 1
-tile_map_data = PackedByteArray("AAAKAAMAAAAEAAAAAAAKAAQAAAADAAAAAAAKAAUAAAAEAAAAAAAKAAYAAAADAAAAAAAKAAcAAAAEAAAAAAAKAAgAAAADAAAAAAAKAAkAAAAEAAAAAAAKAAoAAAADAAAAAAAKAAsAAAAEAAAAAAAKAAwAAAADAAAAAAAKAA0AAAAEAAAAAAAKAA4AAAADAAAAAAAKAA8AAAAEAAAAAAAKABAAAAADAAAAAAAKABEAAAAEAAAAAAAKABIAAAADAAAAAAAKABMAAAAEAAAAAAA=")
-tile_set = ExtResource("2_txvtv")
-
-[node name="ConditionalPlatforms" type="TileMapLayer" parent="." unique_id=1633826130]
-texture_filter = 1
-tile_map_data = PackedByteArray("AAADAAUAAAABAAAAAAAEAAUAAAABAAAAAAAFAAUAAAABAAAAAAANAAgAAAABAAAAAAAOAAgAAAABAAAAAAAPAAgAAAABAAAAAAA=")
-tile_set = ExtResource("2_txvtv")
-
 [node name="BreakableWalls" type="TileMapLayer" parent="." unique_id=244184232]
+z_index = -1
+z_as_relative = true
 texture_filter = 1
 tile_map_data = PackedByteArray("AAARAA8AAAAFAAAAAAARABAAAAAFAAAAAAARABEAAAAFAAAAAAARABIAAAAFAAAAAAARABMAAAAFAAAAAAARABQAAAAFAAAAAAA=")
 tile_set = ExtResource("2_txvtv")
 
+[node name="Solid" type="TileMapLayer" parent="." unique_id=1043100106]
+z_index = -2
+z_as_relative = true
+texture_filter = 1
+tile_map_data = PackedByteArray("AAAWAA4AAAAAAAAAAAAWAA8AAAAAAAAAAAAWABAAAAAAAAAAAAAWABEAAAAAAAAAAAAWABIAAAAAAAAAAAAWABMAAAAAAAAAAAAWABQAAAAAAAAAAAAWABUAAAAAAAAAAAARAA4AAAAAAAAAAAARABUAAAAAAAAAAAASAA4AAAAAAAAAAAASABUAAAAAAAAAAAATAA4AAAAAAAAAAAATABUAAAAAAAAAAAAUAA4AAAAAAAAAAAAUABUAAAAAAAAAAAAVAA4AAAAAAAAAAAAVABUAAAAAAAAAAAA=")
+tile_set = ExtResource("2_txvtv")
+
+[node name="Platforms" type="TileMapLayer" parent="." unique_id=1919925589]
+z_index = -3
+z_as_relative = true
+texture_filter = 1
+tile_map_data = PackedByteArray("AAADABIAAAABAAAAAAAEABIAAAABAAAAAAAFABIAAAABAAAAAAAGABIAAAABAAAAAAAHABIAAAABAAAAAAAIABIAAAABAAAAAAAGAAoAAAABAAAAAAAHAAoAAAABAAAAAAAIAAoAAAABAAAAAAAJAAoAAAABAAAAAAAKAAoAAAABAAAAAAALAAoAAAABAAAAAAAMAAoAAAABAAAAAAA=")
+tile_set = ExtResource("2_txvtv")
+
+[node name="ConditionalPlatforms" type="TileMapLayer" parent="." unique_id=1633826130]
+z_index = -4
+z_as_relative = true
+texture_filter = 1
+tile_map_data = PackedByteArray("AAADAAUAAAABAAAAAAAEAAUAAAABAAAAAAAFAAUAAAABAAAAAAANAAgAAAABAAAAAAAOAAgAAAABAAAAAAAPAAgAAAABAAAAAAA=")
+tile_set = ExtResource("2_txvtv")
+
 [node name="Hazards" type="TileMapLayer" parent="." unique_id=170489472]
-z_index = 1
+z_index = -5
+z_as_relative = true
+texture_filter = 1
+tile_set = ExtResource("2_txvtv")
+collision_enabled = false
+
+[node name="Climbables" type="TileMapLayer" parent="." unique_id=969067106]
+z_index = -6
+z_as_relative = true
+texture_filter = 1
+tile_map_data = PackedByteArray("AAAKAAMAAAAEAAAAAAAKAAQAAAADAAAAAAAKAAUAAAAEAAAAAAAKAAYAAAADAAAAAAAKAAcAAAAEAAAAAAAKAAgAAAADAAAAAAAKAAkAAAAEAAAAAAAKAAoAAAADAAAAAAAKAAsAAAAEAAAAAAAKAAwAAAADAAAAAAAKAA0AAAAEAAAAAAAKAA4AAAADAAAAAAAKAA8AAAAEAAAAAAAKABAAAAADAAAAAAAKABEAAAAEAAAAAAAKABIAAAADAAAAAAAKABMAAAAEAAAAAAA=")
+tile_set = ExtResource("2_txvtv")
+
+[node name="Decorations" type="TileMapLayer" parent="." unique_id=429747816]
+z_index = -7
+z_as_relative = true
 texture_filter = 1
 tile_set = ExtResource("2_txvtv")
 collision_enabled = false

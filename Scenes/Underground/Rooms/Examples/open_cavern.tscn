@@ -7,44 +7,59 @@
 script = ExtResource("1_gw3xw")
 reserved_route_rects = Array[Rect2i]([Rect2i(11, 1, 2, 22), Rect2i(1, 11, 22, 2)])
 
-[node name="Solid" type="TileMapLayer" parent="." unique_id=695473181]
-texture_filter = 1
-tile_set = ExtResource("2_8nuqp")
-
-[node name="Platforms" type="TileMapLayer" parent="." unique_id=969668497]
-texture_filter = 1
-tile_map_data = PackedByteArray("AAAIAA4AAAABAAAAAAAJAA4AAAABAAAAAAAKAA4AAAABAAAAAAALAA4AAAABAAAAAAAMAA4AAAABAAAAAAANAA4AAAABAAAAAAAOAA4AAAABAAAAAAAPAA4AAAABAAAAAAA=")
-tile_set = ExtResource("2_8nuqp")
-
-[node name="Decorations" type="TileMapLayer" parent="." unique_id=153795496]
-texture_filter = 1
-tile_map_data = PackedByteArray("AAAMAAoAAAACAAAAAAA=")
-tile_set = ExtResource("2_8nuqp")
-collision_enabled = false
-
 [node name="ConditionalWalls" type="TileMapLayer" parent="." unique_id=1996536693]
+z_index = 0
+z_as_relative = true
 modulate = Color(1, 0.75, 0.45, 1)
 texture_filter = 1
 tile_map_data = PackedByteArray("AAADAAMAAAAAAAAAAAAEAAMAAAAAAAAAAAAEAAQAAAAAAAAAAAATAAMAAAAAAAAAAAAUAAMAAAAAAAAAAAAUAAQAAAAAAAAAAAADABMAAAAAAAAAAAAEABMAAAAAAAAAAAAEABQAAAAAAAAAAAATABMAAAAAAAAAAAAUABMAAAAAAAAAAAAUABQAAAAAAAAAAAA=")
 tile_set = ExtResource("2_8nuqp")
 
-[node name="Climbables" type="TileMapLayer" parent="." unique_id=1248760530]
+[node name="BreakableWalls" type="TileMapLayer" parent="." unique_id=1435670221]
+z_index = -1
+z_as_relative = true
 texture_filter = 1
+tile_set = ExtResource("2_8nuqp")
+
+[node name="Solid" type="TileMapLayer" parent="." unique_id=695473181]
+z_index = -2
+z_as_relative = true
+texture_filter = 1
+tile_set = ExtResource("2_8nuqp")
+
+[node name="Platforms" type="TileMapLayer" parent="." unique_id=969668497]
+z_index = -3
+z_as_relative = true
+texture_filter = 1
+tile_map_data = PackedByteArray("AAAIAA4AAAABAAAAAAAJAA4AAAABAAAAAAAKAA4AAAABAAAAAAALAA4AAAABAAAAAAAMAA4AAAABAAAAAAANAA4AAAABAAAAAAAOAA4AAAABAAAAAAAPAA4AAAABAAAAAAA=")
 tile_set = ExtResource("2_8nuqp")
 
 [node name="ConditionalPlatforms" type="TileMapLayer" parent="." unique_id=490057532]
-texture_filter = 1
-tile_set = ExtResource("2_8nuqp")
-
-[node name="BreakableWalls" type="TileMapLayer" parent="." unique_id=1435670221]
+z_index = -4
+z_as_relative = true
 texture_filter = 1
 tile_set = ExtResource("2_8nuqp")
 
 [node name="Hazards" type="TileMapLayer" parent="."]
+z_index = -5
+z_as_relative = true
 texture_filter = 1
 tile_set = ExtResource("2_8nuqp")
 collision_enabled = false
-z_index = 1
+
+[node name="Climbables" type="TileMapLayer" parent="." unique_id=1248760530]
+z_index = -6
+z_as_relative = true
+texture_filter = 1
+tile_set = ExtResource("2_8nuqp")
+
+[node name="Decorations" type="TileMapLayer" parent="." unique_id=153795496]
+z_index = -7
+z_as_relative = true
+texture_filter = 1
+tile_map_data = PackedByteArray("AAAMAAoAAAACAAAAAAA=")
+tile_set = ExtResource("2_8nuqp")
+collision_enabled = false
 
 [node name="ObjectMarkers" type="Node2D" parent="." unique_id=1588271515]
 

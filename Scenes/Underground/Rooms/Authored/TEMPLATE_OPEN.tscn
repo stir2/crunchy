@@ -7,43 +7,58 @@
 script = ExtResource("1_qid8q")
 room_size = Vector2i(40, 40)
 
+[node name="ConditionalWalls" type="TileMapLayer" parent="." unique_id=1568434012]
+z_index = 0
+z_as_relative = true
+modulate = Color(1, 0.75, 0.45, 1)
+texture_filter = 1
+tile_set = ExtResource("2_pwk3j")
+
+[node name="BreakableWalls" type="TileMapLayer" parent="." unique_id=849217134]
+z_index = -1
+z_as_relative = true
+texture_filter = 1
+tile_set = ExtResource("2_pwk3j")
+
 [node name="Solid" type="TileMapLayer" parent="." unique_id=1033750265]
+z_index = -2
+z_as_relative = true
 texture_filter = 1
 tile_map_data = PackedByteArray("AAAMAB0AAAAAAAAAAAANAB0AAAAAAAAAAAAOAB0AAAAAAAAAAAALAB0AAAAAAAAAAAA=")
 tile_set = ExtResource("2_pwk3j")
 
 [node name="Platforms" type="TileMapLayer" parent="." unique_id=925235512]
+z_index = -3
+z_as_relative = true
 texture_filter = 1
 tile_map_data = PackedByteArray("AAAAACIAAAABAAAAAAABACIAAAABAAAAAAACACIAAAABAAAAAAAFABgAAAABAAAAAAAGABgAAAABAAAAAAAHABgAAAABAAAAAAAKABgAAAABAAAAAAALABgAAAABAAAAAAAOABgAAAABAAAAAAAPABgAAAABAAAAAAAVABsAAAABAAAAAAAWABsAAAABAAAAAAAXABsAAAABAAAAAAAYABsAAAABAAAAAAAZABsAAAABAAAAAAAnACIAAAABAAAAAAAmACIAAAABAAAAAAAmAB0AAAABAAAAAAAnAB0AAAABAAAAAAAmABgAAAABAAAAAAAnABgAAAABAAAAAAAfAB8AAAABAAAAAAAgAB8AAAABAAAAAAAhAB8AAAABAAAAAAA=")
 tile_set = ExtResource("2_pwk3j")
 
-[node name="Decorations" type="TileMapLayer" parent="." unique_id=931767075]
-texture_filter = 1
-tile_set = ExtResource("2_pwk3j")
-collision_enabled = false
-
-[node name="ConditionalWalls" type="TileMapLayer" parent="." unique_id=1568434012]
-modulate = Color(1, 0.75, 0.45, 1)
-texture_filter = 1
-tile_set = ExtResource("2_pwk3j")
-
-[node name="Climbables" type="TileMapLayer" parent="." unique_id=1969056740]
-texture_filter = 1
-tile_map_data = PackedByteArray("AAAFABgAAAADAAAAAAAFABkAAAADAAAAAAAFABoAAAADAAAAAAAGABgAAAADAAAAAAAGABkAAAADAAAAAAAGABoAAAADAAAAAAAGABsAAAADAAAAAAAHABgAAAADAAAAAAAHABkAAAADAAAAAAAHABoAAAADAAAAAAAHABsAAAADAAAAAAAHABwAAAADAAAAAAAHAB0AAAADAAAAAAAHAB4AAAADAAAAAAAFABsAAAADAAAAAAAFABwAAAADAAAAAAAmABwAAAADAAAAAAAmABsAAAADAAAAAAAmABoAAAADAAAAAAAmABkAAAADAAAAAAAmABgAAAADAAAAAAAnABwAAAADAAAAAAAnABsAAAADAAAAAAAnABoAAAADAAAAAAAnABkAAAADAAAAAAAnABgAAAADAAAAAAA=")
-tile_set = ExtResource("2_pwk3j")
-
 [node name="ConditionalPlatforms" type="TileMapLayer" parent="." unique_id=22730198]
-texture_filter = 1
-tile_set = ExtResource("2_pwk3j")
-
-[node name="BreakableWalls" type="TileMapLayer" parent="." unique_id=849217134]
+z_index = -4
+z_as_relative = true
 texture_filter = 1
 tile_set = ExtResource("2_pwk3j")
 
 [node name="Hazards" type="TileMapLayer" parent="." unique_id=1683948581]
-z_index = 1
+z_index = -5
+z_as_relative = true
 texture_filter = 1
 tile_map_data = PackedByteArray("AAAOABwAAAAGAAAAAAANABwAAAAGAAAAAAAMABwAAAAGAAAAAAALABwAAAAGAAAAAAA=")
+tile_set = ExtResource("2_pwk3j")
+collision_enabled = false
+
+[node name="Climbables" type="TileMapLayer" parent="." unique_id=1969056740]
+z_index = -6
+z_as_relative = true
+texture_filter = 1
+tile_map_data = PackedByteArray("AAAFABgAAAADAAAAAAAFABkAAAADAAAAAAAFABoAAAADAAAAAAAGABgAAAADAAAAAAAGABkAAAADAAAAAAAGABoAAAADAAAAAAAGABsAAAADAAAAAAAHABgAAAADAAAAAAAHABkAAAADAAAAAAAHABoAAAADAAAAAAAHABsAAAADAAAAAAAHABwAAAADAAAAAAAHAB0AAAADAAAAAAAHAB4AAAADAAAAAAAFABsAAAADAAAAAAAFABwAAAADAAAAAAAmABwAAAADAAAAAAAmABsAAAADAAAAAAAmABoAAAADAAAAAAAmABkAAAADAAAAAAAmABgAAAADAAAAAAAnABwAAAADAAAAAAAnABsAAAADAAAAAAAnABoAAAADAAAAAAAnABkAAAADAAAAAAAnABgAAAADAAAAAAA=")
+tile_set = ExtResource("2_pwk3j")
+
+[node name="Decorations" type="TileMapLayer" parent="." unique_id=931767075]
+z_index = -7
+z_as_relative = true
+texture_filter = 1
 tile_set = ExtResource("2_pwk3j")
 collision_enabled = false
 

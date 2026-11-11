@@ -158,6 +158,8 @@ func _physics_process(delta: float) -> void:
 	var breakable_dash_hit: bool = state_for_motion == MovementState.DASHING and movement_state == MovementState.DASHING and combat.connect_breakable_dash()
 	if breakable_dash_hit:
 		velocity = Vector2(dash_direction * active_dash_speed, 0.0)
+	if state_for_motion == MovementState.DASHING and movement_state == MovementState.DASHING:
+		combat.connect_enemy_dash()
 	var new_wall_impact: bool = remember_wall_impact(horizontal_speed_before)
 	if had_wall_momentum and not new_wall_impact:
 		wall_momentum_frames_remaining = maxi(0, wall_momentum_frames_remaining - 1)

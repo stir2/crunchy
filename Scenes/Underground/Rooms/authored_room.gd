@@ -2,6 +2,11 @@
 class_name AbyssAuthoredRoom
 extends Node2D
 ## Geometry container only. Metadata and mutable gameplay state live elsewhere.
+## Highest first. Keep terrain at/below the actors' default drawing plane.
+const LAYER_DRAW_ORDER: Array[StringName] = [
+	&"ConditionalWalls", &"BreakableWalls", &"Solid", &"Platforms",
+	&"ConditionalPlatforms", &"Hazards", &"Climbables", &"Decorations",
+]
 ## Keep existing scenes at 24x24 until explicitly remade; no implicit resizing.
 @export var room_size: Vector2i = AbyssRegionConfig.LEGACY_ROOM_SIZE:
 	set(value):
@@ -40,6 +45,24 @@ var persistent_state: AbyssRoomState
 var breakables: AbyssBreakableTerrain
 var conditional_wall_groups: Array[Dictionary] = []
 var construction_requirements: AbyssRoomRequirements
+
+func _ready() -> void:
+	apply_layer_draw_order()
+	child_entered_tree.connect(_on_layer_entered)
+
+func _on_layer_entered(child: Node) -> void:
+	if child is TileMapLayer:
+		apply_layer_draw_order.call_deferred()
+
+func apply_layer_draw_order() -> void:
+	var layer_index := 0
+	for index in range(LAYER_DRAW_ORDER.size()):
+		var layer := get_node_or_null(NodePath(LAYER_DRAW_ORDER[index])) as TileMapLayer
+		if layer == null: continue
+		layer.z_as_relative = true
+		layer.z_index = -index
+		move_child(layer, layer_index)
+		layer_index += 1
 
 
 func _draw() -> void:

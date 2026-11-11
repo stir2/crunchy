@@ -6,38 +6,53 @@
 [node name="RoomBase" type="Node2D" unique_id=444195804]
 script = ExtResource("1_2jku2")
 
-[node name="Solid" type="TileMapLayer" parent="." unique_id=1043100106]
-texture_filter = 1
-tile_set = ExtResource("2_vt0n6")
-
-[node name="Platforms" type="TileMapLayer" parent="." unique_id=1919925589]
-texture_filter = 1
-tile_set = ExtResource("2_vt0n6")
-
-[node name="Decorations" type="TileMapLayer" parent="." unique_id=429747816]
-texture_filter = 1
-tile_set = ExtResource("2_vt0n6")
-collision_enabled = false
-
 [node name="ConditionalWalls" type="TileMapLayer" parent="." unique_id=348589287]
+z_index = 0
+z_as_relative = true
 modulate = Color(1, 0.75, 0.45, 1)
 texture_filter = 1
 tile_set = ExtResource("2_vt0n6")
 
-[node name="Climbables" type="TileMapLayer" parent="." unique_id=1783847461]
+[node name="BreakableWalls" type="TileMapLayer" parent="." unique_id=1386474198]
+z_index = -1
+z_as_relative = true
+texture_filter = 1
+tile_set = ExtResource("2_vt0n6")
+
+[node name="Solid" type="TileMapLayer" parent="." unique_id=1043100106]
+z_index = -2
+z_as_relative = true
+texture_filter = 1
+tile_set = ExtResource("2_vt0n6")
+
+[node name="Platforms" type="TileMapLayer" parent="." unique_id=1919925589]
+z_index = -3
+z_as_relative = true
 texture_filter = 1
 tile_set = ExtResource("2_vt0n6")
 
 [node name="ConditionalPlatforms" type="TileMapLayer" parent="." unique_id=1809629922]
-texture_filter = 1
-tile_set = ExtResource("2_vt0n6")
-
-[node name="BreakableWalls" type="TileMapLayer" parent="." unique_id=1386474198]
+z_index = -4
+z_as_relative = true
 texture_filter = 1
 tile_set = ExtResource("2_vt0n6")
 
 [node name="Hazards" type="TileMapLayer" parent="." unique_id=685081472]
-z_index = 1
+z_index = -5
+z_as_relative = true
+texture_filter = 1
+tile_set = ExtResource("2_vt0n6")
+collision_enabled = false
+
+[node name="Climbables" type="TileMapLayer" parent="." unique_id=1783847461]
+z_index = -6
+z_as_relative = true
+texture_filter = 1
+tile_set = ExtResource("2_vt0n6")
+
+[node name="Decorations" type="TileMapLayer" parent="." unique_id=429747816]
+z_index = -7
+z_as_relative = true
 texture_filter = 1
 tile_set = ExtResource("2_vt0n6")
 collision_enabled = false

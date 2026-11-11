@@ -253,7 +253,6 @@ func _on_damaged(hit: CombatHit, remaining_health: int) -> void:
 	_in_jump = false
 	_bait_left = 0
 	super._on_damaged(hit, remaining_health)
-	velocity.x = 0
 	_hurt_time = 0.22
 	if remaining_health > 0:
 		sprite.animation = &"death"

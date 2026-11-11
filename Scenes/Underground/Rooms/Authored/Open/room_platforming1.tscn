@@ -8,38 +8,53 @@ script = ExtResource("1_w7cvq")
 room_size = Vector2i(40, 40)
 protect_interior_routes = null
 
-[node name="Solid" type="TileMapLayer" parent="." unique_id=1033750265]
-texture_filter = 1
-tile_set = ExtResource("2_ksdoh")
-
-[node name="Platforms" type="TileMapLayer" parent="." unique_id=925235512]
-texture_filter = 1
-tile_set = ExtResource("2_ksdoh")
-
-[node name="Decorations" type="TileMapLayer" parent="." unique_id=931767075]
-texture_filter = 1
-tile_set = ExtResource("2_ksdoh")
-collision_enabled = false
-
 [node name="ConditionalWalls" type="TileMapLayer" parent="." unique_id=1568434012]
+z_index = 0
+z_as_relative = true
 modulate = Color(1, 0.75, 0.45, 1)
 texture_filter = 1
 tile_set = ExtResource("2_ksdoh")
 
-[node name="Climbables" type="TileMapLayer" parent="." unique_id=1969056740]
+[node name="BreakableWalls" type="TileMapLayer" parent="." unique_id=849217134]
+z_index = -1
+z_as_relative = true
+texture_filter = 1
+tile_set = ExtResource("2_ksdoh")
+
+[node name="Solid" type="TileMapLayer" parent="." unique_id=1033750265]
+z_index = -2
+z_as_relative = true
+texture_filter = 1
+tile_set = ExtResource("2_ksdoh")
+
+[node name="Platforms" type="TileMapLayer" parent="." unique_id=925235512]
+z_index = -3
+z_as_relative = true
 texture_filter = 1
 tile_set = ExtResource("2_ksdoh")
 
 [node name="ConditionalPlatforms" type="TileMapLayer" parent="." unique_id=22730198]
-texture_filter = 1
-tile_set = ExtResource("2_ksdoh")
-
-[node name="BreakableWalls" type="TileMapLayer" parent="." unique_id=849217134]
+z_index = -4
+z_as_relative = true
 texture_filter = 1
 tile_set = ExtResource("2_ksdoh")
 
 [node name="Hazards" type="TileMapLayer" parent="." unique_id=1683948581]
-z_index = 1
+z_index = -5
+z_as_relative = true
+texture_filter = 1
+tile_set = ExtResource("2_ksdoh")
+collision_enabled = false
+
+[node name="Climbables" type="TileMapLayer" parent="." unique_id=1969056740]
+z_index = -6
+z_as_relative = true
+texture_filter = 1
+tile_set = ExtResource("2_ksdoh")
+
+[node name="Decorations" type="TileMapLayer" parent="." unique_id=931767075]
+z_index = -7
+z_as_relative = true
 texture_filter = 1
 tile_set = ExtResource("2_ksdoh")
 collision_enabled = false
