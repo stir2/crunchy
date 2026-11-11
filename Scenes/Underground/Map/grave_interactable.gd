@@ -14,7 +14,7 @@ func get_prompt(_actor: Node2D) -> String:
 func _perform_interaction(_actor: Node2D) -> String:
 	var recovered := state.recover_grave(world,grave_id,global_position)
 	if not recovered.is_empty():
-		get_node("/root/SoundManager").play_sfx(&"collect_grave", -17)
+		get_node("/root/SoundManager").play_sfx(&"collect_grave", -13)
 	return "Recovered %d Flesh" % int(recovered.souls) if not recovered.is_empty() else ""
 
 func _draw() -> void:

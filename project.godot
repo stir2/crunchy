@@ -10,8 +10,10 @@ config_version=5
 
 [application]
 
-config/name="crunchy"
+config/name="Paid In Flesh"
 run/main_scene="res://Scenes/Main/main.tscn"
+config/use_custom_user_dir=true
+config/custom_user_dir_name="Godot/app_userdata/crunchy"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
@@ -57,6 +59,7 @@ directories/dtl_directory={
 "chief_blame": "res://Dialogue/Rumours/chief_blame.dtl",
 "chief_desk": "res://Dialogue/Rumours/chief_desk.dtl",
 "chief_family": "res://Dialogue/Rumours/chief_family.dtl",
+"dawn": "res://Dialogue/Boss/dawn.dtl",
 "day_10_morning": "res://Dialogue/Monster/day_10_morning.dtl",
 "descend_first": "res://Dialogue/Thoughts/descend_first.dtl",
 "descend_hurt": "res://Dialogue/Thoughts/descend_hurt.dtl",
@@ -64,6 +67,9 @@ directories/dtl_directory={
 "manage_first": "res://Dialogue/Thoughts/manage_first.dtl",
 "manage_food": "res://Dialogue/Thoughts/manage_food.dtl",
 "manage_loss": "res://Dialogue/Thoughts/manage_loss.dtl",
+"revival": "res://Dialogue/Boss/revival.dtl",
+"taken": "res://Dialogue/Boss/taken.dtl",
+"taken_after": "res://Dialogue/Boss/taken_after.dtl",
 "taken_bum": "res://Dialogue/Rumours/taken_bum.dtl"
 }
 layout/style_directory={
@@ -83,6 +89,10 @@ window/stretch/aspect="expand"
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/dialogic/plugin.cfg")
+
+[gui]
+
+theme/custom_font="res://Assets/Fonts/Alkhemikal.ttf"
 
 [input]
 
@@ -279,10 +289,6 @@ Interact={
 "events": [Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"factor":1.0,"button_index":1,"canceled":false,"pressed":false,"double_click":false,"script":null)
 , Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"factor":1.0,"button_index":2,"canceled":false,"pressed":false,"double_click":false,"script":null)
 , Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"factor":1.0,"button_index":3,"canceled":false,"pressed":false,"double_click":false,"script":null)
-, Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"factor":1.0,"button_index":4,"canceled":false,"pressed":false,"double_click":false,"script":null)
-, Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"factor":1.0,"button_index":5,"canceled":false,"pressed":false,"double_click":false,"script":null)
-, Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"factor":1.0,"button_index":6,"canceled":false,"pressed":false,"double_click":false,"script":null)
-, Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"factor":1.0,"button_index":7,"canceled":false,"pressed":false,"double_click":false,"script":null)
 , Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"factor":1.0,"button_index":8,"canceled":false,"pressed":false,"double_click":false,"script":null)
 , Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"factor":1.0,"button_index":9,"canceled":false,"pressed":false,"double_click":false,"script":null)
 ]

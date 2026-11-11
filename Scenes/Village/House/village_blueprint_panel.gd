@@ -38,7 +38,6 @@ var _drag_hint := false
 
 
 func _ready() -> void:
-	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_build_layout()
 	resized.connect(_fit)
 	visibility_changed.connect(_visibility_changed)
@@ -101,13 +100,14 @@ func _build_layout() -> void:
 	_canvas = Control.new()
 	_canvas.size = Vector2(1920, 1080)
 	add_child(_canvas)
-	_status = _label("", 25)
-	_place(_status, Rect2(40, 20, 1840, 58), _canvas)
+	_status = _label("", 36)
+	_place(_status, Rect2(40, 6, 1840, 44), _canvas)
 	_status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_notice = _label("", 21)
+	_notice = _label("", 28)
 	_notice.add_theme_color_override("font_color", Color("efd09b"))
-	_place(_notice, Rect2(40, 60, 1840, 28), _canvas)
+	_place(_notice, Rect2(40, 52, 1840, 34), _canvas)
 	var map_view := TextureRect.new()
+	map_view.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	map_view.texture = MAP
 	map_view.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_place(map_view, Rect2(24, 90, 1260, 720), _canvas)
@@ -144,8 +144,10 @@ func _build_layout() -> void:
 			badge_style.set_border_width_all(2)
 			badge_style.content_margin_left = 6
 			badge_style.content_margin_right = 6
+			badge_style.content_margin_top = 4
+			badge_style.content_margin_bottom = 4
 			badge.add_theme_stylebox_override("panel", badge_style)
-			_place(badge, Rect2(hit.position + Vector2(8, hit.size.y - 6), Vector2(190, 38)), _canvas)
+			_place(badge, Rect2(hit.position + Vector2(2, hit.size.y - 6), Vector2(224, 46)), _canvas)
 			badge.mouse_filter = Control.MOUSE_FILTER_PASS
 			badge.gui_input.connect(func(event: InputEvent):
 				if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
@@ -154,21 +156,21 @@ func _build_layout() -> void:
 			_make_drop_target(badge, id)
 	_details = _paper_box(Rect2(1302, 90, 594, 470), "Details")
 	var assigned_box := _paper_box(Rect2(1302, 578, 594, 358), "Assigned")
-	assigned_box.add_child(_label("Assigned villagers", 28))
+	assigned_box.add_child(_label("Assigned villagers", 34))
 	_assigned = _scroll_list(assigned_box, false) as VBoxContainer
 	_make_drop_target(_canvas.get_node("AssignedPaper"), &"selected")
 	var bench_box := _paper_box(Rect2(24, 828, 822, 228), "Bench", 12)
-	bench_box.add_child(_label("On bench", 25))
+	bench_box.add_child(_label("On bench", 30))
 	_bench = _scroll_list(bench_box, true) as HBoxContainer
 	_make_drop_target(_canvas.get_node("BenchPaper"), Villager.QUEUE)
 	var bum_box := _paper_box(Rect2(864, 828, 420, 228), "Bums", 12)
-	bum_box.add_child(_label("Bums", 25))
+	bum_box.add_child(_label("Bums", 30))
 	_bums = _scroll_list(bum_box, true) as HBoxContainer
 	_chief = _paper_box(Rect2(1302, 90, 594, 846), "Chief")
 	_chief.hide()
-	var close := _button("Step away", func(): closed.emit())
+	var close := _button("Step away", func(): closed.emit(), 34)
 	_place(close, Rect2(1314, 960, 258, 72), _canvas)
-	sleep_button = _button("Sleep · End day", func(): sleep_requested.emit())
+	sleep_button = _button("Sleep · End day", func(): sleep_requested.emit(), 34)
 	sleep_button.name = "SleepButton"
 	_place(sleep_button, Rect2(1590, 960, 294, 72), _canvas)
 
@@ -183,6 +185,7 @@ func _paper_box(rect: Rect2, title: String, padding: int = 28) -> VBoxContainer:
 	var paper := NinePatchRect.new()
 	paper.name = title + "Paper"
 	paper.texture = PAPER
+	paper.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	paper.patch_margin_left = 14
 	paper.patch_margin_right = 14
 	paper.patch_margin_top = 14
@@ -212,7 +215,7 @@ func _scroll_list(parent: Node, horizontal: bool) -> Container:
 	return list
 
 
-func _label(text: String, font_size: int = 23) -> Label:
+func _label(text: String, font_size: int = 28) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_font_size_override("font_size", font_size)
@@ -221,11 +224,11 @@ func _label(text: String, font_size: int = 23) -> Label:
 	return label
 
 
-func _button(text: String, action: Callable) -> Button:
+func _button(text: String, action: Callable, font_size: int = 32) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size.y = 44
-	button.add_theme_font_size_override("font_size", 22)
+	button.custom_minimum_size.y = 52
+	button.add_theme_font_size_override("font_size", font_size)
 	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color("c59962")
@@ -269,7 +272,7 @@ func refresh() -> void:
 	if get_viewport().gui_is_dragging():
 		return
 	var preview := VillageManager.night_preview()
-	var quota := "∞" if GameController.is_day_10() else str(GameController.current_quota())
+	var quota := "closed" if GameController.boss_defeated else ("∞" if GameController.is_day_10() else str(GameController.current_quota()))
 	_status.text = "DAY %d     Flesh %d / %s     Rations %d     Potions %d     Population %d     Village health %d%%" % [GameController.day, GameController.flesh, quota, GameController.rations, GameController.potions, VillageManager.get_population(), GameController.village_health]
 	_status.add_theme_color_override("font_color", Color("f0deb5"))
 	for id in _markers:
@@ -284,19 +287,25 @@ func refresh() -> void:
 		for worker: Villager in VillageManager.get_workers_of(selected_building):
 			_assigned.add_child(_worker_row(worker))
 	if _assigned.get_child_count() == 0:
-		_assigned.add_child(_label("No workers assigned." if selected_building != &"chief" else "The Chief manages the village.", 22))
+		_assigned.add_child(_label("No workers assigned." if selected_building != &"chief" else "The Chief manages the village.", 28))
 	_clear(_bench)
 	for worker: Villager in VillageManager.get_idle_workers():
 		_bench.add_child(_portrait_card(worker, true))
 	if _bench.get_child_count() == 0:
-		_bench.add_child(_label("Everyone is assigned.", 22))
+		_bench.add_child(_label("Everyone is assigned.", 28))
 	_clear(_bums)
 	for worker: Villager in VillageManager.get_bums():
 		_bums.add_child(_portrait_card(worker, false))
 	if _bums.get_child_count() == 0:
-		_bums.add_child(_label("No bums.", 22))
+		_bums.add_child(_label("No bums.", 28))
 	sleep_button.disabled = DialogueManager.is_busy() or GameController.is_day_10() or GameController.night_in_progress
-	sleep_button.tooltip_text = "Visit the window and investigate the abyss." if GameController.is_day_10() else "Harvest +%d · Upkeep %d · Sleep pays the toll automatically." % [preview.expected_production, preview.food_cost]
+	var outcome := "Toll met. Everyone survives the toll." if preview.toll_met else (
+		"You choose who is taken." if preview.player_chooses else "The monster chooses who is taken.")
+	var food := int(preview.rations + preview.expected_production + preview.expected_bonus - preview.food_cost)
+	var food_result := "%d rations after dinner" % food if food >= 0 else "Dinner is short by %d rations" % -food
+	sleep_button.tooltip_text = "%s\n%s" % [outcome, food_result]
+	if GameController.is_day_10():
+		sleep_button.tooltip_text = "The monster has fallen." if GameController.boss_defeated else "Visit the window and investigate the Abyss."
 
 
 func _refresh_details() -> void:
@@ -308,9 +317,9 @@ func _refresh_details() -> void:
 	var level := VillageManager.get_building_level(selected_building)
 	var workers := VillageManager.get_workers_of(selected_building)
 	var capacity := VillageManager.get_building_capacity(selected_building)
-	_details.add_child(_label("%s · Level %d" % [building.display_name, level], 32))
-	_details.add_child(_label("Workers: %d / %d" % [workers.size(), capacity], 24))
-	var perk := _label(_format_building_perk(building), 23)
+	_details.add_child(_label("%s · Level %d" % [building.display_name, level], 38))
+	_details.add_child(_label("Workers: %d / %d" % [workers.size(), capacity], 28))
+	var perk := _label(_format_building_perk(building), 30)
 	perk.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_details.add_child(perk)
 	perk.tooltip_text = "%d rations per worker / night" % VillageManager.config.rations_per_worker
@@ -334,6 +343,7 @@ func _refresh_details() -> void:
 
 func _portrait(worker: Villager) -> TextureRect:
 	var image := TextureRect.new()
+	image.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	image.texture = PORTRAITS.texture_for(worker.display_name)
 	image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -354,12 +364,12 @@ func _portrait_button_style(button: Button) -> void:
 
 func _portrait_card(worker: Villager, selectable: bool) -> Control:
 	var box := VBoxContainer.new()
-	box.custom_minimum_size.x = 160
+	box.custom_minimum_size.x = 176
 	box.add_theme_constant_override("separation", 4)
 	var button := _button("", _pick_worker.bind(worker.id))
 	_make_draggable(button, worker.id)
 	button.tooltip_text = _worker_info(worker)
-	button.custom_minimum_size = Vector2(126, 133)
+	button.custom_minimum_size = Vector2(114, 120)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_portrait_button_style(button)
 	var portrait := _portrait(worker)
@@ -370,9 +380,9 @@ func _portrait_card(worker: Villager, selectable: bool) -> Control:
 	if selectable and assignment_target != &"":
 		var cost := VillageManager.assignment_cost(worker.id, assignment_target)
 		caption += " · " + ("Free" if cost == 0 else "%dR" % cost if cost > 0 else "Full")
-	var name_label := _label(caption, 19)
+	var name_label := _label(caption, 28)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.custom_minimum_size.x = 160
+	name_label.custom_minimum_size.x = 176
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	name_label.clip_text = true
 	box.add_child(name_label)
@@ -393,7 +403,7 @@ func _worker_row(worker: Villager) -> Control:
 	row.add_child(choose)
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var title := _label(worker.display_name, 24)
+	var title := _label(worker.display_name, 34)
 	title.clip_text = true
 	info.add_child(title)
 	row.tooltip_text = _worker_info(worker)
@@ -420,7 +430,7 @@ func _worker_info(worker: Villager) -> String:
 func _format_building_perk(building: BuildingData) -> String:
 	match building.id:
 		&"apothecary": return "+1 heart and +1 daily potion per worker."
-		&"blacksmith": return "+2 damage per worker."
+		&"blacksmith": return "+2 attack damage per worker in the Abyss and finale."
 		&"farmer": return "+15 max stamina and +10% regen per worker."
 		&"tailor": return "+8% speed per worker."
 	return ""
@@ -491,10 +501,11 @@ func _refresh_badges() -> void:
 		_clear(badge)
 		var row := HBoxContainer.new()
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
 		row.add_theme_constant_override("separation", 5)
 		badge.add_child(row)
 		var workers := VillageManager.get_workers_of(id)
-		row.add_child(_label("Lv %d · %d/%d" % [VillageManager.get_building_level(id), workers.size(), VillageManager.get_building_capacity(id)], 20))
+		row.add_child(_label("Lv %d · %d/%d" % [VillageManager.get_building_level(id), workers.size(), VillageManager.get_building_capacity(id)], 28))
 		var names := PackedStringArray()
 		for worker: Villager in workers:
 			var image := _portrait(worker)
@@ -515,22 +526,48 @@ func _refresh_chief() -> void:
 		old_progress = _chief_sprite.frame_progress
 	_clear(_chief)
 	_chief.show()
-	_chief.add_child(_label("The Chief", 34))
+	_chief.add_child(_label("The Chief", 40))
 	var stage := Control.new()
-	stage.custom_minimum_size = Vector2(0, 185)
+	stage.custom_minimum_size = Vector2(0, 172)
 	stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_chief.add_child(stage)
 	_chief_sprite = AnimatedSprite2D.new()
 	_chief_sprite.name = "ChiefIdle"
 	_chief_sprite.sprite_frames = CHIEF_IDLE
-	_chief_sprite.position = Vector2(269, 90)
+	_chief_sprite.position = Vector2(269, 86)
+	_chief_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_chief_sprite.scale = Vector2(4, 4)
 	stage.add_child(_chief_sprite)
 	_chief_sprite.play("idle")
 	_chief_sprite.set_frame_and_progress(old_frame, old_progress)
-	_chief.add_child(_label("Hearts %.1f / %.1f   ·   Stamina %d / %d" % [GameController.health / 2.0, GameController.stats.max_health / 2.0, GameController.stamina, GameController.stats.max_stamina], 22))
+	var vitals_row := HFlowContainer.new()
+	vitals_row.add_theme_constant_override("h_separation", 18)
+	vitals_row.add_theme_constant_override("v_separation", 6)
+	vitals_row.mouse_filter = Control.MOUSE_FILTER_PASS
+	vitals_row.tooltip_text = "%.1f / %.1f hearts" % [GameController.health / 2.0, GameController.stats.max_health / 2.0]
+	var hearts_group := HBoxContainer.new()
+	hearts_group.add_theme_constant_override("separation", 10)
+	hearts_group.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var hearts_lbl := _label("Hearts", 28)
+	hearts_lbl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	hearts_group.add_child(hearts_lbl)
+	var hearts_icons := HBoxContainer.new()
+	hearts_icons.name = "HeartsIcons"
+	hearts_icons.add_theme_constant_override("separation", 4)
+	hearts_icons.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	hearts_icons.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var heart_slots := maxi(1, ceili(GameController.stats.max_health / 2.0))
+	for i in range(heart_slots):
+		var fill := clampi(GameController.health - i * 2, 0, 2)
+		hearts_icons.add_child(_heart_icon(fill))
+	hearts_group.add_child(hearts_icons)
+	vitals_row.add_child(hearts_group)
+	var stamina_lbl := _label("Stamina %d / %d" % [GameController.stamina, GameController.stats.max_stamina], 28)
+	stamina_lbl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	vitals_row.add_child(stamina_lbl)
+	_chief.add_child(vitals_row)
 	var keys := ["max_health", "damage", "max_stamina", "speed"]
-	var captions := ["Max hearts", "Damage", "Max stamina", "Movement speed"]
+	var captions := ["Max hearts", "Finale damage", "Max stamina", "Movement speed"]
 	for i in range(keys.size()):
 		var key: String = keys[i]
 		var base := float(GameController.BASE_STATS[key])
@@ -548,16 +585,38 @@ func _refresh_chief() -> void:
 			base = 100.0
 			unit = "%"
 		_add_stat_bar(captions[i], base, bonus, base + maximum_bonus, unit)
-	_chief.add_child(_label("Stamina regen: +%.0f%%\nDaily potions: +%d" % [VillageManager.get_effect("stamina_regen_pct"), int(VillageManager.get_effect("free_potions"))], 22))
+	_chief.add_child(_label("Stamina regen: +%.0f%%\nDaily potions: +%d" % [VillageManager.get_effect("stamina_regen_pct"), int(VillageManager.get_effect("free_potions"))], 28))
+
+
+func _heart_icon(fill: int, pixel_scale: int = 4) -> TextureRect:
+	var rows := HeartHUD.HEART
+	var cols := rows[0].length()
+	var img := Image.create_empty(cols * pixel_scale, rows.size() * pixel_scale, false, Image.FORMAT_RGBA8)
+	var full_col := Color(0.86, 0.20, 0.24)
+	var empty_col := Color(0.45, 0.34, 0.26, 0.42)
+	for y in range(rows.size()):
+		for x in range(cols):
+			if rows[y][x] == "1":
+				var filled := fill == 2 or (fill == 1 and x < 3)
+				var col := full_col if filled else empty_col
+				img.fill_rect(Rect2i(x * pixel_scale, y * pixel_scale, pixel_scale, pixel_scale), col)
+	var tex := TextureRect.new()
+	tex.texture = ImageTexture.create_from_image(img)
+	tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	tex.stretch_mode = TextureRect.STRETCH_KEEP
+	tex.custom_minimum_size = Vector2(cols * pixel_scale, rows.size() * pixel_scale)
+	tex.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return tex
 
 
 func _add_stat_bar(caption: String, base: float, bonus: float, maximum: float, unit: String) -> void:
-	var text := _label("%s  %s%s" % [caption, str(snappedf(base + bonus, 0.1)), unit], 23)
+	var text := _label("%s  %s%s" % [caption, str(snappedf(base + bonus, 0.1)), unit], 28)
 	text.tooltip_text = "Base %s + %s" % [str(snappedf(base, 0.1)), str(snappedf(bonus, 0.1))]
 	text.mouse_filter = Control.MOUSE_FILTER_PASS
 	_chief.add_child(text)
 	var bar := HBoxContainer.new()
-	bar.custom_minimum_size.y = 15
+	bar.custom_minimum_size.y = 18
 	bar.add_theme_constant_override("separation", 0)
 	_chief.add_child(bar)
 	var values := [base, bonus, maxf(maximum - base - bonus, 0.0)]
@@ -588,7 +647,7 @@ func _create_drag(_position: Vector2, worker_id: int, source: Control) -> Varian
 	var preview := VBoxContainer.new()
 	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	preview.add_child(_portrait(worker))
-	var name_label := _label(worker.display_name, 20)
+	var name_label := _label(worker.display_name, 25)
 	name_label.add_theme_color_override("font_color", Color("f0deb5"))
 	preview.add_child(name_label)
 	source.set_drag_preview(preview)

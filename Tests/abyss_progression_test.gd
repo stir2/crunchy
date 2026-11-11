@@ -25,7 +25,7 @@ func snapshot(service: AbyssSpecialRooms, reverse: bool) -> Array:
 	return result
 func gate_hit(room: AbyssAuthoredRoom, x: int) -> bool:
 	var query := PhysicsPointQueryParameters2D.new()
-	query.position = room.to_global((Vector2(x,12)+Vector2(0.5,0.5))*16)
+	query.position = room.to_global((Vector2(x, room.room_size.y / 2)+Vector2(0.5,0.5))*16)
 	return not root.world_2d.direct_space_state.intersect_point(query).is_empty()
 func run() -> void:
 	var source := "res://Scenes/Underground/Rooms/Examples/open_cavern.tscn"
@@ -38,6 +38,7 @@ func run() -> void:
 	var selector := AbyssRoomTemplateSelector.new(registry,857632823493672366)
 	var built: Array[AbyssAuthoredRoom] = []
 	var total_gates := 0
+	var gate_service := AbyssSpecialRooms.new(service.routes, service.config, AbyssProgressionState.new())
 	for level in range(1,4):
 		for interval in range(2):
 			var data := service.interval_definitions(level,interval)
@@ -66,33 +67,37 @@ func run() -> void:
 			var right := left+Vector2i.RIGHT
 			check(service.routes.get_room(left).region == AbyssRoomData.Region.OPEN and service.routes.get_room(right).region == AbyssRoomData.Region.OPEN,"Gate not on valid open border")
 			check(not service.routes.get_room(left).allows_open_adjacency(service.routes.get_room(right)),"Natural cavern adjacency bypasses border")
-			service.state.keys.erase(service.level_key(level))
-			check(not service.can_cross(left,right) and not service.unlock_gate(gate),"Gate unlocked without key")
+			if gate_service.is_gate_unlocked(gate):
+				check(gate_service.can_cross(left, right), "Level unlock did not open another gate")
+				continue
+			check(not gate_service.can_cross(left,right) and not gate_service.unlock_gate(gate),"Gate unlocked without fragments")
 			var gate_rooms: Array[AbyssAuthoredRoom] = []
 			for pos in [left,right]:
-				var gate_room := AbyssRoomTerrainBuilder.build(selector.select_room(service.routes,pos),AbyssTerrainConfig.new(),null,null,service)
+				var gate_room := AbyssRoomTerrainBuilder.build(selector.select_room(service.routes,pos),AbyssTerrainConfig.new(),null,null,gate_service)
 				root.add_child(gate_room)
 				gate_rooms.append(gate_room)
 				built.append(gate_room)
 				var layer := gate_room.get_node("LevelBoundaryEast" if pos == left else "LevelBoundaryWest") as TileMapLayer
-				check(layer.collision_enabled and layer.get_used_cells().size() == 24,"Locked boundary collision incomplete")
+				check(layer.collision_enabled and layer.get_used_cells().size() == gate_room.room_size.y,"Locked boundary collision incomplete")
 				layer.update_internals()
-				var tile := layer.get_cell_tile_data(Vector2i(23 if pos == left else 0,12))
+				var tile := layer.get_cell_tile_data(Vector2i(gate_room.room_size.x - 1 if pos == left else 0, gate_room.room_size.y / 2))
 				check(tile != null and tile.get_collision_polygons_count(0)>0,"Gate tile lacks solid collision")
 			await physics_frame
 			await process_frame
-			check(gate_hit(gate_rooms[0],23) and gate_hit(gate_rooms[1],0),"Locked gates missing actual physics bodies")
-			service.state.record_assembled_key(service.level_key(level))
-			check(service.unlock_gate(gate) and service.can_cross(left,right),"Key did not unlock gate")
-			check(not service.can_cross(left+Vector2i.DOWN,right+Vector2i.DOWN),"Unlocked gate allows crossing elsewhere")
+			check(gate_hit(gate_rooms[0],gate_rooms[0].room_size.x - 1) and gate_hit(gate_rooms[1],0),"Locked gates missing actual physics bodies")
+			for band in range(AbyssProgressionConfig.FRAGMENTS_PER_KEY):
+				gate_service.state.collect_fragment(service.interval_definitions(level, band).fragment)
+			check(gate_service.unlock_gate(gate) and gate_service.can_cross(left,right),"Fragments did not unlock gate")
+			check(gate_service.state.collected_count(service.level_key(level)) == 0,"Unlock did not consume the fragments")
+			check(not gate_service.can_cross(left+Vector2i.DOWN,right+Vector2i.DOWN),"Unlocked gate allows crossing elsewhere")
 			for index in range(2):
 				var layer := gate_rooms[index].get_node("LevelBoundaryEast" if index == 0 else "LevelBoundaryWest") as TileMapLayer
-				check(layer.get_used_cells().size() == 21,"Unlock did not remove exactly three aperture tiles")
+				check(layer.get_used_cells().size() == gate_rooms[index].room_size.y - AbyssRouteConfig.OPENING_WIDTH,"Unlock did not remove the aperture tiles")
 				layer.update_internals()
-				check(layer.get_cell_source_id(Vector2i(23 if index == 0 else 0,12)) == -1,"Unlocked aperture still collides")
+				check(layer.get_cell_source_id(Vector2i(gate_rooms[index].room_size.x - 1 if index == 0 else 0, gate_rooms[index].room_size.y / 2)) == -1,"Unlocked aperture still collides")
 			await physics_frame
 			await process_frame
-			check(not gate_hit(gate_rooms[0],23) and not gate_hit(gate_rooms[1],0),"Unlocked gate retained physics collision")
+			check(not gate_hit(gate_rooms[0],gate_rooms[0].room_size.x - 1) and not gate_hit(gate_rooms[1],0),"Unlocked gate retained physics collision")
 	check(total_gates > 0,"Representative seed has no gates")
 	# All border rows (including negative depth) reject ordinary route contracts.
 	for border in [-4,4,12,20]:

@@ -150,7 +150,7 @@ func run() -> void:
 	check(player.damage.receive_hit(hit),"Death test damage failed")
 	var grave: Dictionary = state.graves.get(world,{})
 	check(not grave.is_empty() and int(grave.souls) == 4 and state.descent_souls[world] == 0,"Death did not preserve half of descent souls")
-	check(game.flesh == flesh and has_marker(model.snapshot(1),"grave",true),"Grave touched village currency or failed map display")
+	check(game.flesh == flesh + 5 and has_marker(model.snapshot(1),"grave",true),"Death did not bank the remainder or display the grave")
 	# Preserve global-tick damage/health deadlines across map pause too.
 	player.health.reset_health()
 	player.health._invulnerable_until = Engine.get_physics_frames()+10

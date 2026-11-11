@@ -1,6 +1,8 @@
 extends CanvasLayer
 ## Pauses the scene tree while the menu itself keeps receiving input.
 
+const MENU_STYLE = preload("res://Scenes/Menus/menu_style.gd")
+
 @onready var panel: Control = $Panel
 @onready var status_label: Label = %StatusLabel
 @onready var leave_dialog: Control = $LeaveDialog
@@ -8,8 +10,8 @@ var _quit := false
 
 
 func _ready() -> void:
-	panel.theme = preload("res://Scenes/Menus/menu_style.gd").make_theme()
-	leave_dialog.theme = panel.theme
+	panel.theme = MENU_STYLE.make_theme()
+	leave_dialog.theme = MENU_STYLE.make_confirmation_theme()
 	get_viewport().size_changed.connect(_fit_layout)
 	_fit_layout()
 	panel.hide()
@@ -36,6 +38,7 @@ func toggle() -> void:
 	if panel.visible:
 		resume()
 		return
+	_fit_layout()
 	%Day.text = "DAY %d" % GameController.day
 	panel.modulate.a = 0
 	panel.show()
@@ -82,7 +85,71 @@ func _leave() -> void:
 func _fit_layout() -> void:
 	if not is_inside_tree(): return
 	var viewport_size := get_viewport().get_visible_rect().size
-	var factor := minf(viewport_size.x / 960.0, viewport_size.y / 540.0)
+	var pixel_mode := viewport_size.y <= 480.0
 	for layout in [$Panel/Layout, $LeaveDialog/Layout]:
-		layout.scale = Vector2.ONE * factor
-		layout.position = (viewport_size - Vector2(960, 540) * factor) * 0.5
+		layout.scale = Vector2.ONE
+		layout.position = Vector2.ZERO
+	var paper := $Panel/Layout/Paper as PanelContainer
+	var buttons_box := $Panel/Layout/Paper/Buttons as VBoxContainer
+	var leave_paper := $LeaveDialog/Layout/Paper as PanelContainer
+	var leave_content := $LeaveDialog/Layout/Paper/Content as VBoxContainer
+	var leave_title := $LeaveDialog/Layout/Paper/Content/Title as Label
+	var leave_message := $LeaveDialog/Layout/Paper/Content/Message as Label
+	var leave_buttons := $LeaveDialog/Layout/Paper/Content/Buttons as HBoxContainer
+	if pixel_mode:
+		panel.theme = MENU_STYLE.make_theme(1.0, true)
+		leave_dialog.theme = MENU_STYLE.make_confirmation_theme(true)
+		var margin := 18.0
+		paper.offset_left = margin
+		paper.offset_top = margin
+		paper.offset_right = 278.0
+		paper.offset_bottom = viewport_size.y - margin
+		buttons_box.add_theme_constant_override("separation", 6)
+		%Day.add_theme_font_size_override("font_size", 16)
+		$Panel/Layout/Paper/Buttons/Title.add_theme_font_size_override("font_size", 32)
+		status_label.add_theme_font_size_override("font_size", 16)
+		for btn: Button in [%ResumeButton, %SaveButton, %MainMenuButton, %QuitButton]:
+			btn.custom_minimum_size.y = 26
+			btn.add_theme_font_size_override("font_size", 16)
+		leave_paper.custom_minimum_size = Vector2(300, 0)
+		leave_paper.offset_left = -150.0
+		leave_paper.offset_right = 150.0
+		leave_paper.offset_top = -64.0
+		leave_paper.offset_bottom = 64.0
+		leave_content.add_theme_constant_override("separation", 10)
+		leave_title.add_theme_font_size_override("font_size", 16)
+		leave_message.add_theme_font_size_override("font_size", 16)
+		leave_buttons.add_theme_constant_override("separation", 12)
+		for btn: Button in [%CancelLeaveButton, %ConfirmLeaveButton]:
+			btn.custom_minimum_size.y = 26
+			btn.add_theme_font_size_override("font_size", 16)
+	else:
+		var s := clampf(minf(viewport_size.x / 1920.0, viewport_size.y / 1080.0), 0.65, 2.0)
+		panel.theme = MENU_STYLE.make_theme(1.15 * s, false)
+		leave_dialog.theme = MENU_STYLE.make_confirmation_theme(false)
+		var margin := roundf(72.0 * s)
+		paper.offset_left = margin
+		paper.offset_top = margin
+		paper.offset_right = roundf(620.0 * s)
+		paper.offset_bottom = viewport_size.y - margin
+		buttons_box.add_theme_constant_override("separation", roundi(14 * s))
+		%Day.add_theme_font_size_override("font_size", roundi(28 * s))
+		$Panel/Layout/Paper/Buttons/Title.add_theme_font_size_override("font_size", roundi(64 * s))
+		status_label.add_theme_font_size_override("font_size", roundi(26 * s))
+		for btn: Button in [%ResumeButton, %SaveButton, %MainMenuButton, %QuitButton]:
+			btn.custom_minimum_size.y = roundf(68.0 * s)
+			btn.add_theme_font_size_override("font_size", roundi(32 * s))
+		var half_w := roundf(340.0 * s)
+		var half_h := roundf(140.0 * s)
+		leave_paper.custom_minimum_size = Vector2(half_w * 2.0, half_h * 2.0)
+		leave_paper.offset_left = -half_w
+		leave_paper.offset_right = half_w
+		leave_paper.offset_top = -half_h
+		leave_paper.offset_bottom = half_h
+		leave_content.add_theme_constant_override("separation", roundi(20 * s))
+		leave_title.add_theme_font_size_override("font_size", roundi(36 * s))
+		leave_message.add_theme_font_size_override("font_size", roundi(30 * s))
+		leave_buttons.add_theme_constant_override("separation", roundi(24 * s))
+		for btn: Button in [%CancelLeaveButton, %ConfirmLeaveButton]:
+			btn.custom_minimum_size.y = roundf(58.0 * s)
+			btn.add_theme_font_size_override("font_size", roundi(30 * s))

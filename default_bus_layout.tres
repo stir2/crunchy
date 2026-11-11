@@ -4,23 +4,47 @@
 ceiling_db = -1.0
 
 [sub_resource type="AudioEffectLowPassFilter" id="LowPass_quota"]
-cutoff_hz = 3600.0
+cutoff_hz = 5200.0
 
 [sub_resource type="AudioEffectReverb" id="Reverb_quota"]
 room_size = 0.85
 damping = 0.65
 spread = 0.9
 dry = 0.85
-wet = 0.3
+wet = 0.22
 
 [sub_resource type="AudioEffectLowPassFilter" id="LowPass_dread"]
-cutoff_hz = 2200.0
+cutoff_hz = 3400.0
 
 [sub_resource type="AudioEffectReverb" id="Reverb_dread"]
 room_size = 1.0
 damping = 0.55
 dry = 0.8
-wet = 0.55
+wet = 0.35
+
+[sub_resource type="AudioEffectLowPassFilter" id="LowPass_boss_music"]
+cutoff_hz = 20000.0
+
+[sub_resource type="AudioEffectLowPassFilter" id="LowPass_village_music"]
+cutoff_hz = 11500.0
+
+[sub_resource type="AudioEffectDistortion" id="Distortion_zombie_steps"]
+mode = 1
+keep_hf_hz = 2600.0
+drive = 0.28
+post_gain = 1.5
+
+[sub_resource type="AudioEffectLowPassFilter" id="LowPass_zombie_steps"]
+cutoff_hz = 1450.0
+resonance = 0.7
+db = 1
+
+[sub_resource type="AudioEffectReverb" id="Reverb_zombie_steps"]
+room_size = 0.3
+damping = 0.85
+spread = 0.6
+dry = 0.85
+wet = 0.16
 
 [resource]
 bus/0/effect/0/effect = SubResource("Master_limiter")
@@ -29,13 +53,13 @@ bus/1/name = &"SFX"
 bus/1/solo = false
 bus/1/mute = false
 bus/1/bypass_fx = false
-bus/1/volume_db = 3.0
+bus/1/volume_db = 5.0
 bus/1/send = &"Master"
 bus/2/name = &"Music"
 bus/2/solo = false
 bus/2/mute = false
 bus/2/bypass_fx = false
-bus/2/volume_db = -6.0
+bus/2/volume_db = -2.0
 bus/2/send = &"Master"
 bus/3/name = &"Quota"
 bus/3/solo = false
@@ -57,3 +81,31 @@ bus/4/effect/0/effect = SubResource("LowPass_dread")
 bus/4/effect/0/enabled = true
 bus/4/effect/1/effect = SubResource("Reverb_dread")
 bus/4/effect/1/enabled = true
+bus/5/name = &"BossMusic"
+bus/5/solo = false
+bus/5/mute = false
+bus/5/bypass_fx = false
+bus/5/volume_db = 0.0
+bus/5/send = &"Music"
+bus/5/effect/0/effect = SubResource("LowPass_boss_music")
+bus/5/effect/0/enabled = true
+bus/6/name = &"VillageMusic"
+bus/6/solo = false
+bus/6/mute = false
+bus/6/bypass_fx = false
+bus/6/volume_db = 0.0
+bus/6/send = &"Music"
+bus/6/effect/0/effect = SubResource("LowPass_village_music")
+bus/6/effect/0/enabled = true
+bus/7/name = &"ZombieSteps"
+bus/7/solo = false
+bus/7/mute = false
+bus/7/bypass_fx = false
+bus/7/volume_db = 0.0
+bus/7/send = &"SFX"
+bus/7/effect/0/effect = SubResource("Distortion_zombie_steps")
+bus/7/effect/0/enabled = true
+bus/7/effect/1/effect = SubResource("LowPass_zombie_steps")
+bus/7/effect/1/enabled = true
+bus/7/effect/2/effect = SubResource("Reverb_zombie_steps")
+bus/7/effect/2/enabled = true

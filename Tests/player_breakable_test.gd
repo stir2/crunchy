@@ -67,6 +67,7 @@ func run() -> void:
 	room = make_room()
 	root.add_child(room)
 	player = load("res://Scenes/Player/player.tscn").instantiate() as Player
+	player.get_node("CombatController").mouse_aim_attacks = false
 	root.add_child(player)
 	player.position = Vector2(120,208)
 	player.combat.repeat_while_held = false

@@ -12,17 +12,21 @@ extends Area2D
 ## Empty uses the area itself, suitable for a standalone environmental source.
 @export var source_path: NodePath
 @export var show_debug_shape: bool = false
+## Optional travel direction for attacks whose approach is independent of the target.
+var attack_direction := Vector2.ZERO
 
 func create_hit(target: Node2D) -> CombatHit:
 	if not active:
 		return null
 	var hit := CombatHit.new()
 	hit.amount = damage
+	hit.attack_area = self
 	hit.source = get_node_or_null(source_path) as Node2D if not source_path.is_empty() else self
 	hit.world_position = global_position
 	var side := signf(target.global_position.x - global_position.x)
-	hit.direction = Vector2(side if side != 0.0 else 1.0, 0)
-	hit.knockback = Vector2(absf(knockback.x) * hit.direction.x, knockback.y)
+	var horizontal := side if side != 0.0 else 1.0
+	hit.direction = attack_direction if attack_direction != Vector2.ZERO else Vector2(horizontal, 0)
+	hit.knockback = Vector2(absf(knockback.x) * horizontal, knockback.y)
 	return hit
 
 func _draw() -> void:

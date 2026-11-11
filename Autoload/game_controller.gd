@@ -42,6 +42,7 @@ var abyss_progression_state := AbyssProgressionState.new()
 var day: int = 1
 var night_in_progress := false
 var monster_missing := false
+var boss_defeated := false
 var return_to_stairs := false
 var window_history: Dictionary = {}
 var trips_left: int = TRIPS_PER_DAY:
@@ -125,6 +126,11 @@ func recalculate_stats() -> void:
 	stats_changed.emit(stats)
 
 
+## Regular enemies and the finale use different base attack damage.
+func abyss_attack_damage(base_damage: int = 1) -> int:
+	return base_damage + int(stat_bonuses.get("damage", 0))
+
+
 func heal_to_full() -> void:
 	health = stats.get("max_health", 6)
 	stamina = stats.get("max_stamina", 100)
@@ -150,7 +156,7 @@ func collect_descent_flesh(world: String, amount: int, origin: Vector2 = Vector2
 		abyss_room_state.markers[key] = "collected"
 	var collected := abyss_room_state.exploration.add_descent_flesh(world,amount,origin)
 	if collected:
-		get_node("/root/SoundManager").play_limited(&"flesh_collect", -22)
+		get_node("/root/SoundManager").play_limited(&"flesh_collect", -15)
 	return collected
 
 func return_abyss_descent(world: String) -> int:
@@ -158,7 +164,7 @@ func return_abyss_descent(world: String) -> int:
 	var amount: int = abyss_room_state.exploration.take_descent_flesh(world)
 	if amount > 0:
 		flesh += amount
-		get_node("/root/SoundManager").play_sfx(&"flesh_bank", -16)
+		get_node("/root/SoundManager").play_sfx(&"flesh_bank", -12)
 	return amount
 
 
@@ -221,6 +227,7 @@ func reset_run() -> void:
 	day = 1
 	abyss_room_state = AbyssRoomState.new()
 	monster_missing = false
+	boss_defeated = false
 	return_to_stairs = false
 	window_history.clear()
 	night_in_progress = false

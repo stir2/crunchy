@@ -4,6 +4,28 @@ const MUSIC_CONTROLLER = preload("res://Autoload/music_controller.gd")
 const PLAYER_AUDIO = preload("res://Scenes/Player/player_audio.gd")
 const ROOT := "res://Assets/Audio/SFX/"
 const SOUND_PATHS := {
+	&"spider_death": "Enemies/spider_death.wav",
+	&"spider_hiss": "Enemies/spider_hiss.wav",
+	&"spider_hit": "Enemies/spider_hit.wav",
+	&"spider_spit": "Enemies/spider_spit.wav",
+	&"spider_walk": "Enemies/spider_walk.wav",
+	&"web_hit": "Enemies/web_hit.wav",
+	&"zombie_atk": "Enemies/zombie_atk.wav",
+	&"zombie_atk_windup": "Enemies/zombie_atk_windup.wav",
+	&"zombie_death": "Enemies/zombie_death.wav",
+	&"zombie_hit": "Enemies/zombie_hit.wav",
+	&"zombie_step_stone": "Movement/footstep_stone.wav",
+	&"zombie_step_wood": "Movement/footstep_wood.wav",
+	&"zombie_drag_stone": "Movement/land_stone.wav",
+	&"zombie_drag_wood": "Movement/land_wood.wav",
+	&"boss_death": "Monster/boss_death.wav",
+	&"boss_hand_drag": "Monster/boss_hand_drag.wav",
+	&"boss_hurt": "Monster/boss_hurt.wav",
+	&"boss_slam": "Monster/boss_slam.wav",
+	&"boss_spit": "Monster/boss_spit.wav",
+	&"boss_stab_creak": "Monster/boss_stab_creak.wav",
+	&"boss_stab_warning": "Monster/boss_stab_warning.wav",
+	&"boss_summon": "Monster/boss_summon.wav",
 	&"checkpoint": "Progression/checkpoint.wav",
 	&"parry": "Combat/parry.wav",
 	&"flesh_collect": "Progression/flesh_collect.wav",
@@ -65,6 +87,11 @@ const SOUND_PATHS := {
 }
 ## Measured source peaks, before playback gain. Keep the supplied WAVs untouched.
 const SOURCE_PEAK_DB := {
+	&"spider_death": -21.78, &"spider_hiss": -15.38, &"spider_hit": -13.24, &"spider_spit": -9.28, &"spider_walk": -26.25,
+	&"web_hit": -12.12, &"zombie_atk": -18.52, &"zombie_atk_windup": -14.76, &"zombie_death": -16.04, &"zombie_hit": -7.17,
+	&"zombie_step_stone": -14.85, &"zombie_step_wood": -14.08, &"zombie_drag_stone": -4.31, &"zombie_drag_wood": -9.07,
+	&"boss_death": 2.24, &"boss_hand_drag": -0.33, &"boss_hurt": -23.82, &"boss_slam": 1.28,
+	&"boss_spit": -12.50, &"boss_stab_creak": -12.58, &"boss_stab_warning": -19.79, &"boss_summon": -21.35,
 	&"checkpoint": -11.98, &"parry": 0.82, &"flesh_collect": -11.14,
 	&"flesh_bank": -7.19, &"collect_grave": -15.55, &"error": -18.39, &"player_hurt": -2.22,
 	&"bull_rush_charge": -20.61, &"bull_rush": 0.34, &"freefall": -18.55, &"jump": -12.91, &"gate_unlock": -9.23,
@@ -91,6 +118,7 @@ const START_OFFSETS := {
 	&"open_ledger": 0.32,
 	&"gate_unlock": 0.46, &"key_fragment_pickup": 0.38, &"key_merge": 0.17,
 	&"bull_rush_charge": 0.03, &"purchase": 0.10, &"geiger_counter_tick": 0.055, &"jump": 0.015,
+	&"boss_stab_creak": 0.13, &"boss_summon": 0.22,
 }
 const CUE_ENDS := {
 	&"play_button": 1.8, &"night_bell-1": 4.6,
@@ -314,3 +342,19 @@ func play_limited(sound: StringName, volume_db: float, interval: float = 0.12) -
 		return
 	_limited_times[sound] = now
 	play_sfx(sound, volume_db)
+
+
+func play_varied(sound: StringName, volume_db: float, pitch_min: float, pitch_max: float, start_offset: float = 0.0, bus: StringName = &"SFX") -> AudioStreamPlayer:
+	var stream := stream_for(sound)
+	if stream == null:
+		return null
+	var audio := AudioStreamPlayer.new()
+	audio.stream = stream
+	audio.bus = bus
+	audio.volume_db = volume_db + gain_for(sound)
+	audio.pitch_scale = randf_range(pitch_min, pitch_max)
+	audio.process_mode = Node.PROCESS_MODE_PAUSABLE
+	add_child(audio)
+	audio.finished.connect(audio.queue_free)
+	audio.play(clampf(start_offset, 0.0, maxf(0.0, stream.get_length() - 0.02)))
+	return audio

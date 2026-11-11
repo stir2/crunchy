@@ -9,11 +9,12 @@ func _initialize() -> void:
 func requirements(coords: Vector2i = Vector2i(-3,8)) -> AbyssRoomRequirements:
 	var req := AbyssRoomRequirements.new()
 	req.global_coords = coords
-	req.room_size = AbyssRegionConfig.DEFAULT_ROOM_SIZE
+	req.room_size = AbyssRegionConfig.LEGACY_ROOM_SIZE
 	req.region = AbyssRoomData.Region.OPEN
 	req.opening_schema = &"abyss_slots_v1"
-	req.horizontal_offsets = AbyssRouteConfig.DEFAULT_OPENING_OFFSETS
-	req.vertical_offsets = AbyssRouteConfig.DEFAULT_OPENING_OFFSETS
+	req.opening_width = 3
+	req.horizontal_offsets = Vector2i(5, 18)
+	req.vertical_offsets = Vector2i(5, 18)
 	return req
 func pack(room: AbyssAuthoredRoom) -> PackedScene:
 	var scene := PackedScene.new()
@@ -118,10 +119,10 @@ func run() -> void:
 			check(not room.get_world_2d().direct_space_state.intersect_point(query).is_empty() if i == 1 else room.get_world_2d().direct_space_state.intersect_point(query).is_empty(), "Physics body differs from selected group")
 		room.free()
 	# Defensive construction: never clip a group; suppress the whole group on
-	# a route, reserved rectangle, or perimeter even if caller bypasses validation.
+	# an opening throat or perimeter even if the caller bypasses validation.
 	var unsafe := metadata.scene.instantiate() as AbyssAuthoredRoom
 	var conditional := unsafe.get_node("ConditionalWalls") as TileMapLayer
-	for cell in [Vector2i(0,6),Vector2i(1,6),Vector2i(8,5),Vector2i(8,6),Vector2i(10,8),Vector2i(11,8)]:
+	for cell in [Vector2i(0,6),Vector2i(1,6),Vector2i(3,6),Vector2i(4,6),Vector2i(20,6),Vector2i(19,6)]:
 		conditional.set_cell(cell,0,Vector2i.ZERO)
 	var unsafe_metadata := metadata.duplicate(true) as AbyssRoomTemplateMetadata
 	unsafe_metadata.scene = pack(unsafe)
@@ -131,13 +132,13 @@ func run() -> void:
 	request.requirements.route_openings = {&"west:0":Vector2i(0,6),&"east:0":Vector2i(23,6)}
 	request.scene = unsafe_metadata.scene
 	var guarded := AbyssRoomSceneInstantiator.instantiate_authored(request)
-	for cell in [Vector2i(0,6),Vector2i(1,6),Vector2i(8,5),Vector2i(8,6),Vector2i(10,8),Vector2i(11,8)]:
+	for cell in [Vector2i(0,6),Vector2i(1,6),Vector2i(3,6),Vector2i(4,6),Vector2i(20,6),Vector2i(19,6)]:
 		check(guarded.get_node("ConditionalWalls").get_cell_source_id(cell) == -1, "Conditional wall blocks protected route")
 	guarded.free()
 	# A single required port also protects an interior approach in a dead end.
 	request.requirements.route_openings.erase(&"east:0")
 	guarded = AbyssRoomSceneInstantiator.instantiate_authored(request)
-	check(guarded.get_node("ConditionalWalls").get_cell_source_id(Vector2i(8,6)) == -1, "Dead-end approach blocked")
+	check(guarded.get_node("ConditionalWalls").get_cell_source_id(Vector2i(3,6)) == -1, "Dead-end approach blocked")
 	guarded.free()
 	unsafe.free()
 	for probability in [-0.1,1.1,NAN]:

@@ -6,7 +6,6 @@ var runtime: AbyssRuntime
 var model: AbyssMapModel
 var opened: bool = false
 var _owns_pause: bool = false
-var _pause_tick: int = 0
 var _fade: Tween
 var _dialogic_paused: bool = false
 var _dirty: bool = false
@@ -30,7 +29,6 @@ func configure(service: AbyssSpecialRooms, state: AbyssExplorationState, size: V
 
 func open_map() -> bool:
 	if opened or model == null or not runtime.is_active() or get_tree().paused: return false
-	_pause_tick = Engine.get_physics_frames()
 	_owns_pause = true
 	get_tree().paused = true
 	if _dialogue != null:
@@ -52,11 +50,6 @@ func close_map() -> void:
 	opened = false
 	visible = false
 	if _owns_pause:
-		var ticks := Engine.get_physics_frames()-_pause_tick
-		if is_instance_valid(runtime) and is_instance_valid(runtime.player):
-			runtime.player.combat.compensate_paused_ticks(_pause_tick,ticks)
-			runtime.player.damage.compensate_paused_ticks(_pause_tick,ticks)
-			runtime.player.health.compensate_paused_ticks(_pause_tick,ticks)
 		get_tree().paused = false
 		if is_instance_valid(_dialogue): _dialogue.set("paused",_dialogic_paused)
 		_owns_pause = false

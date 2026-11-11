@@ -231,6 +231,7 @@ class DigitReel extends Control:
 
 
 func _ready() -> void:
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 
 	_shake_root = housing.get_parent() as Control
@@ -319,7 +320,8 @@ func _setup_reels(quota_str: String) -> void:
 func _build_night_backdrop() -> void:
 	_night_backdrop = TextureRect.new()
 	_night_backdrop.name = "NightBackdrop"
-	_night_backdrop.texture = preload("res://Assets/Sprites/House/desk.png")
+	_night_backdrop.texture = preload("res://uiSprites/deskView.png")
+	_night_backdrop.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_night_backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_night_backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	_night_backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -331,7 +333,7 @@ func _build_night_backdrop() -> void:
 	_quota_caption.name = "QuotaCaption"
 	_quota_caption.text = "DAY %d" % GameController.day
 	_quota_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_quota_caption.add_theme_font_size_override("font_size", 28)
+	_quota_caption.add_theme_font_size_override("font_size", 32)
 	_quota_caption.add_theme_color_override("font_color", Color("b4aaa0"))
 	_quota_caption.modulate.a = 0.0
 	add_child(_quota_caption)
@@ -354,7 +356,7 @@ func _run_sequence() -> void:
 	if not is_inside_tree() or _phase != Phase.PRELUDE:
 		return
 	_intro_running = false
-	await get_tree().create_timer(0.25 if opening else 0.12 if has_intro else PRELUDE_TIME).timeout
+	await get_tree().create_timer(0.25 if opening else 0.12 if has_intro else PRELUDE_TIME, false).timeout
 	if _phase != Phase.PRELUDE or not is_inside_tree():
 		return # skipped during the prelude
 	_phase = Phase.SPINNING
@@ -399,7 +401,7 @@ func _begin_hold() -> void:
 		return
 	_phase = Phase.HOLD
 	# Hold the number while the impact fades into the dark.
-	await get_tree().create_timer(HOLD_TIME).timeout
+	await get_tree().create_timer(HOLD_TIME, false).timeout
 	if is_inside_tree() and _phase == Phase.HOLD:
 		_transition_to_house()
 

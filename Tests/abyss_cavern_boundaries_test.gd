@@ -37,8 +37,8 @@ func run() -> void:
 	var corner_generator := CornerFixture.new()
 	var corner_selector := AbyssRoomTemplateSelector.new(AbyssRoomTemplateRegistry.new(), 0)
 	var corner_field := AbyssCavernBoundaryField.new(corner_generator, corner_selector, corner_config)
-	check(not corner_field.is_solid(Vector2i(29, 29)), "Concave cavern corner remains rectangular")
-	check(corner_field.is_solid(Vector2i(29, 40)), "Corner rounding erased the straight-wall reference")
+	check(not corner_field.is_solid(Vector2i(45, 45)), "Concave cavern corner remains rectangular")
+	check(corner_field.is_solid(Vector2i(45, 56)), "Corner rounding erased the straight-wall reference")
 	# Both orientations and negative/positive chunk seams: preserve the seal,
 	# widen its root, and round its tip instead of leaving a two-cell fin.
 	var authored_selector := AbyssRoomTemplateSelector.new(load("res://Scenes/Underground/Rooms/example_registry.tres"), 0)
@@ -47,7 +47,7 @@ func run() -> void:
 			var seam_generator := FlatCavernFixture.new()
 			seam_generator.vertical = vertical
 			var seam_field := AbyssCavernBoundaryField.new(seam_generator, seam_selector, corner_config)
-			for seam in [-192, 0, 192]:
+			for seam in [-320, 0, 320]:
 				var root := Vector2i(seam + 2, 2) if not vertical else Vector2i(2, seam + 2)
 				var tip_side := Vector2i(seam + 2, 0) if not vertical else Vector2i(0, seam + 2)
 				var seal := Vector2i(seam, 0) if not vertical else Vector2i(0, seam)

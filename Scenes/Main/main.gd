@@ -19,6 +19,11 @@ func _ready() -> void:
 	change_scene(MENU_SCENE)
 
 
+func _exit_tree() -> void:
+	Input.set_custom_mouse_cursor(null, Input.CURSOR_ARROW)
+	Input.set_custom_mouse_cursor(null, Input.CURSOR_POINTING_HAND)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and active_path != MENU_SCENE and not _transitioning:
 		pause_menu.toggle()

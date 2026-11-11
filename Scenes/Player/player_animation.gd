@@ -2,14 +2,14 @@ extends AnimatedSprite2D
 ## Movement owns physics; combat owns slash playback. Jump/dash poses follow state.
 @export_range(0.0, 20.0, 0.5) var idle_speed_threshold: float = 1.0
 @export_range(1.05, 4.0, 0.05) var run_threshold_ratio: float = 1.25
-@export var idle_offset: Vector2 = Vector2(0, -4)
-@export var walk_offset: Vector2 = Vector2(0, -4)
+@export var idle_offset: Vector2 = Vector2(0, 3)
+@export var walk_offset: Vector2 = Vector2(0, 3)
 @export var run_offset: Vector2 = Vector2(0, 3)
 @export var attack_offset: Vector2 = Vector2(0, 3)
 @export var dash_offset: Vector2 = Vector2(0, 3)
 @export var jump_offset: Vector2 = Vector2(0, 3)
-@export var death_offset: Vector2 = Vector2(0, -4)
-@export var grave_offset: Vector2 = Vector2(0, 3)
+# Vertical offsets measured from the contact row of each death frame.
+const DEATH_FLOOR_OFFSETS := [-3, 3, 3, -1, -1, -1, -2, -2, -2, -2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 2, 2]
 signal death_animation_started
 signal death_animation_finished
 var _death_started: bool = false
@@ -71,6 +71,10 @@ func _pose(name: StringName, pose_frame: int, pose_offset: Vector2) -> void:
 	speed_scale = 1.0
 	pause()
 
+func _death_floor_offset(death_frame: int) -> Vector2:
+	var floor_offset: int = DEATH_FLOOR_OFFSETS[death_frame] if death_frame < DEATH_FLOOR_OFFSETS.size() else 3
+	return Vector2(0, floor_offset)
+
 func update_animation() -> void:
 	if is_instance_valid(_player.damage) and _player.damage.is_dead():
 		if not _death_started:
@@ -81,7 +85,7 @@ func update_animation() -> void:
 			death_animation_started.emit()
 			flip_h = true
 			get_parent().scale.x = absf(get_parent().scale.x) * _player.facing_direction
-			offset = death_offset
+			offset = _death_floor_offset(0)
 			speed_scale = 1.0
 			play(&"death")
 			set_frame_and_progress(0, 0.0)
@@ -90,13 +94,12 @@ func update_animation() -> void:
 			var position: float = audio.death_playback_position() if audio != null else -1.0
 			# Frame21 is the falling stone; frame22 is contact with the ground.
 			if position >= 0.0 and position < 2.88 - 1.0/24.0:
-				_pose(&"death",20,death_offset)
+				_pose(&"death", 20, _death_floor_offset(20))
 				return
 			_death_drop_released = true
 			play(&"death")
 			set_frame_and_progress(21,0.0)
-		# The settled gravestone baseline is seven pixels above the living pose.
-		offset = grave_offset if frame >= 22 else death_offset
+		offset = _death_floor_offset(frame)
 		return
 	if is_instance_valid(_player.damage) and _player.damage.is_action_locked():
 		_pose(&"run", 4, run_offset) # Temporary hurt pose.

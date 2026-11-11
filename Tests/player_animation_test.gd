@@ -195,6 +195,7 @@ func run() -> void:
 	floor_body.add_child(collider)
 	world.add_child(floor_body)
 	player = load("res://Scenes/Player/player.tscn").instantiate() as Player
+	player.get_node("CombatController").mouse_aim_attacks = false
 	player.position = Vector2(96,320)
 	world.add_child(player)
 	sprite = player.get_node("Visuals/AnimatedSprite2D")

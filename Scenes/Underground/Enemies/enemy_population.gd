@@ -159,9 +159,19 @@ func _spawn_drop(id: String) -> void:
 	if drops.has(id): return
 	var drop := DROP.instantiate() as Area2D
 	drop.position = to_local(_point(records[id]))
+	drop.terrain_ready = stream.is_rect_ready
 	add_child(drop)
 	drops[id] = drop
 	drop.touched.connect(_touch_drop.bind(id))
+	drop.landed.connect(_snapshot_drop.bind(id))
+
+
+func _snapshot_drop(id: String) -> void:
+	var drop: Area2D = drops[id]
+	var point := runtime.loaded_rooms.to_local(drop.global_position)
+	records[id].x = point.x
+	records[id].y = point.y
+	_save(id)
 
 func _touch_drop(id: String) -> void:
 	if not collect_drop(id) and drops.has(id): drops[id].set("_collecting", false)
@@ -172,7 +182,10 @@ func collect_drop(id: String) -> bool:
 	var entry: Dictionary = records[id]
 	# Mark first, then emit currency/HUD signals; reentrant calls cannot pay twice.
 	entry.drop_collected = true
-	_save(id)
+	if drops.has(id):
+		_snapshot_drop(id)
+	else:
+		_save(id)
 	var collected: bool = runtime.game.collect_descent_flesh(_world, int(entry.reward), _point(entry), drop_id(id))
 	if drops.has(id):
 		drops[id].queue_free()
@@ -214,6 +227,7 @@ func _physics_process(delta: float) -> void:
 	for id: String in drops.keys():
 		var drop: Area2D = drops[id]
 		if not stream.room_ready(stream.world_to_room(drop.global_position)):
+			_snapshot_drop(id)
 			drop.queue_free()
 			drops.erase(id)
 		else:
@@ -254,7 +268,9 @@ func _retire(id: String) -> void:
 
 func clear_population() -> void:
 	for id: String in actors.keys(): _retire(id)
-	for drop: Node in drops.values(): drop.queue_free()
+	for id: String in drops:
+		_snapshot_drop(id)
+		drops[id].queue_free()
 	drops.clear()
 	# Includes death animations/projectiles left by actors outside the live table.
 	for child in get_children():
@@ -262,3 +278,4 @@ func clear_population() -> void:
 
 func _exit_tree() -> void:
 	for id: String in actors: _snapshot(id)
+	for id: String in drops: _snapshot_drop(id)
