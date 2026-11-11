@@ -16,7 +16,7 @@ opening_tiles = Dictionary[StringName, Vector2i]({
 [resource]
 script = ExtResource("1_metadata")
 template_id = &"room_halls"
-display_name = "Halls"
+display_name = "Winding Right 1"
 scene = ExtResource("3_scene")
 room_size = Vector2i(40, 40)
 opening_schema = &"abyss_slots_v2"

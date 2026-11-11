@@ -86,10 +86,13 @@ position = Vector2(8, 152)
 position = Vector2(8, 504)
 
 [node name="EnemySpawnMarker" parent="." unique_id=1737793044 instance=ExtResource("3_nhnu4")]
+marker_id = &"room_winding_left1_enemyspawnmarker"
 position = Vector2(412, 235)
 
 [node name="EnemySpawnMarker2" parent="." unique_id=1909512229 instance=ExtResource("3_nhnu4")]
+marker_id = &"room_winding_left1_enemyspawnmarker2"
 position = Vector2(169, 455)
 
 [node name="EnemySpawnMarker3" parent="." unique_id=968517819 instance=ExtResource("3_nhnu4")]
+marker_id = &"room_winding_left1_enemyspawnmarker3"
 position = Vector2(254, 454)
