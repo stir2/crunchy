@@ -77,7 +77,7 @@ func _ready() -> void:
 	$Waves.wave_started.connect(func(): _cue(&"boss_summon", -16))
 	monster.health.health_changed.connect(_boss_health_changed)
 	monster.defeated.connect(_boss_defeated)
-	monster.defeat_finished.connect(func(): _show_result("No more tribute."))
+	monster.defeat_finished.connect(_finish_boss_defeat)
 	player.health.health_changed.connect(_on_player_health_changed)
 	player.health.died.connect(_player_died)
 	player.get_node("Visuals/AnimatedSprite2D").death_animation_finished.connect(_player_death_finished)
@@ -88,7 +88,26 @@ func _ready() -> void:
 		_pause_menu = preload("res://Scenes/Menus/pause_menu.tscn").instantiate()
 		add_child(_pause_menu)
 	monster.modulate.a = 0.0
-	create_tween().tween_property(monster, "modulate:a", 1.0, 1.1)
+	var show_intro := get_parent() != get_tree().root and GameController.is_day_10() and not GameController.window_history.has("boss_intro")
+	var reveal := create_tween()
+	reveal.tween_property(monster, "modulate:a", 1.0, 3.2 if show_intro else 1.1).set_trans(Tween.TRANS_SINE)
+	if show_intro:
+		monster.encounter_intro = true
+		player.get_node("Visuals/AnimatedSprite2D").set_dialogue_idle(true)
+		$HUD.hide()
+		player.get_node("StaminaHUD").hide()
+		player.combat.actions_enabled = false
+		player.set_physics_process(false)
+		await reveal.finished
+		DialogueManager.play("boss_intro", "Boss/intro")
+		if DialogueManager.current_id == "boss_intro":
+			await DialogueManager.conversation_finished
+		player.set_physics_process(true)
+		player.combat.actions_enabled = true
+		monster.encounter_intro = false
+		player.get_node("Visuals/AnimatedSprite2D").set_dialogue_idle(false)
+		$HUD.show()
+		player.get_node("StaminaHUD").show()
 
 func _start_taken() -> void:
 	var losses: Array[Dictionary] = get_node("/root/VillageManager").get_fallen()
@@ -227,7 +246,7 @@ func _drop_to_lower_arena() -> void:
 	for offset: float in [-28.0, 0.0, 28.0]:
 		var x := clampf(player.position.x + offset, 8.0, 632.0)
 		_ground_impact(Vector2(x, _lower_landing_y(x)), offset == 0.0)
-	_cue(&"hard_land_stone", -7)
+	_cue(&"hard_land_stone", -9)
 	_shake = 4.2
 	# The Chief lands first; the pursuing mass hits on a separate beat.
 	if monster_fall.is_running():
@@ -305,12 +324,12 @@ func _break_slab() -> void:
 func _attack_tell(strike: bool, seconds: float) -> void:
 	if strike:
 		_cue(&"boss_stab_warning", -14, seconds)
-		_cue(&"boss_stab_creak", -14, seconds)
+		_cue(&"boss_stab_creak", -17, seconds)
 		var y: float = _sweep_floor_y(monster.SLAM_X) if _lower else monster.floor_y
 		var point := monster.to_global(Vector2(monster.SLAM_X, y))
 		_show_strike_warning(point, seconds - monster.SLAM_FALL_TIME)
 	else:
-		_cue(&"monster_rumbling_1", -2, seconds)
+		_cue(&"monster_rumbling_1", -8, seconds)
 
 
 func _show_strike_warning(point: Vector2, hold_until: float) -> void:
@@ -340,10 +359,10 @@ func _arm_impact(strike: bool, point: Vector2) -> void:
 		var flash := _fx(STRIKE_FX, 184, point + Vector2(14, -3), 0.62, 0.72)
 		flash.offset.y = -74.0
 		_shake = 3.7
-		_cue(&"boss_slam", -14)
+		_cue(&"boss_slam", -6)
 	else:
 		_shake = 1.5
-		_cue(&"boss_hand_drag", -14)
+		_cue(&"boss_hand_drag", -6, 0.0, true)
 
 
 func _fx(sheet: Texture2D, cell: int, point: Vector2, seconds: float, scale_factor: float) -> Sprite2D:
@@ -368,7 +387,7 @@ func _cue(sound: StringName, volume: float, limit: float = 0.0, full_sample := f
 	if voice.stream == null:
 		voice.free()
 		return null
-	voice.bus = &"Dread" if String(sound).begins_with("monster_rumbling") else &"SFX"
+	voice.bus = &"Dread" if sound == &"monster_rumbling_3" else &"SFX"
 	voice.volume_db = volume + sounds.gain_for(sound) - 3.0
 	add_child(voice)
 	voice.finished.connect(voice.queue_free)
@@ -399,7 +418,7 @@ func _fire_burst(index: int) -> void:
 	if _ending or _reviving or _dropping:
 		return
 	var origin: Vector2 = monster.volley_origin()
-	_cue(&"boss_spit", -16)
+	_cue(&"boss_spit", -9, 0.0, true)
 	_music_cue(&"toll_release" if monster.is_last_toll() else &"volley_release")
 	if monster.is_last_toll():
 		var aim := origin.direction_to(_volley_aim)
@@ -438,6 +457,7 @@ func _fire_web(origin: Vector2, motion: Vector2, toll_shot := false) -> void:
 	web.visual_scale = 1.05
 	web.damage = 1
 	web.max_bounces = 0
+	web.impact_volume_db = -20.0
 	web.shot_color = Color("ffe094") if toll_shot else Color("e7c6d5")
 	if toll_shot:
 		web.set_meta(&"last_toll", true)
@@ -534,8 +554,12 @@ func _ground_impact(point: Vector2, heavy: bool) -> void:
 	dust.animation_finished.connect(dust.queue_free)
 	dust.play(&"land")
 	if heavy:
-		_shake = 2.2
-		get_node("/root/SoundManager").play_limited(&"land_stone", -14, 0.15)
+		if _ending and not player.health.is_dead():
+			_shake = 8.0
+			_cue(&"boss_slam", -5)
+		else:
+			_shake = 2.2
+			get_node("/root/SoundManager").play_limited(&"land_stone", -16, 0.15)
 
 func _sweep_dust(point: Vector2) -> void:
 	var dust := Sprite2D.new()
@@ -555,10 +579,11 @@ func _sweep_dust(point: Vector2) -> void:
 func _boss_health_changed(current: int, maximum: int) -> void:
 	_boss_bar.max_value = maximum
 	_boss_bar.value = current
+	_boss_bar.modulate = Color(1.0, 0.55, 0.42) if monster.is_in_final_stretch() else Color.WHITE
 
 func _boss_defeated() -> void:
 	if _ending: return
-	_cue(&"boss_death", -14)
+	_cue(&"boss_death", -7)
 	_music_cue(&"victory")
 	_ending = true
 	if get_tree().current_scene != self:
@@ -570,7 +595,16 @@ func _boss_defeated() -> void:
 	player.combat.actions_enabled = false
 	player.combat.interrupt()
 	player.get_node("Hurtbox").invulnerable = true
-	_shake = 2.5
+	_shake = 6.0
+	monster.modulate = Color(1.5, 0.82, 0.72)
+	create_tween().tween_property(monster, "modulate", Color.WHITE, 0.48)
+
+func _finish_boss_defeat() -> void:
+	DialogueManager.play("boss_aftermath", "Boss/aftermath")
+	if DialogueManager.current_id == "boss_aftermath":
+		await DialogueManager.conversation_finished
+	_show_result("No more tribute.")
+
 
 func _debug_infinite_health_active() -> bool:
 	return debug_infinite_health_after_first_death and _revival_used and not _ending and not _reviving

@@ -286,7 +286,7 @@ func evaluate_toll(flesh: int, quota: int) -> Dictionary:
 
 
 func settle_night(day: int, flesh: int, quota: int, rations: int, toll_met: bool,
-		taken_id: int) -> Dictionary:
+		taken_id: int, cause: StringName = &"taken") -> Dictionary:
 	is_first_day = false
 	current_day = day
 	var report := {
@@ -308,7 +308,7 @@ func settle_night(day: int, flesh: int, quota: int, rations: int, toll_met: bool
 	# Night toll: if missed, monster takes the victim
 	var taken: Villager = null
 	if taken_id > 0:
-		taken = remove_villager(taken_id, &"taken", day)
+		taken = remove_villager(taken_id, cause, day)
 		if taken != null:
 			report["taken"] = taken.display_name
 

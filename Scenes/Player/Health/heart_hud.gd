@@ -6,6 +6,8 @@ extends Control
 @export var full_color: Color = Color(0.92, 0.22, 0.28)
 @export var empty_color: Color = Color(0.23, 0.2, 0.28)
 var health: HealthComponent
+var _display_current := 0
+var _display_maximum := 0
 const HEART: Array[String] = ["0110110", "1111111", "1111111", "0111110", "0011100", "0001000"]
 
 func _ready() -> void:
@@ -22,12 +24,20 @@ func bind_health(component: HealthComponent) -> void:
 	visible = is_instance_valid(health) and not health.is_dead()
 	queue_redraw()
 
+func set_display_health(current: int, maximum: int) -> void:
+	_display_current = current
+	_display_maximum = maximum
+	custom_minimum_size = Vector2(maxi(0, heart_count() * 9 - 2), HEART.size()) * pixel_scale
+	queue_redraw()
+
+
 func heart_count() -> int:
-	return ceili(health.max_health / 2.0) if is_instance_valid(health) else 0
+	return ceili((health.max_health if is_instance_valid(health) else _display_maximum) / 2.0)
 
 ## 0 empty, 1 half, 2 full. Also useful to skin this display with future artwork.
 func heart_fill(index: int) -> int:
-	return clampi(health.current_health - index * 2, 0, 2) if is_instance_valid(health) else 0
+	var current := health.current_health if is_instance_valid(health) else _display_current
+	return clampi(current - index * 2, 0, 2)
 
 func _on_health_changed(current: int, _maximum: int) -> void:
 	visible = current > 0

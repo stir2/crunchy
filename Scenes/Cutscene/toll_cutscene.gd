@@ -154,6 +154,9 @@ class DigitReel extends Control:
 			var v := base + j - 1
 			var sym := _symbol_for(v)
 			var y := (float(v) - wheel) * cell_h + kick
+			# The infinity glyph sits below the font's visual center.
+			if sym == "∞":
+				y -= 19.0
 			var layers: Array = _slots[j]
 			var changed: bool = (layers[0] as Label).text != sym
 			for g in 5:
@@ -331,7 +334,7 @@ func _build_night_backdrop() -> void:
 	_night_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_quota_caption = Label.new()
 	_quota_caption.name = "QuotaCaption"
-	_quota_caption.text = "DAY %d" % GameController.day
+	_quota_caption.text = "DAY %d · FLESH QUOTA" % GameController.day
 	_quota_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_quota_caption.add_theme_font_size_override("font_size", 32)
 	_quota_caption.add_theme_color_override("font_color", Color("b4aaa0"))

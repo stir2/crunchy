@@ -116,11 +116,17 @@ func _process(delta: float) -> void:
 			pitch = lerpf(1.0, 0.91, pulse)
 			cutoff = lerpf(resting_cutoff, 1700.0, pulse)
 	if route == "village":
+		if _village_music_stopped():
+			_voice.stop()
+			return
+		if not _voice.playing:
+			_voice.volume_db = _target_gain
+			_voice.play()
 		var room_cutoff := 11500.0
 		match village_room:
 			&"window":
 				room_cutoff = 18500.0
-				event_gain = 0.6
+				event_gain = -2.0
 			&"stairs":
 				room_cutoff = 4600.0
 				event_gain = -1.8
@@ -191,8 +197,14 @@ func _set_route(route: String) -> void:
 		_pair.set_sync_stream_volume(1, -80)
 		_voice.stream = _pair
 		_target_gain = -18
-	_voice.volume_db = -80
-	_voice.play()
+	_voice.volume_db = _target_gain if route == "village" else -80
+	if route != "village" or not _village_music_stopped():
+		_voice.play()
+
+
+func _village_music_stopped() -> bool:
+	return GameController.is_day_10() and not GameController.boss_defeated
+
 
 func _looping_stream(path: String) -> AudioStreamWAV:
 	var stream := (load(path) as AudioStreamWAV).duplicate() as AudioStreamWAV

@@ -55,7 +55,9 @@ directories/dtl_directory={
 "Rumours/starved": "res://Dialogue/Rumours/starved.dtl",
 "Rumours/taken": "res://Dialogue/Rumours/taken.dtl",
 "Rumours/work": "res://Dialogue/Rumours/work.dtl",
+"aftermath": "res://Dialogue/Boss/aftermath.dtl",
 "ancestors": "res://Dialogue/Monster/ancestors.dtl",
+"boss_intro": "res://Dialogue/Boss/intro.dtl",
 "chief_blame": "res://Dialogue/Rumours/chief_blame.dtl",
 "chief_desk": "res://Dialogue/Rumours/chief_desk.dtl",
 "chief_family": "res://Dialogue/Rumours/chief_family.dtl",
@@ -68,6 +70,7 @@ directories/dtl_directory={
 "manage_food": "res://Dialogue/Thoughts/manage_food.dtl",
 "manage_loss": "res://Dialogue/Thoughts/manage_loss.dtl",
 "revival": "res://Dialogue/Boss/revival.dtl",
+"sacrificed": "res://Dialogue/Rumours/sacrificed.dtl",
 "taken": "res://Dialogue/Boss/taken.dtl",
 "taken_after": "res://Dialogue/Boss/taken_after.dtl",
 "taken_bum": "res://Dialogue/Rumours/taken_bum.dtl"

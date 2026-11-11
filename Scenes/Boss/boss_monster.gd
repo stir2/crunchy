@@ -21,6 +21,7 @@ enum Phase { REST, SWIPE_WINDUP, SWIPE_DROP, SWIPE_DRAG, SWIPE_RECOVER, SWIPE_RE
 @export var floor_y: float = 304.0
 
 var phase: Phase = Phase.REST
+var encounter_intro := false
 var elapsed := 0.0
 var duration := 2.0
 var _age := 0.0
@@ -120,6 +121,7 @@ const SLAM_FALL_TIME := 0.20
 const COMBO_IMPACT := 0.64
 const REVERSE_IMPACT := -0.10
 const IMPACT_WINDOW := 0.20
+const FINAL_HEALTH_FRACTION := 0.2
 const BURST_TIMES := [0.85, 1.24, 1.63]
 const LEFT_REST := Vector2(96, 265)
 const RIGHT_REST := Vector2(527, 265)
@@ -241,6 +243,9 @@ func _physics_process(delta: float) -> void:
 			gaze = signf(side) * smoothstep(32.0, 180.0, absf(side))
 		_head_tracking = lerpf(_head_tracking, gaze, 1.0 - exp(-2.6 * delta))
 	_hurt_time = maxf(0.0, _hurt_time - delta)
+	if encounter_intro:
+		_pose()
+		return
 	elapsed += delta
 	var t := clampf(elapsed / duration, 0.0, 1.0)
 	var smooth := t * t * t * (t * (t * 6.0 - 15.0) + 10.0)
@@ -321,7 +326,7 @@ func _physics_process(delta: float) -> void:
 			if not lower_arena and health.current_health <= maximum_health * 0.5:
 				_breaking_floor = true
 				_set_phase(Phase.SLAM_TRACK, 1.2)
-			elif lower_arena and not _last_stand_started and health.current_health <= maximum_health * 0.2:
+			elif not _last_stand_started and is_in_final_stretch():
 				_last_stand_started = true
 				_last_toll = true
 				_combo = false
@@ -391,6 +396,8 @@ func _set_phase(next: Phase, seconds: float) -> void:
 	phase = next
 	elapsed = 0.0
 	duration = maxf(0.01, seconds)
+	if is_in_final_stretch() and next in [Phase.REST, Phase.SWIPE_RECOVER, Phase.SLAM_RECOVER]:
+		duration *= 0.75
 	if next in [Phase.SWIPE_RECOVER, Phase.SLAM_RECOVER]:
 		_reflection_extended = false
 		if _reflection_earned:
@@ -411,6 +418,10 @@ func _set_phase(next: Phase, seconds: float) -> void:
 	elif next == Phase.VOLLEY:
 		volley_started.emit()
 	_pose()
+
+func is_in_final_stretch() -> bool:
+	return lower_arena and not health.is_dead() and health.current_health <= maximum_health * FINAL_HEALTH_FRACTION
+
 
 func _start_arm_attack() -> void:
 	var sweep := not lower_arena or _lower_combo_next
@@ -616,15 +627,15 @@ func _on_damaged(_hit: CombatHit, _amount: int) -> void:
 
 func _on_died(_hit: CombatHit) -> void:
 	_hurt_time = 0
-	_set_phase(Phase.DEFEATED, 4.5)
+	_set_phase(Phase.DEFEATED, 7.0)
 	_pose()
-	_drop_defeated_part($SwipeHand/Sprite, 0.15, -22.0, false)
-	_drop_defeated_part($ClawHand/Sprite, 0.25, 26.0, false)
-	_drop_defeated_part($LowerArm, 0.36, -28.0, false)
-	_drop_defeated_part($ClawArm, 0.46, 18.0, false)
-	_drop_defeated_part($UpperArm, 0.56, -14.0, false)
-	_drop_defeated_part($Body, 0.72, -30.0, false)
-	_drop_defeated_part($Head, 1.0, 24.0, true)
+	_drop_defeated_part($SwipeHand/Sprite, 0.55, -22.0, false)
+	_drop_defeated_part($ClawHand/Sprite, 0.72, 26.0, false)
+	_drop_defeated_part($LowerArm, 0.88, -28.0, false)
+	_drop_defeated_part($ClawArm, 1.04, 18.0, false)
+	_drop_defeated_part($UpperArm, 1.20, -14.0, false)
+	_drop_defeated_part($Body, 1.42, -30.0, false)
+	_drop_defeated_part($Head, 1.86, 24.0, true)
 	defeated.emit()
 
 
@@ -644,8 +655,8 @@ func _drop_defeated_part(part: Sprite2D, delay: float, drift: float, heavy: bool
 	var fall := create_tween()
 	fall.tween_interval(delay)
 	fall.tween_property(part, "global_position", landing, clampf(sqrt(drop / 440.0), 0.22, 1.0)).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	fall.tween_callback(func(): ground_impact.emit(floor_point, heavy))
 	if heavy:
-		fall.tween_callback(func(): ground_impact.emit(floor_point, true))
 		var start_rotation := part.rotation
 		var center := local_bounds.get_center()
 		var center_x := (part.global_transform * center).x + drift

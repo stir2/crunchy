@@ -322,7 +322,7 @@ func _play_impact() -> void:
 	var sound := AudioStreamPlayer2D.new()
 	sound.stream = IMPACT_SOUND
 	sound.bus = &"SFX"
-	sound.volume_db = -10.0 + SoundManager.gain_for(&"cleaver_impact")
+	sound.volume_db = -7.0 + SoundManager.gain_for(&"cleaver_impact")
 	sound.pitch_scale = 1.1 if health <= 0 else 1.0
 	get_parent().add_child(sound)
 	sound.global_position = global_position

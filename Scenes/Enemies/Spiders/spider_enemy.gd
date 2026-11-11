@@ -271,7 +271,7 @@ func _start_windup() -> void:
 		_recover()
 		return
 	super._start_windup()
-	SoundManager.play_limited(&"spider_hiss", -11.5, 0.2)
+	SoundManager.play_limited(&"spider_hiss", -14.5, 0.2)
 
 
 func _chase_velocity() -> float:
@@ -314,7 +314,7 @@ func _begin_attack() -> void:
 	projectile.travel_velocity = aim.normalized() * projectile_speed * speed_multiplier
 	get_parent().add_child(projectile)
 	projectile.global_position = origin
-	SoundManager.play_limited(&"spider_spit", -11.5, 0.12)
+	SoundManager.play_limited(&"spider_spit", -15.5, 0.12)
 	_recover()
 	_play_attack_release()
 
@@ -370,7 +370,7 @@ func _on_died(_hit: CombatHit) -> void:
 	if _dying:
 		return
 	_dying = true
-	SoundManager.play_limited(&"spider_death", -10.5, 0.15)
+	SoundManager.play_limited(&"spider_death", -15.5, 0.15)
 	hitbox.active = false
 	set_physics_process(false)
 	_health_bar.hide()
@@ -384,7 +384,8 @@ func _on_died(_hit: CombatHit) -> void:
 
 
 func _play_impact() -> void:
-	SoundManager.play_limited(&"spider_hit", -10.5, 0.08)
+	super._play_impact()
+	SoundManager.play_limited(&"spider_hit", -15.5, 0.08)
 
 
 func _on_spider_frame_changed() -> void:
@@ -401,7 +402,7 @@ func _on_spider_frame_changed() -> void:
 	_next_walk_ms = now + randi_range(440, 760)
 	if randf() < 0.15:
 		return
-	SoundManager.play_varied(&"spider_walk", -15.5 + randf_range(-2.0, 1.0) + distance_gain, 0.74, 1.30, randf_range(0.0, 0.16))
+	SoundManager.play_varied(&"spider_walk", -19.5 + randf_range(-2.0, 1.0) + distance_gain, 0.74, 1.30, randf_range(0.0, 0.16))
 
 
 func _on_spider_animation_finished() -> void:
