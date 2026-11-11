@@ -15,11 +15,6 @@ var _volume_labels: Dictionary = {}
 
 
 func _ready() -> void:
-	var shade := ColorRect.new()
-	shade.color = Color(0.09, 0.05, 0.11, 0.62)
-	add_child(shade, false, Node.INTERNAL_MODE_BACK)
-	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
 	_paper = PanelContainer.new()
 	add_child(_paper)
 	_content = VBoxContainer.new()
@@ -52,8 +47,13 @@ func _ready() -> void:
 	_content.add_child(done_button)
 
 	get_viewport().size_changed.connect(_fit_layout)
+	resized.connect(queue_redraw)
 	_fit_layout()
 	hide()
+
+
+func _draw() -> void:
+	draw_rect(Rect2(Vector2.ZERO, size), Color(0.09, 0.05, 0.11, 0.62))
 
 
 func open() -> void:
@@ -132,21 +132,25 @@ func _fit_layout() -> void:
 	var pixel_mode := get_viewport().get_visible_rect().size.y <= 480
 	theme = MENU_STYLE.make_confirmation_theme(pixel_mode)
 	var rule := StyleBoxLine.new()
-	rule.color = Color("76536f")
+	rule.color = Color("866446")
 	rule.thickness = 2
 	theme.set_stylebox("separator", "HSeparator", rule)
 	var track := StyleBoxFlat.new()
-	track.bg_color = Color("52394f")
+	track.bg_color = Color("594139")
 	track.content_margin_top = 3 if pixel_mode else 5
 	track.content_margin_bottom = track.content_margin_top
 	theme.set_stylebox("slider", "HSlider", track)
 	var fill := track.duplicate() as StyleBoxFlat
-	fill.bg_color = Color("bc8f7f")
+	fill.bg_color = Color("926346")
 	theme.set_stylebox("grabber_area", "HSlider", fill)
 	theme.set_stylebox("grabber_area_highlight", "HSlider", fill)
-	for state in ["grabber", "grabber_highlight"]:
-		var knob := Image.create_empty(8 if pixel_mode else 14, 14 if pixel_mode else 24, false, Image.FORMAT_RGBA8)
-		knob.fill(Color("fae6d6") if state == "grabber_highlight" else Color("d8b6a5"))
+	for state in ["grabber", "grabber_highlight", "grabber_disabled"]:
+		var knob_size := Vector2i(9, 14) if pixel_mode else Vector2i(16, 24)
+		var knob := Image.create_empty(knob_size.x, knob_size.y, false, Image.FORMAT_RGBA8)
+		var face := Color("80573d") if state == "grabber_highlight" else Color("594139")
+		knob.fill(Color("34251f"))
+		knob.fill_rect(Rect2i(Vector2i(1, 1), knob_size - Vector2i(2, 2)), face)
+		knob.fill_rect(Rect2i(knob_size.x / 2, 3, 1 if pixel_mode else 2, knob_size.y - 6), Color("f6dcab"))
 		theme.set_icon(state, "HSlider", ImageTexture.create_from_image(knob))
 	_paper.custom_minimum_size.x = 360 if pixel_mode else 660
 	_content.add_theme_constant_override("separation", 7 if pixel_mode else 18)

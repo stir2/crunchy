@@ -5,7 +5,7 @@
 [ext_resource type="Script" uid="uid://gs04lspi2kv4" path="res://Scenes/Village/House/village_blueprint_panel.gd" id="2_blueprint"]
 [ext_resource type="Texture2D" path="res://uiSprites/stairsView.png" id="3_stairs"]
 [ext_resource type="Texture2D" path="res://uiSprites/deskView.png" id="4_desk"]
-[ext_resource type="Texture2D" path="res://uiSprites/villageView.png" id="5_window"]
+[ext_resource type="Texture2D" path="res://uiSprites/villageProgress0001.png" id="5_window"]
 [ext_resource type="Texture2D" path="res://uiSprites/flesh.png" id="9_soul"]
 [ext_resource type="Texture2D" path="res://uiSprites/ration.png" id="10_ration"]
 [ext_resource type="Texture2D" path="res://uiSprites/potionGreen.png" id="15_potion"]

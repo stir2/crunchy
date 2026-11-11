@@ -19,6 +19,13 @@ func has_save() -> bool:
 	return not _read_save().is_empty()
 
 
+func menu_preview() -> Dictionary:
+	var data := _read_save()
+	if data.is_empty():
+		return {}
+	return {"day": int(data.game.day), "boss_defeated": data.get("boss_defeated", false)}
+
+
 func has_save_file() -> bool:
 	return FileAccess.file_exists(save_path)
 

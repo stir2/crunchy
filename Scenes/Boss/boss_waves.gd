@@ -3,12 +3,10 @@ extends Node2D
 signal completed
 signal wave_started
 signal spawn_warning(point: Vector2)
-const PORTRAITS = preload("res://Scenes/Village/villager_portraits.gd")
 const ZOMBIES := [preload("res://Scenes/Enemies/Zombies/zombie_shambler.tscn"), preload("res://Scenes/Enemies/Zombies/zombie_runner.tscn"), preload("res://Scenes/Enemies/Zombies/zombie_stalker.tscn")]
 const SPIDERS := [preload("res://Scenes/Enemies/Spiders/spider_rusher.tscn"), preload("res://Scenes/Enemies/Spiders/spider_web_shooter.tscn")]
 const FORMATIONS := [[ZOMBIES[0], SPIDERS[1], ZOMBIES[1]], [SPIDERS[0], ZOMBIES[2], SPIDERS[1]]]
 var target: Player
-var _taken_name := ""
 var active := false
 var wave_index := 0
 var _live: Array[Node] = []
@@ -16,10 +14,9 @@ var _pending: Array[Dictionary] = []
 var _grace: Array[Dictionary] = []
 var _timer := 0.0
 
-func start(player: Player, taken_name: String) -> void:
+func start(player: Player) -> void:
 	if active: return
 	target = player
-	_taken_name = taken_name
 	wave_index = 0
 	_timer = 0.8
 	active = true
@@ -77,18 +74,6 @@ func _spawn(entry: Dictionary) -> void:
 	_grace.append({"enemy": enemy, "time": 0.45})
 	_live.append(enemy)
 	enemy.died.connect(func(): _live.erase(enemy))
-	if not _taken_name.is_empty():
-		var memory := Sprite2D.new()
-		memory.texture = PORTRAITS.texture_for(_taken_name)
-		_taken_name = ""
-		memory.scale = Vector2.ONE * 0.4
-		memory.modulate = Color(0.65, 0.77, 0.9, 0.85)
-		add_child(memory)
-		memory.global_position = enemy.global_position + Vector2(0, -51)
-		var fade := memory.create_tween()
-		fade.tween_property(memory, "modulate:a", 0.0, 0.8)
-		fade.tween_callback(memory.queue_free)
-
 func _clear_projectiles() -> void:
 	for child in get_children():
 		if child.is_in_group("enemy_projectiles"): child.queue_free()

@@ -63,7 +63,7 @@ void fragment() {
 		var cause := Label.new()
 		match String(loss.get("cause", "")):
 			"taken": cause.text = "Taken by the monster"
-			"sacrificed": cause.text = "Sacrificed for the toll"
+			"sacrificed": cause.text = "Sacrificed"
 			"starved": cause.text = "Died of starvation"
 			_: cause.text = "Died"
 		cause.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

@@ -104,6 +104,13 @@ func _fit_layout() -> void:
 	var leave_title := $LeaveDialog/Layout/Paper/Content/Title as Label
 	var leave_message := $LeaveDialog/Layout/Paper/Content/Message as Label
 	var leave_buttons := $LeaveDialog/Layout/Paper/Content/Buttons as HBoxContainer
+	%Day.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	$Panel/Layout/Paper/Buttons/Title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	for button: Button in [%ResumeButton, %SaveButton, %SettingsButton, %MainMenuButton, %QuitButton]:
+		button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		button.custom_minimum_size.x = 154.0 if pixel_mode else roundf(viewport_size.x * 0.18)
 	if pixel_mode:
 		panel.theme = MENU_STYLE.make_theme(1.0, true)
 		leave_dialog.theme = MENU_STYLE.make_confirmation_theme(true)
@@ -111,25 +118,25 @@ func _fit_layout() -> void:
 		paper.offset_left = margin
 		paper.offset_top = margin
 		paper.offset_right = 278.0
-		paper.offset_bottom = viewport_size.y - margin
+		paper.offset_bottom = paper.offset_top
 		buttons_box.add_theme_constant_override("separation", 6)
 		%Day.add_theme_font_size_override("font_size", 16)
 		$Panel/Layout/Paper/Buttons/Title.add_theme_font_size_override("font_size", 32)
 		status_label.add_theme_font_size_override("font_size", 16)
 		for btn: Button in [%ResumeButton, %SaveButton, %SettingsButton, %MainMenuButton, %QuitButton]:
-			btn.custom_minimum_size.y = 26
+			btn.custom_minimum_size = Vector2(148, 26)
 			btn.add_theme_font_size_override("font_size", 16)
-		leave_paper.custom_minimum_size = Vector2(300, 0)
-		leave_paper.offset_left = -150.0
-		leave_paper.offset_right = 150.0
-		leave_paper.offset_top = -64.0
-		leave_paper.offset_bottom = 64.0
+		leave_paper.custom_minimum_size = Vector2(286, 0)
+		leave_paper.offset_left = -143.0
+		leave_paper.offset_right = 143.0
+		leave_paper.offset_top = 0.0
+		leave_paper.offset_bottom = 0.0
 		leave_content.add_theme_constant_override("separation", 10)
 		leave_title.add_theme_font_size_override("font_size", 16)
 		leave_message.add_theme_font_size_override("font_size", 16)
 		leave_buttons.add_theme_constant_override("separation", 12)
 		for btn: Button in [%CancelLeaveButton, %ConfirmLeaveButton]:
-			btn.custom_minimum_size.y = 26
+			btn.custom_minimum_size = Vector2(148, 26)
 			btn.add_theme_font_size_override("font_size", 16)
 	else:
 		var s := clampf(minf(viewport_size.x / 1920.0, viewport_size.y / 1080.0), 0.65, 2.0)
@@ -139,7 +146,7 @@ func _fit_layout() -> void:
 		paper.offset_left = margin
 		paper.offset_top = margin
 		paper.offset_right = roundf(620.0 * s)
-		paper.offset_bottom = viewport_size.y - margin
+		paper.offset_bottom = paper.offset_top
 		buttons_box.add_theme_constant_override("separation", roundi(14 * s))
 		%Day.add_theme_font_size_override("font_size", roundi(28 * s))
 		$Panel/Layout/Paper/Buttons/Title.add_theme_font_size_override("font_size", roundi(64 * s))
@@ -147,13 +154,12 @@ func _fit_layout() -> void:
 		for btn: Button in [%ResumeButton, %SaveButton, %SettingsButton, %MainMenuButton, %QuitButton]:
 			btn.custom_minimum_size.y = roundf(68.0 * s)
 			btn.add_theme_font_size_override("font_size", roundi(32 * s))
-		var half_w := roundf(340.0 * s)
-		var half_h := roundf(140.0 * s)
-		leave_paper.custom_minimum_size = Vector2(half_w * 2.0, half_h * 2.0)
+		var half_w := roundf(282.0 * s)
+		leave_paper.custom_minimum_size = Vector2(half_w * 2.0, 0.0)
 		leave_paper.offset_left = -half_w
 		leave_paper.offset_right = half_w
-		leave_paper.offset_top = -half_h
-		leave_paper.offset_bottom = half_h
+		leave_paper.offset_top = 0.0
+		leave_paper.offset_bottom = 0.0
 		leave_content.add_theme_constant_override("separation", roundi(20 * s))
 		leave_title.add_theme_font_size_override("font_size", roundi(36 * s))
 		leave_message.add_theme_font_size_override("font_size", roundi(30 * s))

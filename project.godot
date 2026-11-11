@@ -15,7 +15,11 @@ run/main_scene="res://Scenes/Main/main.tscn"
 config/use_custom_user_dir=true
 config/custom_user_dir_name="Godot/app_userdata/crunchy"
 config/features=PackedStringArray("4.7", "GL Compatibility")
-config/icon="res://icon.svg"
+boot_splash/bg_color=Color(0, 0, 0, 1)
+boot_splash/stretch_mode=0
+boot_splash/use_filter=false
+boot_splash/image="res://uiSprites/logoSplash.png"
+config/icon="res://uiSprites/logoIcon.png"
 
 [audio]
 
@@ -74,7 +78,10 @@ directories/dtl_directory={
 "sacrificed": "res://Dialogue/Rumours/sacrificed.dtl",
 "taken": "res://Dialogue/Boss/taken.dtl",
 "taken_after": "res://Dialogue/Boss/taken_after.dtl",
-"taken_bum": "res://Dialogue/Rumours/taken_bum.dtl"
+"taken_bum": "res://Dialogue/Rumours/taken_bum.dtl",
+"window_approach_1": "res://Dialogue/Monster/window_approach_1.dtl",
+"window_approach_2": "res://Dialogue/Monster/window_approach_2.dtl",
+"window_approach_3": "res://Dialogue/Monster/window_approach_3.dtl"
 }
 layout/style_directory={
 "": "res://Dialogue/window_style.tres",

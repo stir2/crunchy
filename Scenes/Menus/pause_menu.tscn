@@ -86,11 +86,6 @@ custom_minimum_size = Vector2(0, 44)
 text = "Quit game"
 alignment = 0
 
-[node name="Space" type="Control" parent="Panel/Layout/Paper/Buttons"]
-layout_mode = 2
-size_flags_vertical = 3
-mouse_filter = 2
-
 [node name="StatusLabel" type="Label" parent="Panel/Layout/Paper/Buttons"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -140,26 +135,27 @@ theme_override_constants/separation = 14
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 text = "Leave this run?"
+horizontal_alignment = 1
 
 [node name="Message" type="Label" parent="LeaveDialog/Layout/Paper/Content"]
 layout_mode = 2
-text = "Progress since your last save will be lost."
+text = "Unsaved progress will be lost."
+horizontal_alignment = 1
 autowrap_mode = 2
 
 [node name="Buttons" type="HBoxContainer" parent="LeaveDialog/Layout/Paper/Content"]
 layout_mode = 2
 theme_override_constants/separation = 16
+alignment = 1
 
 [node name="CancelLeaveButton" type="Button" parent="LeaveDialog/Layout/Paper/Content/Buttons"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
 text = "Cancel"
 
 [node name="ConfirmLeaveButton" type="Button" parent="LeaveDialog/Layout/Paper/Content/Buttons"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
 text = "Leave run"
 
 [node name="SettingsPanel" parent="." instance=ExtResource("20_settings")]

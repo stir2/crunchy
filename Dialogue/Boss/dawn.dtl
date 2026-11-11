@@ -1,5 +1,6 @@
 Villager: Chief? What happened?
 Chief: It's dead. There's no toll today.
+Chief: Look. The village is lit up again.
 Villager: Should I ring the bell?
 Chief: Yeah. Let them know.
 [signal arg="dawn_bell"]

@@ -1,8 +1,12 @@
 extends Node2D
 
+const VICTORY_CREDITS = preload("res://Scenes/Village/House/victory_credits.gd")
+const DAY_ONE_TUTORIAL = preload("res://Scenes/Village/House/day_one_tutorial.gd")
 const PORTRAITS = preload("res://Scenes/Village/villager_portraits.gd")
 const ABYSS_SCENE := "res://Scenes/Underground/abyss_runtime.tscn"
 const CUTSCENE_SCENE := "res://Scenes/Cutscene/toll_cutscene.tscn"
+
+const WINDOW_ART = preload("res://Scenes/Village/House/village_window_art.gd")
 
 enum RoomPanel { STAIRS = 0, DESK = 1, WINDOW = 2 }
 
@@ -10,6 +14,7 @@ var current_panel: RoomPanel = RoomPanel.DESK
 var ending_dialog: AcceptDialog
 var sleep_dialog: ConfirmationDialog
 var _morning_transition: bool = false
+var _credits_active := false
 var _greeted_refugee: String = ""
 var _rumble: AudioStreamPlayer
 var _window_ambience_timer := Timer.new()
@@ -49,18 +54,26 @@ var _window_ambience_fade: Tween
 
 
 func music_room() -> StringName:
+	if _credits_active:
+		return &"credits"
 	match current_panel:
 		RoomPanel.WINDOW: return &"window"
 		RoomPanel.STAIRS: return &"stairs"
 		_: return &"desk"
 
 func _play_dawn() -> void:
+	set_panel(RoomPanel.WINDOW)
 	var survivors := VillageManager.get_villagers()
 	if GameController.window_history.has("boss_dawn") or survivors.is_empty():
 		return
-	set_panel(RoomPanel.WINDOW)
 	await get_tree().create_timer(0.8, false).timeout
 	DialogueManager.play("boss_dawn", "Boss/dawn", survivors[0].display_name)
+	if DialogueManager.current_id != "boss_dawn":
+		return
+	await DialogueManager.conversation_finished
+	if is_inside_tree() and current_panel == RoomPanel.WINDOW and GameController.window_history.has("boss_dawn"):
+		_credits_active = true
+		add_child(VICTORY_CREDITS.new())
 
 func _fit_room_panels() -> void:
 	if not is_inside_tree():
@@ -74,6 +87,8 @@ func _ready() -> void:
 	var menu_style := preload("res://Scenes/Menus/menu_style.gd")
 	var modal_theme := menu_style.make_theme()
 	var action_theme := menu_style.make_confirmation_theme()
+	for button in [left_nav_btn, right_nav_btn, open_blueprint_btn, descend_btn, window_button, listen_button]:
+		button.theme = action_theme
 	for state in ["normal", "hover", "pressed", "focus"]:
 		modal_theme.set_stylebox(state, "Button", action_theme.get_stylebox(state, "Button"))
 	for color_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
@@ -125,6 +140,10 @@ func _ready() -> void:
 	VillageManager.night_resolved.connect(_on_night_resolved)
 	VillageManager.village_wiped.connect(_on_village_wiped)
 
+	if GameController.day == 1 and not GameController.window_history.has(DAY_ONE_TUTORIAL.SKIPPED):
+		var tutorial := DAY_ONE_TUTORIAL.new()
+		tutorial.house = self
+		$UI.add_child(tutorial)
 	var start_panel := RoomPanel.DESK
 	if GameController.return_to_stairs:
 		GameController.return_to_stairs = false
@@ -132,7 +151,6 @@ func _ready() -> void:
 	set_panel(start_panel)
 	_refresh_top_hud()
 	if GameController.boss_defeated:
-		$Panels/WindowPanel/TextureRect.self_modulate = Color(1.14, 1.06, 0.86)
 		call_deferred("_play_dawn")
 	elif GameController.is_day_10():
 		call_deferred("_start_day_10")
@@ -176,8 +194,9 @@ func set_panel(p: RoomPanel) -> void:
 			right_nav_btn.hide()
 
 	_refresh_panel_content()
-	if p == RoomPanel.WINDOW and GameController.is_day_10():
-		call_deferred("_check_empty_window")
+	if p == RoomPanel.WINDOW:
+		_refresh_window_art()
+		call_deferred("_check_window_story")
 
 
 func _on_left_nav_pressed() -> void:
@@ -208,6 +227,9 @@ func _open_blueprint() -> void:
 	village_panel.refresh()
 	SoundManager.play_ui(&"open_ledger", -23)
 	village_panel.show()
+	if GameController.day == 1:
+		var history := GameController.window_history
+		history[DAY_ONE_TUTORIAL.FOOD_SEEN] = true
 
 
 func _close_blueprint() -> void:
@@ -245,6 +267,13 @@ func _on_sleep_requested() -> void:
 	if _morning_transition or DialogueManager.is_busy() or GameController.is_day_10() or GameController.night_in_progress or refugee_modal.visible:
 		return
 	var preview := VillageManager.night_preview()
+	if GameController.day == 1 and not GameController.window_history.has(DAY_ONE_TUTORIAL.SKIPPED):
+		var toll := "The toll is met." if preview.toll_met else ("You choose who the monster takes." if preview.player_chooses else "The monster chooses who it takes.")
+		var food := int(preview.rations + preview.expected_production + preview.expected_bonus - preview.food_cost)
+		var dinner := "Rations left after feeding the village: %d." % food if food >= 0 else "Food is short by %d rations. Some villagers will go hungry." % -food
+		sleep_dialog.dialog_text = "Banked Flesh: %d / %d. %s\n\n%s" % [GameController.flesh, GameController.current_quota(), toll, dinner]
+		sleep_dialog.popup_centered(Vector2i(680, 210))
+		return
 	if not preview.toll_met:
 		sleep_dialog.dialog_text = ("The toll is short. You will choose who the monster takes."
 			if preview.player_chooses else "The toll is short. The monster will choose who it takes.")
@@ -465,6 +494,7 @@ func _return_to_menu() -> void:
 func _build_dialogs() -> void:
 	var confirm_theme := preload("res://Scenes/Menus/menu_style.gd").make_confirmation_theme()
 	sleep_dialog = ConfirmationDialog.new()
+	sleep_dialog.transparent_bg = true
 	sleep_dialog.title = "End the day?"
 	sleep_dialog.ok_button_text = "Sleep"
 	sleep_dialog.theme = confirm_theme
@@ -474,6 +504,7 @@ func _build_dialogs() -> void:
 	sleep_dialog.confirmed.connect(_sleep)
 	add_child(sleep_dialog)
 	ending_dialog = AcceptDialog.new()
+	ending_dialog.transparent_bg = true
 	ending_dialog.title = "Run status"
 	ending_dialog.theme = confirm_theme
 	ending_dialog.get_label().horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -557,12 +588,24 @@ func _start_day_10() -> void:
 		DialogueManager.play("day_10_morning", "Monster/day_10_morning")
 
 
-func _check_empty_window() -> void:
-	if _waiting_for_window() and not DialogueManager.is_busy():
+func _refresh_window_art() -> void:
+	$Panels/WindowPanel/TextureRect.texture = WINDOW_ART.texture_for(GameController.day, GameController.boss_defeated)
+
+
+func _check_window_story() -> void:
+	if current_panel != RoomPanel.WINDOW or DialogueManager.is_busy() or GameController.boss_defeated:
+		return
+	if _waiting_for_window():
 		DialogueManager.talk_to_monster()
+		return
+	var stage := WINDOW_ART.stage(GameController.day, GameController.boss_defeated)
+	if stage >= 1 and stage <= 3:
+		var id := "window_approach_%d" % stage
+		if not GameController.window_history.has(id):
+			DialogueManager.play(id, "Monster/" + id)
 
 
 func _on_conversation_finished() -> void:
 	_refresh_top_hud()
-	if current_panel == RoomPanel.WINDOW and _waiting_for_window():
-		call_deferred("_check_empty_window")
+	if current_panel == RoomPanel.WINDOW:
+		call_deferred("_check_window_story")

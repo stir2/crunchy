@@ -25,7 +25,6 @@ var _revival_used := false
 var _slab_intact := true
 var _volley_aim := Vector2.ZERO
 var _fan_next := true
-var _taken_name := ""
 var _pause_menu: CanvasLayer
 var _ending := false
 var _shake := 0.0
@@ -63,9 +62,9 @@ func _ready() -> void:
 	player.get_node("InteractionController").set_enabled(false)
 	player.reset_movement()
 	player.set_meta(&"boss_death_mix", true)
-	$Waves.completed.connect(_finish_taken)
+	$Waves.completed.connect(monster.finish_waves)
 	$Waves.spawn_warning.connect(func(point: Vector2): _ground_impact(point, false))
-	monster.waves_requested.connect(_start_taken)
+	monster.waves_requested.connect($Waves.start.bind(player))
 	monster.set_target(player)
 	monster.ground_impact.connect(_ground_impact)
 	monster.attack_tell.connect(_attack_tell)
@@ -95,7 +94,8 @@ func _ready() -> void:
 	reveal.tween_property(monster, "modulate:a", 1.0, 3.2 if show_intro else 1.1).set_trans(Tween.TRANS_SINE)
 	if show_intro:
 		monster.encounter_intro = true
-		player.get_node("Visuals/AnimatedSprite2D").set_dialogue_idle(true)
+		var chief_sprite = player.get_node("Visuals/AnimatedSprite2D")
+		chief_sprite.set_dialogue_idle(true)
 		$HUD.hide()
 		player.get_node("StaminaHUD").hide()
 		player.combat.actions_enabled = false
@@ -107,34 +107,9 @@ func _ready() -> void:
 		player.set_physics_process(true)
 		player.combat.actions_enabled = true
 		monster.encounter_intro = false
-		player.get_node("Visuals/AnimatedSprite2D").set_dialogue_idle(false)
+		chief_sprite.set_dialogue_idle(false)
 		$HUD.show()
 		player.get_node("StaminaHUD").show()
-
-func _start_taken() -> void:
-	var losses: Array[Dictionary] = get_node("/root/VillageManager").get_fallen()
-	for index in range(losses.size() - 1, -1, -1):
-		if losses[index].cause == "taken":
-			_taken_name = String(losses[index].name)
-			break
-	if not _taken_name.is_empty() and not DialogueManager.is_busy():
-		player.combat.actions_enabled = false
-		player.set_physics_process(false)
-		DialogueManager.play("boss_taken", "Boss/taken", _taken_name)
-		await DialogueManager.conversation_finished
-		player.set_physics_process(true)
-		player.combat.actions_enabled = true
-	$Waves.start(player, _taken_name)
-
-func _finish_taken() -> void:
-	if not _taken_name.is_empty():
-		player.combat.actions_enabled = false
-		player.set_physics_process(false)
-		DialogueManager.play("boss_taken_after", "Boss/taken_after")
-		await DialogueManager.conversation_finished
-		player.set_physics_process(true)
-		player.combat.actions_enabled = true
-	monster.finish_waves()
 
 func _build_floor() -> void:
 	var tiles: TileMapLayer = $Terrain
@@ -507,7 +482,8 @@ func _build_hud() -> void:
 	_result = PanelContainer.new()
 	_result.position = Vector2(36, 36)
 	_result.resized.connect(_fit_result)
-	_result.custom_minimum_size = Vector2(460, 0)
+	_result.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_result.custom_minimum_size = Vector2(380, 0)
 	_result.theme = preload("res://Scenes/Menus/menu_style.gd").make_theme(1.2, false)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 14)

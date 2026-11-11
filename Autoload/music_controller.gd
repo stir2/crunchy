@@ -67,6 +67,8 @@ func _process(delta: float) -> void:
 		elif path == "res://Scenes/Village/House/house.tscn":
 			route = "village"
 			village_room = active.music_room()
+			if village_room == &"credits":
+				route = "credits"
 		elif path in ["res://Scenes/Underground/abyss_runtime.tscn", "res://Scenes/Boss/boss_arena.tscn"]:
 			boss_arena = path == "res://Scenes/Boss/boss_arena.tscn"
 			if boss_arena: boss = active
@@ -193,6 +195,9 @@ func _set_route(route: String) -> void:
 	elif route == "boss":
 		_voice.stream = _looping_stream(BOSS)
 		_target_gain = -10
+	elif route == "credits":
+		_voice.stream = _looping_stream(ABYSS)
+		_target_gain = -14
 	else:
 		_pair = AudioStreamSynchronized.new()
 		_pair.stream_count = 2

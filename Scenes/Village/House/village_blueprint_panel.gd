@@ -5,8 +5,9 @@ extends Control
 signal closed
 signal sleep_requested
 
+const MENU_STYLE = preload("res://Scenes/Menus/menu_style.gd")
 const MAP = preload("res://uiSprites/deskUi.png")
-const PAPER = preload("res://uiSprites/paper.png")
+
 const PORTRAITS = preload("res://Scenes/Village/villager_portraits.gd")
 const CHIEF_IDLE = preload("res://Assets/Sprites/UI/Village/chief_idle.tres")
 const INK = Color("392b24")
@@ -39,6 +40,7 @@ const BADGE_CENTERS = {
 var selected_building: StringName = &"farmer"
 var assignment_target: StringName = &""
 var sleep_button: Button
+var _button_theme := Theme.new()
 var _canvas: Control
 var _status: Label
 var _details: VBoxContainer
@@ -116,6 +118,7 @@ func _fit() -> void:
 
 
 func _build_layout() -> void:
+	MENU_STYLE.apply_buttons(_button_theme, 12, 4, 1)
 	var shade := ColorRect.new()
 	shade.color = Color(0.07, 0.05, 0.04, 1.0)
 	add_child(shade)
@@ -236,7 +239,7 @@ func _paper_box(rect: Rect2, title: String, padding: int = 28, side_padding: Vec
 	paper.name = title + "Paper"
 	paper.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	var style := StyleBoxTexture.new()
-	style.texture = PAPER
+	style.texture = MENU_STYLE.paper_texture()
 	style.set_texture_margin(SIDE_LEFT, 20)
 	style.set_texture_margin(SIDE_RIGHT, 16)
 	style.set_texture_margin(SIDE_TOP, 16)
@@ -291,29 +294,7 @@ func _button(text: String, action: Callable, font_size: int = 32) -> Button:
 	button.text = text
 	button.custom_minimum_size.y = 52
 	button.add_theme_font_size_override("font_size", font_size)
-	var fills := {
-		"normal": Color("594139"),
-		"hover": Color("704c3e"),
-		"pressed": Color("47332f"),
-		"disabled": Color("80664f"),
-	}
-	for state: String in fills:
-		var style := StyleBoxFlat.new()
-		style.bg_color = fills[state]
-		style.border_color = Color("392823")
-		style.set_border_width_all(1)
-		style.border_width_bottom = 3
-		style.content_margin_left = 12
-		style.content_margin_right = 12
-		button.add_theme_stylebox_override(state, style)
-	var focus := StyleBoxFlat.new()
-	focus.draw_center = false
-	focus.border_color = Color("edca92")
-	focus.set_border_width_all(2)
-	button.add_theme_stylebox_override("focus", focus)
-	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-		button.add_theme_color_override(state, Color("f3d8ae"))
-	button.add_theme_color_override("font_disabled_color", Color("d0b69a"))
+	button.theme = _button_theme
 	button.pressed.connect(action)
 	return button
 
@@ -405,6 +386,7 @@ func _refresh_details() -> void:
 		_details.add_child(_button("Cancel · " + target_name, _cancel_assignment))
 	else:
 		var assign := _button("Assign villager" if workers.size() < capacity else "Full", _begin_assignment)
+		assign.name = "AssignVillager"
 		assign.disabled = workers.size() >= capacity
 		_details.add_child(assign)
 	for child in _details.get_children():
