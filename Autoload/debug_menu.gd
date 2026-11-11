@@ -25,6 +25,9 @@ var _spin_boxes: Array[SpinBox] = []
 
 
 func _ready() -> void:
+	if not OS.is_debug_build():
+		set_process_input(false)
+		return
 	layer = 128
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_ui()
@@ -42,6 +45,8 @@ func _input(event: InputEvent) -> void:
 
 
 func toggle() -> void:
+	if _panel == null:
+		return
 	if _panel.visible:
 		_panel.hide()
 	else:
@@ -51,7 +56,8 @@ func toggle() -> void:
 
 
 func close() -> void:
-	_panel.hide()
+	if _panel != null:
+		_panel.hide()
 
 
 func _build_ui() -> void:

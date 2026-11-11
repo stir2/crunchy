@@ -10,6 +10,14 @@ var _quit := false
 
 
 func _ready() -> void:
+	%SettingsButton.pressed.connect(func():
+		panel.hide()
+		$SettingsPanel.open())
+	$SettingsPanel.closed.connect(func(save_error: String):
+		if not save_error.is_empty():
+			status_label.text = save_error
+		panel.show()
+		%SettingsButton.grab_focus())
 	panel.theme = MENU_STYLE.make_theme()
 	leave_dialog.theme = MENU_STYLE.make_confirmation_theme()
 	get_viewport().size_changed.connect(_fit_layout)
@@ -108,7 +116,7 @@ func _fit_layout() -> void:
 		%Day.add_theme_font_size_override("font_size", 16)
 		$Panel/Layout/Paper/Buttons/Title.add_theme_font_size_override("font_size", 32)
 		status_label.add_theme_font_size_override("font_size", 16)
-		for btn: Button in [%ResumeButton, %SaveButton, %MainMenuButton, %QuitButton]:
+		for btn: Button in [%ResumeButton, %SaveButton, %SettingsButton, %MainMenuButton, %QuitButton]:
 			btn.custom_minimum_size.y = 26
 			btn.add_theme_font_size_override("font_size", 16)
 		leave_paper.custom_minimum_size = Vector2(300, 0)
@@ -136,7 +144,7 @@ func _fit_layout() -> void:
 		%Day.add_theme_font_size_override("font_size", roundi(28 * s))
 		$Panel/Layout/Paper/Buttons/Title.add_theme_font_size_override("font_size", roundi(64 * s))
 		status_label.add_theme_font_size_override("font_size", roundi(26 * s))
-		for btn: Button in [%ResumeButton, %SaveButton, %MainMenuButton, %QuitButton]:
+		for btn: Button in [%ResumeButton, %SaveButton, %SettingsButton, %MainMenuButton, %QuitButton]:
 			btn.custom_minimum_size.y = roundf(68.0 * s)
 			btn.add_theme_font_size_override("font_size", roundi(32 * s))
 		var half_w := roundf(340.0 * s)

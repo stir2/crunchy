@@ -31,6 +31,7 @@ Dialogic="*uid://ds2q0uclmolvu"
 DialogueManager="*res://Autoload/dialogue_manager.gd"
 SoundManager="*res://Autoload/sound_manager.gd"
 AttackInputRouter="*res://Autoload/attack_input_router.gd"
+GameSettings="*res://Autoload/game_settings.gd"
 
 [dialogic]
 

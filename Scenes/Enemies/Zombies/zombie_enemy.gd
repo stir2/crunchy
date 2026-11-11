@@ -229,7 +229,7 @@ func _play_impact() -> void:
 
 func _begin_attack() -> void:
 	super._begin_attack()
-	SoundManager.play_limited(&"zombie_atk", -14.5, 0.12)
+	SoundManager.play_limited(&"zombie_atk", -17.5, 0.12)
 	hitbox.position.x = _direction * 22
 	sprite.play(&"attack")
 	sprite.set_frame_and_progress(8, 0)
