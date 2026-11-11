@@ -26,8 +26,10 @@ var health: int:
 var _owns_health: bool = false
 var _normal_layer: int
 var _hitstop_until_tick: int = -1
+var _frozen_animations: Array[Dictionary] = []
 
 func _ready() -> void:
+	set_process(false)
 	_normal_layer = collision_layer
 	health_component = get_node_or_null(health_component_path) as HealthComponent if not health_component_path.is_empty() else null
 	if health_component == null:
@@ -58,11 +60,33 @@ func _on_died(hit: CombatHit) -> void:
 func _on_reset() -> void:
 	set_deferred("collision_layer", _normal_layer)
 	_hitstop_until_tick = -1
+	_resume_animations()
 	health_reset.emit()
 
 func begin_hitstop(ticks: int) -> void:
 	if ticks > 0:
 		_hitstop_until_tick = maxi(_hitstop_until_tick, Engine.get_physics_frames() + ticks)
+		if _frozen_animations.is_empty():
+			_freeze_animations(damage_owner())
+		set_process(not _frozen_animations.is_empty())
+
+func _process(_delta: float) -> void:
+	if not _frozen_animations.is_empty() and not is_hitstopped():
+		_resume_animations()
+
+func _freeze_animations(node: Node) -> void:
+	if node is AnimatedSprite2D or node is AnimationPlayer:
+		_frozen_animations.append({"node":weakref(node), "speed":node.speed_scale})
+		node.speed_scale = 0.0
+	for child in node.get_children():
+		_freeze_animations(child)
+
+func _resume_animations() -> void:
+	for entry in _frozen_animations:
+		var animation: Node = entry.node.get_ref()
+		if is_instance_valid(animation): animation.speed_scale = entry.speed
+	_frozen_animations.clear()
+	set_process(false)
 
 func is_hitstopped() -> bool:
 	return Engine.get_physics_frames() <= _hitstop_until_tick

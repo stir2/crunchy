@@ -10,7 +10,7 @@ const LEVEL_COUNT := 3
 @export_range(1, 16) var checkpoint_min_spacing_rooms: int = 4
 const FRAGMENT_INTERVAL := 50
 const EXTRA_FRAGMENT_PROBABILITY := 1.0 / 200.0
-const FRAGMENTS_PER_KEY := 3
+const FRAGMENTS_PER_KEY := 2
 func level_at_chunk(x: int) -> int:
 	var index := floori(float(x - first_chunk_x) / level_width_chunks)
 	return index + 1 if index >= 0 and index < LEVEL_COUNT else 0

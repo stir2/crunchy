@@ -78,8 +78,10 @@ func _draw() -> void:
 			var glow_color: Color = edge.from_color.lerp(edge.to_color,0.5)
 			glow_color.a = 0.14
 			draw_polyline(glow,glow_color,6,true)
-		for index in range(points.size()-1):
-			var color: Color = edge.from_color if index == 0 else edge.to_color if index == 2 else edge.from_color.lerp(edge.to_color,0.5)
-			draw_line(world_to_screen(points[index]),world_to_screen(points[index+1]),color,1.5,true)
+		var start := world_to_screen(points[0])
+		var end := world_to_screen(points[1])
+		var middle := start.lerp(end,0.5)
+		draw_line(start,middle,edge.from_color,1.5,true)
+		draw_line(middle,end,edge.to_color,1.5,true)
 	for node: Dictionary in graph.nodes.values():
 		draw_circle(world_to_screen(node.position),3.5 if node.visited else 3.0,node.color,true,-1,true)

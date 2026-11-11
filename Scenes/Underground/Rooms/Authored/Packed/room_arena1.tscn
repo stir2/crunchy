@@ -7,7 +7,6 @@
 [node name="PackedRoom" type="Node2D" unique_id=247041278]
 script = ExtResource("1_qid8q")
 room_size = Vector2i(40, 40)
-protect_interior_routes = false
 
 [node name="Solid" type="TileMapLayer" parent="." unique_id=1033750265]
 texture_filter = 1
@@ -82,21 +81,21 @@ position = Vector2(8, 152)
 position = Vector2(8, 504)
 
 [node name="EnemySpawnMarker" parent="." unique_id=1709964460 instance=ExtResource("3_pwk3j")]
-marker_id = &"EnemySpawnMarker"
 position = Vector2(111, 364)
+marker_id = &"EnemySpawnMarker"
 
 [node name="EnemySpawnMarker2" parent="." unique_id=1345320851 instance=ExtResource("3_pwk3j")]
-marker_id = &"EnemySpawnMarker2"
 position = Vector2(287, 364)
+marker_id = &"EnemySpawnMarker2"
 
 [node name="EnemySpawnMarker3" parent="." unique_id=1602000806 instance=ExtResource("3_pwk3j")]
-marker_id = &"EnemySpawnMarker3"
 position = Vector2(352, 365)
+marker_id = &"EnemySpawnMarker3"
 
 [node name="EnemySpawnMarker4" parent="." unique_id=1924155991 instance=ExtResource("3_pwk3j")]
-marker_id = &"EnemySpawnMarker4"
 position = Vector2(528, 360)
+marker_id = &"EnemySpawnMarker4"
 
 [node name="EnemySpawnMarker5" parent="." unique_id=683425320 instance=ExtResource("3_pwk3j")]
-marker_id = &"EnemySpawnMarker5"
 position = Vector2(320, 241)
+marker_id = &"EnemySpawnMarker5"

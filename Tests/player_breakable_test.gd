@@ -113,7 +113,7 @@ func run() -> void:
 			break
 	check(connected,"Dash collision must trigger hitstop")
 	check(room.breakables.groups()[0].health == 0,"Dash must destroy default wall")
-	for frame in range(6): await tick()
+	for frame in range(player.combat.dash_breakable_hitstop_frames + 3): await tick()
 	check(player.position.x > 145,"Dash must continue through destroyed wall after freeze")
 	room.queue_free()
 	await tick()

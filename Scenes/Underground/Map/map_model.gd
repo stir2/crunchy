@@ -16,6 +16,15 @@ func _init(specials: AbyssSpecialRooms, state: AbyssExplorationState, size: Vect
 func room_center(coords: Vector2i) -> Vector2:
 	return (Vector2(coords)+Vector2(0.5,0.5))*Vector2(room_size*tile_pixels)
 
+func room_anchor(coords: Vector2i) -> Vector2:
+	var openings: Dictionary = {}
+	for connection in connections(coords):
+		openings[connection.a] = true
+	if openings.is_empty(): return room_center(coords)
+	var total := Vector2.ZERO
+	for point: Vector2 in openings: total += point
+	return total / openings.size()
+
 func color_for(level: int, current_level: int, visited: bool = true) -> Color:
 	var color: Color = LEVEL_COLORS[level-1] if level == current_level and level >= 1 and level <= LEVEL_COLORS.size() else OTHER_LEVEL
 	if not visited: color.a *= 0.22
@@ -60,24 +69,24 @@ func snapshot(current_level: int) -> Dictionary:
 	var rooms := exploration.visited_rooms(service.world)
 	var seen_edges: Dictionary = {}
 	for coords in rooms:
-		nodes[coords] = {"coords":coords,"position":room_center(coords),"visited":true,
+		nodes[coords] = {"coords":coords,"position":room_anchor(coords),"visited":true,
 			"color":color_for(service.level_at(coords),current_level)}
 	for coords in rooms:
 		for connection in connections(coords):
 			var adjacent: Vector2i = connection.neighbor
 			if not nodes.has(adjacent):
-				nodes[adjacent] = {"coords":adjacent,"position":room_center(adjacent),"visited":false,
+				nodes[adjacent] = {"coords":adjacent,"position":room_anchor(adjacent),"visited":false,
 					"color":color_for(service.level_at(adjacent),current_level,false)}
 			if not nodes[adjacent].visited or seen_edges.has(connection.id): continue
 			seen_edges[connection.id] = true
 			edges.append({"id":connection.id,"from":coords,"to":adjacent,
-				"points":PackedVector2Array([room_center(coords),connection.a,connection.b,room_center(adjacent)]),
+				"points":PackedVector2Array([nodes[coords].position,nodes[adjacent].position]),
 				"from_color":color_for(service.level_at(coords),current_level),
 				"to_color":color_for(service.level_at(adjacent),current_level),
 				"unlocked_gate":not connection.gate.is_empty() and service.is_gate_unlocked(connection.gate)})
 		for definition in service.definitions_at(coords):
 			var active := false
-			var position := room_center(coords)
+			var position := nodes[coords].position as Vector2
 			match definition.kind:
 				"checkpoint": active = service.state.checkpoints.get(definition.id,{}).get("activated",false)
 				"gate":
@@ -95,7 +104,7 @@ func snapshot(current_level: int) -> Dictionary:
 		if marker_ids.has(id) or not id.begins_with(service.world+"/level/") or not id.contains("/fragment/"): continue
 		var last := id.get_slice("/",id.get_slice_count("/")-1).split(":")
 		if last.size() != 2 or not last[0].is_valid_int() or not last[1].is_valid_int(): continue
-		markers.append({"kind":"fragment","id":id,"position":room_center(Vector2i(int(last[0]),int(last[1]))),"active":true})
+		markers.append({"kind":"fragment","id":id,"position":room_anchor(Vector2i(int(last[0]),int(last[1]))),"active":true})
 	var grave: Dictionary = exploration.graves.get(service.world,{})
 	if not grave.is_empty():
 		markers.append({"kind":"grave","id":grave.id,"position":Vector2(grave.position_x,grave.position_y),"active":true})

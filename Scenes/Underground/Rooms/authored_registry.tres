@@ -20,7 +20,7 @@
 [ext_resource type="Resource" uid="uid://dn7p6ivjwitxf" path="res://Scenes/Underground/Rooms/Metadata/room_hallway2.tres" id="packed_room_hallway2"]
 [ext_resource type="Resource" uid="uid://b12qcj1i285bv" path="res://Scenes/Underground/Rooms/Metadata/room_hallway3.tres" id="packed_room_hallway3"]
 [ext_resource type="Resource" uid="uid://drcy1nwdoxk3v" path="res://Scenes/Underground/Rooms/Metadata/room_hallway_DOWN2.tres" id="packed_room_hallway_down2"]
-[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/room_hallway_DOWN3.tres" id="packed_room_hallway_down3"]
+[ext_resource type="Resource" uid="uid://dkrrf23v5o0fw" path="res://Scenes/Underground/Rooms/Metadata/room_hallway_DOWN3.tres" id="packed_room_hallway_down3"]
 [ext_resource type="Resource" uid="uid://cnlu30vtclpti" path="res://Scenes/Underground/Rooms/Metadata/room_hallway_DOWN4.tres" id="packed_room_hallway_down4"]
 [ext_resource type="Resource" uid="uid://dbw4iby4cgu1u" path="res://Scenes/Underground/Rooms/Metadata/room_hallway_DOWN5.tres" id="packed_room_hallway_down5"]
 [ext_resource type="Resource" uid="uid://plt63heokn23" path="res://Scenes/Underground/Rooms/Metadata/room_hallway_UP3.tres" id="packed_room_hallway_up3"]

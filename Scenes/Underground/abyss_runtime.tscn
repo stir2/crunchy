@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/Underground/HUD/flesh_hud.tscn" id="8_flesh_hud"]
 [ext_resource type="Script" uid="uid://blwbp2x456mmg" path="res://Scenes/Interaction/entrance_return.gd" id="9_entrance_return"]
 [ext_resource type="Script" uid="uid://d1pwahiyti1lu" path="res://Scenes/Underground/Enemies/enemy_population.gd" id="10_population"]
+[ext_resource type="PackedScene" path="res://Scenes/Underground/HUD/key_fragment_hud.tscn" id="11_key_hud"]
 
 [node name="AbyssRuntime" type="Node2D" unique_id=678067981]
 script = ExtResource("1_runtime")
@@ -73,8 +74,9 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 
-[node name="ReturnButton" type="Button" parent="StartupStatusCanvas/Panel"]
+[node name="ReturnButton" type="Button" parent="StartupStatusCanvas/Panel" unique_id=109789049]
 visible = false
+layout_mode = 0
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
@@ -97,3 +99,5 @@ script = ExtResource("9_entrance_return")
 
 [node name="EnemyPopulation" type="Node2D" parent="." unique_id=711212018]
 script = ExtResource("10_population")
+
+[node name="KeyFragmentHUD" parent="." unique_id=1216821477 instance=ExtResource("11_key_hud")]

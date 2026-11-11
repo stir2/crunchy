@@ -1,0 +1,8 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Scenes/Underground/HUD/key_fragment_hud.gd" id="1"]
+[node name="KeyFragmentHUD" type="CanvasLayer"]
+layer = 10
+[node name="Display" type="Control" parent="."]
+texture_filter = 1
+mouse_filter = 2
+script = ExtResource("1")

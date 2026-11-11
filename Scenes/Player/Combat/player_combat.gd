@@ -7,6 +7,7 @@ signal attack_finished(interrupted: bool)
 signal phase_changed(phase: AttackState)
 signal hit_confirmed(target: CombatDamageable, hit: CombatHit)
 signal hitstop_started(ticks: int)
+signal breakable_hit_confirmed(dashing: bool)
 signal swing_freeze_started(ticks: int)
 
 @export var actions_enabled: bool = true
@@ -40,9 +41,9 @@ signal swing_freeze_started(ticks: int)
 @export_range(1.0, 100.0, 1.0) var hitbox_height: float = 42.0
 @export_group("Impact")
 @export var attack_knockback: Vector2 = Vector2(170, -70)
-@export_range(0, 15, 1) var hitstop_frames: int = 3
+@export_range(0, 15, 1) var hitstop_frames: int = 8
 @export_range(0, 100, 1) var dash_breakable_damage: int = 3
-@export_range(0, 15, 1) var dash_breakable_hitstop_frames: int = 3
+@export_range(0, 15, 1) var dash_breakable_hitstop_frames: int = 8
 
 var _breakable_rooms: Array[AbyssAuthoredRoom] = []
 var _swing_breakable_hits: Dictionary = {}
@@ -363,6 +364,7 @@ func _damage_swing_breakables(hit_transform: Transform2D) -> void:
 		polygon.append(hit_transform*corner)
 	for room in _breakable_rooms:
 		if room.breakables != null and room.breakables.damage_in_polygon(polygon,attack_damage,_swing_breakable_hits):
+			breakable_hit_confirmed.emit(false)
 			if not _hitstop_used:
 				_start_hitstop()
 
@@ -383,6 +385,7 @@ func connect_breakable_dash() -> bool:
 		connected = room.breakables.damage_at_once(point,dash_breakable_damage,_dash_breakable_hits) or connected
 	if connected:
 		_start_hitstop(dash_breakable_hitstop_frames)
+		breakable_hit_confirmed.emit(true)
 	return connected
 
 ## Preserve frame-based deadlines across an explicit gameplay pause.

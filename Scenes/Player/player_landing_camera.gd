@@ -11,6 +11,12 @@ extends Camera2D
 @export_group("Hurt Shake")
 @export_range(0.0, 40.0, 0.25) var hurt_shake_pixels: float = 4.0
 @export_range(0.01, 1.0, 0.01) var hurt_shake_duration: float = 0.3
+@export_group("Enemy Hit Shake")
+@export_range(0.0, 40.0, 0.25) var enemy_hit_shake_pixels: float = 4.0
+@export_range(0.01, 1.0, 0.01) var enemy_hit_shake_duration: float = 0.12
+@export_group("Breakable Hit Shake")
+@export_range(0.0, 40.0, 0.25) var breakable_hit_shake_pixels: float = 6.0
+@export_range(0.01, 1.0, 0.01) var breakable_hit_shake_duration: float = 0.16
 var _base_offset: Vector2
 var _shake_elapsed: float = 0.0
 var _shake_strength: float = 0.0
@@ -29,6 +35,8 @@ func bind_player(player: Player) -> void:
 		_feedback_player.movement_state_changed.disconnect(_on_movement_state_changed)
 		_feedback_player.get_node("DamageController").damage_reaction.disconnect(_on_hurt)
 		_feedback_player.movement_reset.disconnect(reset_shake)
+		_feedback_player.get_node("CombatController").hit_confirmed.disconnect(_on_enemy_hit)
+		_feedback_player.get_node("CombatController").breakable_hit_confirmed.disconnect(_on_breakable_hit)
 	reset_shake()
 	_feedback_player = player
 	if player == null:
@@ -37,6 +45,14 @@ func bind_player(player: Player) -> void:
 	player.movement_state_changed.connect(_on_movement_state_changed)
 	player.get_node("DamageController").damage_reaction.connect(_on_hurt)
 	player.movement_reset.connect(reset_shake)
+	player.get_node("CombatController").hit_confirmed.connect(_on_enemy_hit)
+	player.get_node("CombatController").breakable_hit_confirmed.connect(_on_breakable_hit)
+
+func _on_enemy_hit(_target: CombatDamageable, _hit: CombatHit) -> void:
+	start_shake(enemy_hit_shake_pixels,enemy_hit_shake_duration,Vector2(1.0,0.6))
+
+func _on_breakable_hit(_dashing: bool) -> void:
+	start_shake(breakable_hit_shake_pixels,breakable_hit_shake_duration,Vector2.ONE)
 
 func _on_movement_state_changed(state: Player.MovementState) -> void:
 	if state == Player.MovementState.DASHING:

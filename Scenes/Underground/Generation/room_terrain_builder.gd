@@ -11,6 +11,8 @@ static func build(request: AbyssRoomConstructionRequest, config: AbyssTerrainCon
 		room.climbable_regions = AbyssTileGroups.describe(climbables,request.template_id)
 	if room != null and specials != null:
 		AbyssSpecialRoomConstruction.apply(room,request,specials)
+	if room != null:
+		AbyssTerrainArt.setup(room,boundary)
 	return room
 
 static func _build(request: AbyssRoomConstructionRequest, config: AbyssTerrainConfig, boundary: AbyssCavernBoundaryField = null, state: AbyssRoomState = null) -> AbyssAuthoredRoom:

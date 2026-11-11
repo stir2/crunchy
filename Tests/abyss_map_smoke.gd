@@ -111,7 +111,14 @@ func run() -> void:
 	state.visit(world,adjacent)
 	graph = model.snapshot(service.level_at(coords))
 	check(not graph.edges.is_empty(),"Visited neighbor has no graph edge")
-	check((graph.edges[0].points[1] == connections[0].a and graph.edges[0].points[2] == connections[0].b) or (graph.edges[0].points[2] == connections[0].a and graph.edges[0].points[1] == connections[0].b),"Graph ignored actual opening positions")
+	var graph_edge: Dictionary = graph.edges[0]
+	check(graph_edge.points.size() == 2 and graph_edge.points[0] == graph.nodes[graph_edge.from].position and graph_edge.points[1] == graph.nodes[graph_edge.to].position,"Graph connections must be straight between room dots")
+	var opening_positions: Dictionary = {}
+	for connection in connections: opening_positions[connection.a] = true
+	var opening_center := Vector2.ZERO
+	for point: Vector2 in opening_positions: opening_center += point
+	opening_center /= opening_positions.size()
+	check(graph.nodes[coords].position.is_equal_approx(opening_center),"Room dot must use the center of its openings")
 	check(model.color_for(1,1) == AbyssMapModel.LEVEL_COLORS[0] and model.color_for(2,2) == AbyssMapModel.LEVEL_COLORS[1] and model.color_for(3,3) == AbyssMapModel.LEVEL_COLORS[2],"Level palette incorrect")
 	check(model.color_for(2,1) == AbyssMapModel.OTHER_LEVEL and model.color_for(3,1) == AbyssMapModel.OTHER_LEVEL,"Other levels are not translucent gray")
 	var gate: Dictionary = service.interval_definitions(1,0).gate
