@@ -13,6 +13,7 @@
 [sub_resource type="Resource" id="Resource_8qola"]
 script = ExtResource("1_gfifg")
 overrides = {
+"canvas_layer": "10",
 "global_font_size": "30"
 }
 

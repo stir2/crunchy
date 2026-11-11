@@ -231,6 +231,7 @@ class DigitReel extends Control:
 
 
 func _ready() -> void:
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 
 	_shake_root = housing.get_parent() as Control

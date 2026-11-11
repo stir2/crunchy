@@ -10,8 +10,11 @@ const REVIVAL = preload("res://Scenes/Boss/boss_village_revival.gd")
 const PORTRAITS = preload("res://Scenes/Village/villager_portraits.gd")
 const STRIKE_WARNING = preload("res://BossSprites/Strike Attack/bossFxWarningStrike.png")
 const STRIKE_FX = preload("res://BossSprites/Strike Attack/bossFxRedStrike.png")
-const LOWER_OFFSET := 352.0
-const DROP_SECONDS := 1.22
+const LOWER_OFFSET := 1952.0
+const DROP_SECONDS := 5.8
+const BOSS_FALL_DELAY := 1.15
+const BOSS_FALL_DURATION := DROP_SECONDS - 0.80
+const PICKUP_DELAY := 0.55
 var active_path := ARENA
 var _lower := false
 var _dropping := false
@@ -20,6 +23,7 @@ var _revival_used := false
 var _slab_intact := true
 var _volley_aim := Vector2.ZERO
 var _fan_next := true
+var _taken_name := ""
 var _pause_menu: CanvasLayer
 var _ending := false
 var _shake := 0.0
@@ -52,9 +56,10 @@ func _ready() -> void:
 	player.stamina.regeneration_per_second *= 1.0 + get_node("/root/VillageManager").get_effect("stamina_regen_pct") / 100.0
 	player.get_node("InteractionController").set_enabled(false)
 	player.reset_movement()
-	$Waves.completed.connect(monster.finish_waves)
+	player.set_meta(&"boss_death_mix", true)
+	$Waves.completed.connect(_finish_taken)
 	$Waves.spawn_warning.connect(func(point: Vector2): _ground_impact(point, false))
-	monster.waves_requested.connect(func(): $Waves.start(player))
+	monster.waves_requested.connect(_start_taken)
 	monster.set_target(player)
 	monster.ground_impact.connect(_ground_impact)
 	monster.attack_tell.connect(_attack_tell)
@@ -62,12 +67,13 @@ func _ready() -> void:
 	monster.floor_break_requested.connect(_drop_to_lower_arena)
 	monster.volley_started.connect(_start_volley)
 	monster.volley_burst.connect(_fire_burst)
+	monster.last_toll_interrupted.connect(_interrupt_last_toll)
 	monster.sweep_floor = _sweep_floor_y
 	monster.slab_broken.connect(_break_slab)
-	$Waves.wave_started.connect(func(_family: int): _cue(&"monster_rumbling_2", -24, 0.9))
+	$Waves.wave_started.connect(func(): _cue(&"monster_rumbling_2", -24, 0.9))
 	monster.health.health_changed.connect(_boss_health_changed)
 	monster.defeated.connect(_boss_defeated)
-	monster.defeat_finished.connect(func(): _show_result("The monster falls"))
+	monster.defeat_finished.connect(func(): _show_result("No more tribute."))
 	player.health.died.connect(_player_died)
 	player.get_node("Visuals/AnimatedSprite2D").death_animation_finished.connect(_player_death_finished)
 	_boss_health_changed(monster.health.current_health, monster.health.max_health)
@@ -79,13 +85,38 @@ func _ready() -> void:
 	monster.modulate.a = 0.0
 	create_tween().tween_property(monster, "modulate:a", 1.0, 1.1)
 
+func _start_taken() -> void:
+	var losses: Array[Dictionary] = get_node("/root/VillageManager").get_fallen()
+	for index in range(losses.size() - 1, -1, -1):
+		if losses[index].cause == "taken":
+			_taken_name = String(losses[index].name)
+			break
+	if not _taken_name.is_empty() and not DialogueManager.is_busy():
+		player.combat.actions_enabled = false
+		player.set_physics_process(false)
+		DialogueManager.play("boss_taken", "Boss/taken", _taken_name)
+		await DialogueManager.conversation_finished
+		player.set_physics_process(true)
+		player.combat.actions_enabled = true
+	$Waves.start(player, _taken_name)
+
+func _finish_taken() -> void:
+	if not _taken_name.is_empty():
+		player.combat.actions_enabled = false
+		player.set_physics_process(false)
+		DialogueManager.play("boss_taken_after", "Boss/taken_after")
+		await DialogueManager.conversation_finished
+		player.set_physics_process(true)
+		player.combat.actions_enabled = true
+	monster.finish_waves()
+
 func _build_floor() -> void:
 	var tiles: TileMapLayer = $Terrain
 	tiles.tile_set = TILES
 	for x in range(-1, 41):
 		for y in range(19, 24):
 			tiles.set_cell(Vector2i(x, y), 0, Vector2i.ZERO)
-	for y in range(-1, 47):
+	for y in range(-1, 147):
 		tiles.set_cell(Vector2i(-1, y), 0, Vector2i.ZERO)
 		tiles.set_cell(Vector2i(40, y), 0, Vector2i.ZERO)
 
@@ -93,18 +124,18 @@ func _build_lower_floor() -> void:
 	var tiles: TileMapLayer = $Terrain
 	for x in range(40):
 		var top := _lower_floor_row(x)
-		for y in range(top, 47):
+		for y in range(top, 147):
 			tiles.set_cell(Vector2i(x, y), 0, Vector2i(5, 0) if y == top and x in range(28, 33) else Vector2i.ZERO)
 	for x in range(5, 12):
-		tiles.set_cell(Vector2i(x, 38), 0, Vector2i.RIGHT)
+		tiles.set_cell(Vector2i(x, 138), 0, Vector2i.RIGHT)
 
 
 func _lower_floor_row(column: int) -> int:
 	if column in range(15, 25):
-		return 43
+		return 143
 	if column in [14, 25] or (not _slab_intact and column in range(28, 33)):
-		return 42
-	return 41
+		return 142
+	return 141
 
 
 func _sweep_floor_y(x: float) -> float:
@@ -113,12 +144,18 @@ func _sweep_floor_y(x: float) -> float:
 
 func _lower_landing_y(x: float) -> float:
 	if x >= 80 and x <= 192:
-		return 38.0 * 16.0
+		return 138.0 * 16.0
 	return _lower_floor_row(clampi(floori(x / 16.0), 1, 38)) * 16.0
 
 
+func _music_cue(cue: StringName, time_until_impact := 0.0) -> void:
+	var music := get_node_or_null("/root/SoundManager/MusicController")
+	if music != null:
+		music.boss_music_cue(self, cue, time_until_impact)
+
 func _drop_to_lower_arena() -> void:
 	_dropping = true
+	_music_cue(&"fall")
 	_clear_volley()
 	monster.set_physics_process(false)
 	player.set_physics_process(false)
@@ -131,7 +168,7 @@ func _drop_to_lower_arena() -> void:
 	_shake = 5.0
 	for x in range(40, 640, 72):
 		_ground_impact(Vector2(x, 304), false)
-	await get_tree().create_timer(0.28, false).timeout
+	await get_tree().create_timer(0.75, false).timeout
 	_cue(&"toll_impact", -13)
 	_build_lower_floor()
 	var tiles: TileMapLayer = $Terrain
@@ -144,15 +181,21 @@ func _drop_to_lower_arena() -> void:
 	_floor_debris()
 	_shake = 8.0
 	var landing := _lower_landing_y(player.position.x)
-	var echoes := _falling_portraits()
+	_fall_streaks()
 	var fall := create_tween().set_parallel(true)
 	fall.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	fall.tween_property(player, "position:y", landing - 0.5, DROP_SECONDS)
-	fall.tween_property(monster, "position:y", LOWER_OFFSET, DROP_SECONDS)
+	var monster_fall := monster.create_tween()
+	monster.begin_fall()
+	monster_fall.tween_interval(BOSS_FALL_DELAY)
+	var pickup := create_tween()
+	pickup.tween_interval(PICKUP_DELAY)
+	pickup.tween_callback(func(): _music_cue(&"pickup", BOSS_FALL_DELAY + BOSS_FALL_DURATION - PICKUP_DELAY))
+	monster_fall.tween_property(monster, "position:y", LOWER_OFFSET, BOSS_FALL_DURATION).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	monster_fall.parallel().tween_method(monster.pose_fall, 0.0, 1.0, BOSS_FALL_DURATION).set_trans(Tween.TRANS_LINEAR)
 	fall.tween_property(camera, "position:y", 180.0 + LOWER_OFFSET, DROP_SECONDS)
 	fall.tween_property($BackgroundCanvas/Background, "color", Color("271420"), DROP_SECONDS)
 	await fall.finished
-	echoes.queue_free()
 	_lower = true
 	sprite.set_process(true)
 	player.reset_movement()
@@ -161,12 +204,46 @@ func _drop_to_lower_arena() -> void:
 		var x := clampf(player.position.x + offset, 8.0, 632.0)
 		_ground_impact(Vector2(x, _lower_landing_y(x)), offset == 0.0)
 	_cue(&"hard_land_stone", -10)
-	_shake = 6.4
-	await get_tree().create_timer(0.66, false).timeout
+	_shake = 4.2
+	# The Chief lands first; the pursuing mass hits on a separate beat.
+	if monster_fall.is_running():
+		await monster_fall.finished
+	_music_cue(&"landing")
+	_ground_impact(monster.to_global(Vector2(486, 304)), true)
+	_shake = 8.0
+	_cue(&"toll_impact", -12)
+	# Hands brace first. The suspended head follows a beat later and rebounds.
+	var settle := monster.create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	settle.tween_interval(0.06)
+	settle.tween_method(monster.pose_landing_head, 0.0, 14.0, 0.14)
+	settle.tween_method(monster.pose_landing_head, 14.0, -7.0, 0.22)
+	settle.tween_method(monster.pose_landing_head, -7.0, 2.5, 0.18)
+	settle.tween_method(monster.pose_landing_head, 2.5, 0.0, 0.20)
+	await get_tree().create_timer(1.05, false).timeout
 	_dropping = false
 	player.get_node("Hurtbox").invulnerable = false
 	monster.finish_floor_break()
 	monster.set_physics_process(true)
+
+
+func _fall_streaks() -> void:
+	for i in range(44):
+		var streak := Line2D.new()
+		var x := 18.0 + fmod(float(i) * 97.0, 604.0)
+		var y := 380.0 + float(i % 6) * 21.0
+		streak.add_point(Vector2(x, y))
+		streak.add_point(Vector2(x, y + 16.0 + float(i % 4) * 11.0))
+		streak.width = 1.0
+		streak.default_color = Color(0.62, 0.53, 0.66, 0.0)
+		_hud.add_child(streak)
+		var delay := 0.20 + float(i) * 0.105
+		var motion := streak.create_tween()
+		motion.tween_interval(delay)
+		motion.tween_property(streak, "modulate:a", 1.0, 0.01)
+		streak.default_color.a = 0.20
+		streak.modulate.a = 0.0
+		motion.parallel().tween_property(streak, "position:y", -540.0, 0.60)
+		motion.tween_callback(streak.queue_free)
 
 
 func _floor_debris() -> void:
@@ -190,49 +267,12 @@ func _floor_debris() -> void:
 		drop.chain().tween_callback(chunk.queue_free)
 
 
-func _falling_portraits() -> Control:
-	var echoes := Control.new()
-	echoes.name = &"FallingVillagers"
-	echoes.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_hud.add_child(echoes)
-	var village := get_node("/root/VillageManager")
-	var living: Array = village.get_villagers()
-	var fallen: Array = village.get_fallen()
-	var entries: Array[Dictionary] = []
-	for i in range(3):
-		if i < living.size():
-			entries.append({"name": living[i].display_name, "fallen": false})
-		if i < fallen.size():
-			entries.append({"name": fallen[i].name, "fallen": true})
-	for i in entries.size():
-		var portrait := TextureRect.new()
-		var entry := entries[i]
-		portrait.texture = PORTRAITS.texture_for(entry.name)
-		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		portrait.size = Vector2(22, 24)
-		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		portrait.modulate = Color(0.58, 0.68, 0.84, 0) if entry.fallen else Color(0.90, 0.77, 0.75, 0)
-		echoes.add_child(portrait)
-		var side := -1.0 if i % 2 == 0 else 1.0
-		var x := clampf(player.position.x + side * (76 + 18 * i), 26.0, 592.0)
-		portrait.position = Vector2(x, 365.0)
-		var trail := portrait.create_tween().set_parallel(true)
-		var delay := 0.09 + i * 0.055
-		var travel := DROP_SECONDS - delay
-		trail.tween_property(portrait, "position", Vector2(x + side * 18, -44.0), travel).set_delay(delay).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		trail.tween_property(portrait, "modulate:a", 0.40 if entry.fallen else 0.52, 0.27).set_delay(delay + 0.13)
-		var fade := portrait.create_tween()
-		fade.tween_interval(DROP_SECONDS - 0.30)
-		fade.tween_property(portrait, "modulate:a", 0.0, 0.30)
-	return echoes
-
-
 func _break_slab() -> void:
 	_slab_intact = false
 	var tiles: TileMapLayer = $Terrain
 	for x in range(28, 33):
-		tiles.erase_cell(Vector2i(x, 41))
-		_ground_impact(tiles.map_to_local(Vector2i(x, 41)) - Vector2(0, 8), false)
+		tiles.erase_cell(Vector2i(x, 141))
+		_ground_impact(tiles.map_to_local(Vector2i(x, 141)) - Vector2(0, 8), false)
 	tiles.update_internals()
 	_shake = 4.8
 	_cue(&"toll_impact", -15)
@@ -273,29 +313,39 @@ func _fx(sheet: Texture2D, cell: int, point: Vector2, seconds: float, scale_fact
 	return sprite
 
 
-func _cue(sound: StringName, volume: float, limit: float = 0.0) -> void:
+func _cue(sound: StringName, volume: float, limit: float = 0.0, full_sample := false) -> AudioStreamPlayer:
 	var sounds := get_node("/root/SoundManager")
 	var voice := AudioStreamPlayer.new()
 	voice.name = "Cue_" + String(sound)
 	voice.stream = sounds.stream_for(sound)
 	if voice.stream == null:
 		voice.free()
-		return
+		return null
 	voice.bus = &"Dread" if String(sound).begins_with("monster_rumbling") else &"SFX"
-	voice.volume_db = volume + sounds.gain_for(sound)
+	voice.volume_db = volume + sounds.gain_for(sound) - 3.0
 	add_child(voice)
 	voice.finished.connect(voice.queue_free)
-	voice.play(sounds.start_offset_for(sound))
+	voice.play(0.0 if full_sample else sounds.start_offset_for(sound))
 	if limit > 0 and limit < voice.stream.get_length():
 		var fade := voice.create_tween()
 		fade.tween_interval(maxf(0.0, limit - 0.15))
 		fade.tween_property(voice, "volume_db", -60.0, 0.15)
 		fade.tween_callback(voice.queue_free)
+	return voice
 
 
 func _start_volley() -> void:
 	_volley_aim = player.global_position - Vector2(0, 16)
-	_cue(&"gate_unlock", -13, 0.75)
+	if monster.is_last_toll():
+		_music_cue(&"last_toll")
+	else:
+		_cue(&"gate_unlock", -13, 0.75)
+
+func _interrupt_last_toll() -> void:
+	_clear_volley()
+	_music_cue(&"")
+	_cue(&"night_bell-1", -10.0, 1.4)
+	_shake = 4.0
 
 
 func _fire_burst(index: int) -> void:
@@ -303,30 +353,47 @@ func _fire_burst(index: int) -> void:
 		return
 	var origin: Vector2 = monster.volley_origin()
 	_cue(&"cleaver_swing_alt", -17, 0.35)
+	_music_cue(&"toll_release" if monster.is_last_toll() else &"volley_release")
+	if monster.is_last_toll():
+		var aim := origin.direction_to(_volley_aim)
+		if aim.length_squared() < 0.01:
+			aim = Vector2.DOWN
+		for slot in range(-2, 3):
+			_fire_web(origin, aim.rotated(deg_to_rad(slot * 19.0)) * 220.0, slot == 0)
+		return
+	if not _lower:
+		# Keep the first arena's bursts narrow enough to leave room to dodge.
+		var aim := origin.direction_to(_volley_aim).angle()
+		for slot in range(-1, 2):
+			var angle := aim + deg_to_rad(slot * 16.0 + (index - 1) * 7.0)
+			_fire_web(origin, Vector2.from_angle(angle) * (210.0 + index * 10.0))
+		return
 	if _fan_next:
 		# The gaps rotate on each pulse. The original aim stays fixed for the volley.
 		var aim := origin.direction_to(_volley_aim).angle()
-		for slot in range(-3, 4):
-			var angle := aim + deg_to_rad(slot * 11.0 + (index - 1) * 5.5)
-			_fire_web(origin, Vector2.from_angle(angle) * (235 + index * 15))
+		for slot in range(-2, 3):
+			var angle := aim + deg_to_rad(slot * 16.0 + (index - 1) * 4.0)
+			_fire_web(origin, Vector2.from_angle(angle) * (205 + index * 10))
 	else:
-		# Two staggered curtains leave lanes between the diagonal falling shots.
-		var direction := 1.0 if index != 1 else -1.0
-		for slot in range(8):
-			var x := 24.0 + slot * 82.0 + (24.0 if index == 1 else 0.0)
-			_fire_web(Vector2(x, LOWER_OFFSET + 62), Vector2(74.0 * direction, 242.0 + index * 14))
+		# Vertical shots leave the same open lanes throughout the volley.
+		for slot in range(4):
+			var x := 82.0 + slot * 158.0
+			_fire_web(Vector2(x, LOWER_OFFSET + 62), Vector2(0.0, 190.0 + index * 8.0))
 	if index == 2:
 		_fan_next = not _fan_next
 
 
-func _fire_web(origin: Vector2, motion: Vector2) -> void:
+func _fire_web(origin: Vector2, motion: Vector2, toll_shot := false) -> void:
 	var web := WEB.new()
 	web.source_actor = monster
 	web.travel_velocity = motion
-	web.radius = 9.0
+	web.radius = 11.0
+	web.visual_scale = 1.05
 	web.damage = 1
 	web.max_bounces = 0
-	web.shot_color = Color("e7c6d5")
+	web.shot_color = Color("ffe094") if toll_shot else Color("e7c6d5")
+	if toll_shot:
+		web.set_meta(&"last_toll", true)
 	$Effects.add_child(web)
 	web.global_position = origin
 
@@ -340,6 +407,7 @@ func _clear_volley() -> void:
 
 func _build_hud() -> void:
 	_hud = Control.new()
+	_hud.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hud.size = Vector2(640, 360)
 	$HUD.add_child(_hud)
@@ -349,7 +417,7 @@ func _build_hud() -> void:
 	_hud.add_child(hearts)
 	hearts.bind_health(player.health)
 	_boss_bar = ProgressBar.new()
-	_boss_bar.position = Vector2(180, 12)
+	_boss_bar.position = Vector2(180, 25)
 	_boss_bar.show_percentage = false
 	for key in ["background", "fill"]:
 		var style := StyleBoxFlat.new()
@@ -358,7 +426,8 @@ func _build_hud() -> void:
 	_hud.add_child(_boss_bar)
 	_boss_bar.size = Vector2(280, 5)
 	_result = PanelContainer.new()
-	_result.position = Vector2(16, 208)
+	_result.position = Vector2(16, 24)
+	_result.resized.connect(_fit_result)
 	_result.custom_minimum_size = Vector2(216, 0)
 	_result.theme = preload("res://Scenes/Menus/menu_style.gd").make_theme(0.67)
 	var column := VBoxContainer.new()
@@ -378,6 +447,9 @@ func _build_hud() -> void:
 		column.add_child(button)
 	_hud.add_child(_result)
 	_result.hide()
+
+func _fit_result() -> void:
+	_result.position.y = maxf(24.0, _hud.size.y - _result.size.y - 16.0)
 
 func _fit_view() -> void:
 	if not is_inside_tree() or not is_instance_valid(_hud): return
@@ -412,6 +484,7 @@ func _boss_health_changed(current: int, maximum: int) -> void:
 
 func _boss_defeated() -> void:
 	if _ending: return
+	_music_cue(&"victory")
 	_ending = true
 	if get_tree().current_scene != self:
 		get_node("/root/GameController").boss_defeated = true
@@ -431,6 +504,8 @@ func _player_died(_hit: CombatHit) -> void:
 	if not _revival_used:
 		_revival_used = true
 		_reviving = true
+		$Waves.process_mode = Node.PROCESS_MODE_DISABLED
+		monster.set_physics_process(false)
 		_revive.call_deferred()
 		return
 	_ending = true
@@ -466,7 +541,9 @@ func _revive() -> void:
 		if not $Waves.active:
 			monster.resume_fight()
 	$Waves.process_mode = Node.PROCESS_MODE_INHERIT
+	_music_cue(&"")
 	_reviving = false
+	_cue(&"revive", -12)
 	await get_tree().create_timer(1.0, false).timeout
 	if not _ending and not _dropping:
 		player.get_node("Hurtbox").invulnerable = false
@@ -479,10 +556,18 @@ func _show_result(title: String) -> void:
 	player.set_physics_process(false)
 	_result_title.text = title
 	if not player.health.is_dead():
-		var row := HFlowContainer.new()
-		row.custom_minimum_size.x = 185
+		var caption := Label.new()
+		caption.text = "The village will see another dawn."
+		caption.custom_minimum_size.x = 180
+		caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		var column := _result_title.get_parent()
+		column.add_child(caption)
+		column.move_child(caption, _result_title.get_index() + 1)
+		var row := GridContainer.new()
+		row.columns = 6
 		for villager: Villager in get_node("/root/VillageManager").get_villagers():
 			var portrait := TextureRect.new()
+			portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 			portrait.texture = PORTRAITS.texture_for(villager.display_name)
 			portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			portrait.custom_minimum_size = Vector2(24, 26)
@@ -491,6 +576,8 @@ func _show_result(title: String) -> void:
 		_result_title.get_parent().add_child(row)
 	_result.modulate.a = 0
 	_result.show()
+	_result.reset_size.call_deferred()
+	_fit_result()
 	for child in _result_title.get_parent().get_children():
 		if child is Button and child.visible:
 			child.grab_focus()
@@ -508,7 +595,7 @@ func _return_home() -> void:
 	game.health = player.health.current_health
 	if player.health.is_dead(): game.recover_from_death()
 	game.stamina = int(player.stamina.current_stamina)
-	game.return_to_stairs = true
+	game.return_to_stairs = not _ending or player.health.is_dead()
 	_change_scene(HOUSE)
 
 func _change_scene(path: String) -> void:

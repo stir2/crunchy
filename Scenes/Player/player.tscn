@@ -130,7 +130,7 @@ stamina_path = NodePath("../Stamina")
 
 [node name="HealingEffect" type="AnimatedSprite2D" parent="."]
 visible = false
-position = Vector2(0, -15)
+position = Vector2(0, -18)
 z_index = 5
 texture_filter = 1
 sprite_frames = ExtResource("15_heal_frames")

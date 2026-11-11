@@ -9,8 +9,13 @@ func _ready() -> void:
 	player.movement_reset.connect(_clear)
 	animation_finished.connect(_clear)
 
+func _process(_delta: float) -> void:
+	if visible and is_instance_valid(player):
+		flip_h = player.facing_direction < 0
+
 func _on_healed(amount: int) -> void:
 	if amount <= 0 or player.get_node("Health").is_dead(): return
+	flip_h = player.facing_direction < 0
 	show()
 	play(&"heal")
 	set_frame_and_progress(0,0.0)

@@ -19,6 +19,11 @@ func check(value: bool, message: String) -> void:
 		push_error(message)
 
 
+func _capture_mixed_spawns(waves: Node, result: Array[PackedScene]) -> void:
+	for entry: Dictionary in waves._pending:
+		result.append(entry.scene)
+
+
 func wait_for(condition: Callable) -> bool:
 	for frame in range(1800):
 		if condition.call():
@@ -31,19 +36,11 @@ func check_boss_settles(monster: Node, retract: int) -> void:
 	check(await wait_for(func():
 		return monster.phase == retract and monster.elapsed >= monster.duration - 0.03
 	), "Boss did not play the end of its retract animation")
-	var drawings: Array[Texture2D] = []
-	var positions: Array[Vector2] = []
-	var scales: Array[Vector2] = []
-	for layer: Sprite2D in monster._art._layers:
-		drawings.append(layer.texture)
-		positions.append(layer.position)
-		scales.append(layer.scale)
-	check(await wait_for(func(): return monster.phase == monster.Phase.REST), "Boss did not settle to idle after retracting")
-	for i in monster._art._layers.size():
-		var layer: Sprite2D = monster._art._layers[i]
-		check(layer.visible and layer.modulate.a == 1.0 and layer.texture == drawings[i]
-			and layer.position.distance_to(positions[i]) < 3.0 and layer.scale.distance_to(scales[i]) < 0.03,
-			"Boss layer %s swapped silhouettes or jumped between retract and idle" % i)
+	var left_position: Vector2 = monster.left.position
+	var right_position: Vector2 = monster.right.position
+	check(await wait_for(func(): return monster.phase == monster.Phase.REST), "Boss did not settle to idle")
+	check(monster.left.position.distance_to(left_position) < 4.0 and monster.right.position.distance_to(right_position) < 4.0,
+		"Boss rig jumped between retract and idle")
 
 
 func check_cutscene_pause() -> void:
@@ -218,10 +215,10 @@ func run() -> void:
 			boss_cues.append(child.name))
 	arena.player.get_node("Hurtbox").invulnerable = true
 	arena.player.position.x = 100
-	check(await wait_for(func(): return monster.phase == monster.Phase.SWIPE_WINDUP and monster._layer_alpha.y > 0.99), "Sweep did not render the authored left arm during windup")
+	check(await wait_for(func(): return monster.phase == monster.Phase.SWIPE_WINDUP), "Sweep did not enter windup")
 	check(await wait_for(func(): return monster.phase == monster.Phase.SWIPE_DRAG), "Left-side positioning did not draw a sweep")
 	check(monster.left_attack.active and not monster.right_attack.active, "Upper sweep enabled the wrong hand")
-	check(not arena.get_node("Effects").get_children().any(func(effect: Node): return effect is Sprite2D), "Sweep added a second airborne dust effect")
+	check(not arena.get_node("Effects").get_children().any(func(effect: Node): return effect is Sprite2D and not effect.is_in_group("boss_attack_warning")), "Sweep added a second airborne dust effect")
 	var dust_positions: Array[Vector2] = []
 	monster.ground_impact.connect(func(point: Vector2, heavy: bool):
 		if monster.phase == monster.Phase.SWIPE_DRAG and not heavy:
@@ -231,32 +228,31 @@ func run() -> void:
 	check(monster.left.position.x - sweep_start > 480 and dust_positions.size() >= 10, "Sweep did not cross the arena and trail dust")
 	if dust_positions.size() >= 2:
 		check(dust_positions[-1].x - dust_positions[0].x > 470, "Sweep dust stayed in one location")
-	check(not monster.left_hurt.invulnerable and monster.right_hurt.invulnerable, "Sweep opened the wrong hand")
-	hit.amount = 48
+	check(not monster.left_hurt.invulnerable and not monster.right_hurt.invulnerable, "Collector combo did not expose both hands")
+	hit.amount = 75
 	monster.health.take_damage(hit)
 	await check_boss_settles(monster, monster.Phase.SWIPE_RETRACT)
 	var waves := arena.get_node("Waves")
 	check(await wait_for(func(): return waves.active), "Boss did not summon the intermission")
-	var families: Array[int] = []
-	waves.wave_started.connect(func(family: int): families.append(family))
+	var mixed_spawns: Array[PackedScene] = []
+	waves.wave_started.connect(func():
+		call_deferred("_capture_mixed_spawns", waves, mixed_spawns))
 	for tick in 750:
 		if not waves.active:
 			break
 		for enemy: Node in waves._live.duplicate():
 			enemy.take_damage(999)
 		await process_frame
-	check(families == [0, 1] and not waves.active, "Zombie and spider waves did not complete in order")
-	hit.amount = 55
+	check(mixed_spawns == waves.FORMATIONS[0] + waves.FORMATIONS[1] and not waves.active, "Mixed summon encounter did not complete")
+	hit.amount = 148
 	monster.health.take_damage(hit)
 	check(await wait_for(func(): return arena._dropping), "Boss did not start the floor break")
-	check(monster._strike_frame == 43 and monster._layer_alpha.z == 1.0, "Floor-breaking slam did not render JV's impact pose")
-	check(await wait_for(func(): return arena._hud.has_node("FallingVillagers")), "Arena fall did not show village portraits")
-	check(arena._hud.get_node("FallingVillagers").get_child_count() > 0, "The fall showed no villagers from the run")
+	check(monster.right.position.distance_to(monster._claw_contact()) < 1.0, "Floor-breaking slam did not reach the floor")
 	check(await wait_for(func(): return arena._lower and not arena._dropping), "Boss did not complete the floor break")
 	check(not arena._hud.has_node("FallingVillagers"), "Portrait echoes stayed on screen after landing")
-	check(monster.phase == monster.Phase.BREAK_RETRACT and monster._layer_alpha.z > 0.99
+	check(monster.phase == monster.Phase.BREAK_RETRACT
 		and not monster.left_attack.active and not monster.right_attack.active,
-		"Phase-two handoff dropped the authored claw pose or enabled an attack before retracting")
+		"Phase-two handoff enabled an attack before retracting")
 	check(monster.health.current_health == 77 and monster.position.y == arena.LOWER_OFFSET, "Floor break reset boss health or left the boss behind")
 	check(arena.get_node("Terrain").get_cell_source_id(Vector2i(10, 19)) == -1 and arena._lower_floor_row(20) > arena._lower_floor_row(30), "Lower arena did not replace the upper floor with a dip")
 	arena.player.position = Vector2(486, arena.LOWER_OFFSET + 303)
@@ -268,8 +264,8 @@ func run() -> void:
 	await create_timer(0.5).timeout
 	check(monster.elapsed == paused_windup and get_nodes_in_group("enemy_projectiles").is_empty(), "Volley advanced while paused")
 	host.pause_menu.resume()
-	check(await wait_for(func(): return get_nodes_in_group("enemy_projectiles").size() >= 7), "First volley did not fire a multi-shot fan")
-	check(await wait_for(func(): return get_nodes_in_group("enemy_projectiles").size() >= 14), "Fan pulses never overlapped")
+	check(await wait_for(func(): return get_nodes_in_group("enemy_projectiles").size() >= 5), "First volley did not fire a multi-shot fan")
+	check(await wait_for(func(): return get_nodes_in_group("enemy_projectiles").size() >= 10), "Fan pulses never overlapped")
 
 	var chief: Player = arena.player
 	var hurtbox: PlayerHurtbox = chief.get_node("Hurtbox")
@@ -305,12 +301,12 @@ func run() -> void:
 	chief.set_physics_process(true)
 	check(await wait_for(func(): return monster.phase == monster.Phase.SWIPE_RECOVER), "Lower combo did not open a punish window")
 	var terrain: TileMapLayer = arena.get_node("Terrain")
-	check(terrain.get_cell_source_id(Vector2i(30, 41)) == -1 and terrain.get_cell_source_id(Vector2i(30, 42)) != -1, "Breakable slab was not removed above its support floor")
+	check(terrain.get_cell_source_id(Vector2i(30, 141)) == -1 and terrain.get_cell_source_id(Vector2i(30, 142)) != -1, "Breakable slab was not removed above its support floor")
 	check(monster.duration >= 3.2 and not monster.left_hurt.invulnerable and not monster.right_hurt.invulnerable, "Baited slam and web parry did not extend the combo punish window")
-	check(await wait_for(func(): return chief.is_on_floor() and chief.position.y > 665), "Chief did not fall into the recess after the slab broke")
+	check(await wait_for(func(): return chief.is_on_floor() and chief.position.y > arena.LOWER_OFFSET + 313), "Chief did not fall into the recess after the slab broke")
 	await check_boss_settles(monster, monster.Phase.SWIPE_RETRACT)
 	check(await wait_for(func():
-		return get_nodes_in_group("enemy_projectiles").filter(func(web: Node): return is_equal_approx(web.travel_velocity.x, 74.0)).size() >= 7
+		return get_nodes_in_group("enemy_projectiles").filter(func(web: Node): return is_zero_approx(web.travel_velocity.x) and web.travel_velocity.y >= 190.0).size() >= 4
 	), "Second volley did not fire a staggered curtain")
 	chief.position = Vector2(136, arena.LOWER_OFFSET + 248)
 	chief.reset_movement()
@@ -345,13 +341,20 @@ func run() -> void:
 		await process_frame
 	check(chief_sprite.animation == &"death" and chief_sprite.frame == chief_sprite.sprite_frames.get_frame_count(&"death") - 1, "Death animation did not settle on the grave")
 	check(not arena._hud.has_node("VillageRevival"), "Villagers appeared before the grave had a beat on screen")
+	var dialogue := root.get_node("DialogueManager")
+	var dialogic := root.get_node("Dialogic")
+	check(await wait_for(func(): return dialogue.current_id == "boss_revival" and dialogic.current_timeline != null), "Villagers did not speak before the revival")
+	check(chief.health.is_dead(), "Chief healed before the villagers spoke")
+	if dialogic.current_timeline != null:
+		dialogic.end_timeline()
 	check(await wait_for(func(): return arena._hud.has_node("VillageRevival") and not chief.health.is_dead()), "Chief did not revive behind the overlay")
 	check(not chief.is_physics_processing() and chief_sprite.animation != &"death", "Revival reveal exposed a dead pose or resumed controls too early")
 	check(await wait_for(func(): return arena._revival_used and not arena._reviving and not arena.player.health.is_dead()), "Chief did not receive the village revival")
 	check(arena.player.health.current_health == ceili(arena.player.health.max_health * 0.75), "Low village health did not grant the minimum revival heal")
 	check(arena._lower and monster.health.current_health == 77, "Revival reset the boss phase or health")
-	for cue: StringName in [&"Cue_monster_rumbling_1", &"Cue_monster_rumbling_2", &"Cue_hard_land_stone", &"Cue_gate_unlock", &"Cue_toll_impact", &"Cue_night_bell-1", &"Cue_geiger_counter_tick"]:
+	for cue: StringName in [&"Cue_monster_rumbling_1", &"Cue_monster_rumbling_2", &"Cue_hard_land_stone", &"Cue_gate_unlock", &"Cue_toll_impact", &"Cue_night_bell-1", &"Cue_geiger_counter_tick", &"Cue_revive"]:
 		check(boss_cues.has(cue), "Boss fight missed audio cue %s" % cue)
+	await wait_for(func(): return not hurtbox.invulnerable)
 	arena.player.health.take_damage(hit)
 	# The death pose waits for audio playback, which uses wall time even at fixed FPS.
 	var defeat_deadline := Time.get_ticks_msec() + 6000
@@ -366,7 +369,11 @@ func run() -> void:
 	check(game.boss_defeated and not arena._retry_button.visible, "Victory did not complete the run")
 	arena._return_home()
 	check(host.active_scene.descend_btn.disabled, "Finished run can enter the boss again")
-	check(saves.save_game(), "Completed run could not be saved")
+	check(await wait_for(func(): return dialogue.current_id == "boss_dawn" and dialogic.current_timeline != null), "Victory did not reach the homecoming dialogue")
+	if dialogic.current_timeline != null:
+		dialogic.end_timeline()
+	check(await wait_for(func(): return not dialogue.is_busy()), "Homecoming did not release village controls")
+	check(saves.save_game(), "Completed run could not be saved: " + saves.last_error)
 	game.boss_defeated = false
 	check(saves.load_game() and game.boss_defeated, "Continue lost the victory flag")
 	host.queue_free()

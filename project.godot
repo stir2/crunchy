@@ -57,6 +57,7 @@ directories/dtl_directory={
 "chief_blame": "res://Dialogue/Rumours/chief_blame.dtl",
 "chief_desk": "res://Dialogue/Rumours/chief_desk.dtl",
 "chief_family": "res://Dialogue/Rumours/chief_family.dtl",
+"dawn": "res://Dialogue/Boss/dawn.dtl",
 "day_10_morning": "res://Dialogue/Monster/day_10_morning.dtl",
 "descend_first": "res://Dialogue/Thoughts/descend_first.dtl",
 "descend_hurt": "res://Dialogue/Thoughts/descend_hurt.dtl",
@@ -64,6 +65,9 @@ directories/dtl_directory={
 "manage_first": "res://Dialogue/Thoughts/manage_first.dtl",
 "manage_food": "res://Dialogue/Thoughts/manage_food.dtl",
 "manage_loss": "res://Dialogue/Thoughts/manage_loss.dtl",
+"revival": "res://Dialogue/Boss/revival.dtl",
+"taken": "res://Dialogue/Boss/taken.dtl",
+"taken_after": "res://Dialogue/Boss/taken_after.dtl",
 "taken_bum": "res://Dialogue/Rumours/taken_bum.dtl"
 }
 layout/style_directory={
@@ -83,6 +87,10 @@ window/stretch/aspect="expand"
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/dialogic/plugin.cfg")
+
+[gui]
+
+theme/default_font_multichannel_signed_distance_field=true
 
 [input]
 

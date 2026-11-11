@@ -13,6 +13,7 @@ var _bounces_left: int = 0
 var reflected: bool = false
 var support_exit_distance: float = 0.0
 var radius: float = 0.0
+var visual_scale: float = 0.5
 var _visual: AnimatedSprite2D
 
 
@@ -28,7 +29,7 @@ func _ready() -> void:
 	visual.sprite_frames = WEB_FRAMES
 	visual.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	visual.modulate = shot_color
-	visual.scale = Vector2.ONE * (0.85 if radius > 0.0 else 0.5)
+	visual.scale = Vector2.ONE * visual_scale
 	visual.offset = Vector2(1, -3)
 	visual.rotation = travel_velocity.angle()
 	visual.play(&"fly")

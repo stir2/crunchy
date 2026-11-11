@@ -1,0 +1,5 @@
+Chief: {DialogueManager.lost_name}? Is that you out there?
+Villager: Should I ring it?
+Chief: Go on. Let everyone sleep through it if they want.
+[signal arg="dawn_bell"]
+Villager: I'll leave my door open. Come have breakfast when you're ready.

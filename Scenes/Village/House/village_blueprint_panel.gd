@@ -38,7 +38,6 @@ var _drag_hint := false
 
 
 func _ready() -> void:
-	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_build_layout()
 	resized.connect(_fit)
 	visibility_changed.connect(_visibility_changed)
@@ -108,6 +107,7 @@ func _build_layout() -> void:
 	_notice.add_theme_color_override("font_color", Color("efd09b"))
 	_place(_notice, Rect2(40, 60, 1840, 28), _canvas)
 	var map_view := TextureRect.new()
+	map_view.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	map_view.texture = MAP
 	map_view.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_place(map_view, Rect2(24, 90, 1260, 720), _canvas)
@@ -340,6 +340,7 @@ func _refresh_details() -> void:
 
 func _portrait(worker: Villager) -> TextureRect:
 	var image := TextureRect.new()
+	image.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	image.texture = PORTRAITS.texture_for(worker.display_name)
 	image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED

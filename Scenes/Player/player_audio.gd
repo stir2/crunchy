@@ -6,7 +6,6 @@ var _death_voice: WeakRef
 var _death_cue_played: bool = false
 var _last_swing: int = -1
 var _warning: AudioStreamPlayer
-var _heartbeat: AudioStreamPlayer
 var _footsteps: Array[AudioStreamPlayer] = []
 var _charge_audio: AudioStreamPlayer
 var _dash_audio: AudioStreamPlayer
@@ -26,6 +25,7 @@ var _movement_duck_db: float = 0.0
 var _movement_duck_hold: float = 0.0
 @onready var player: Player = get_parent()
 @onready var sprite: AnimatedSprite2D = player.get_node("Visuals/AnimatedSprite2D")
+@onready var boss_death_mix: bool = player.has_meta(&"boss_death_mix")
 @onready var sounds: Node = get_node("/root/SoundManager")
 
 
@@ -58,15 +58,6 @@ func _ready() -> void:
 	_warning.bus = &"SFX"
 	_warning.volume_db = -14 + sounds.gain_for(&"low_health_initial")
 	add_child(_warning)
-	_heartbeat = AudioStreamPlayer.new()
-	var loop := sounds.stream_for(&"low_health").duplicate() as AudioStreamWAV
-	loop.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	loop.loop_begin = 0
-	loop.loop_end = roundi(loop.get_length() * loop.mix_rate)
-	_heartbeat.stream = loop
-	_heartbeat.bus = &"SFX"
-	_heartbeat.volume_db = -16 + sounds.gain_for(&"low_health")
-	add_child(_heartbeat)
 	player.combat.phase_changed.connect(_on_attack_phase)
 	player.combat.hit_confirmed.connect(_on_hit_confirmed)
 	player.health.health_changed.connect(_on_health_changed)
@@ -209,17 +200,15 @@ func _on_health_changed(current: int, maximum: int) -> void:
 	if low and not _low_health:
 		_low_health = true
 		_warning.play()
-		_heartbeat.play()
 	elif not low:
 		_low_health = false
 		_warning.stop()
-		_heartbeat.stop()
 
 
 func _on_health_reset() -> void:
 	if not player.health.is_dead():
 		_death_cue_played = false
-	if _was_dead and not player.health.is_dead():
+	if _was_dead and not player.health.is_dead() and not boss_death_mix:
 		sounds.play_sfx(&"revive", -12)
 	_was_dead = player.health.is_dead()
 
@@ -306,4 +295,9 @@ func death_playback_position() -> float:
 func _on_death_animation_started() -> void:
 	if _death_cue_played or not player.health.is_dead(): return
 	_death_cue_played = true
-	_death_voice = weakref(sounds.play_sfx(&"death", -12))
+	var voice: AudioStreamPlayer = sounds.play_sfx(&"death", -12)
+	_death_voice = weakref(voice)
+	if boss_death_mix:
+		var level := voice.volume_db
+		voice.volume_db = level - 24.0
+		voice.create_tween().tween_property(voice, "volume_db", level, 0.45)

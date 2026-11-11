@@ -45,6 +45,20 @@ var _rumble: AudioStreamPlayer
 @onready var listen_button: Button = %ListenOutsideButton
 
 
+func music_room() -> StringName:
+	match current_panel:
+		RoomPanel.WINDOW: return &"window"
+		RoomPanel.STAIRS: return &"stairs"
+		_: return &"desk"
+
+func _play_dawn() -> void:
+	var survivors := VillageManager.get_villagers()
+	if GameController.window_history.has("boss_dawn") or survivors.is_empty():
+		return
+	set_panel(RoomPanel.WINDOW)
+	await get_tree().create_timer(0.8, false).timeout
+	DialogueManager.play("boss_dawn", "Boss/dawn", survivors[0].display_name)
+
 func _ready() -> void:
 	_build_dialogs()
 	window_button.pressed.connect(_talk_to_monster)
@@ -97,7 +111,10 @@ func _ready() -> void:
 		start_panel = RoomPanel.STAIRS
 	set_panel(start_panel)
 	_refresh_top_hud()
-	if GameController.is_day_10():
+	if GameController.boss_defeated:
+		$Panels/WindowPanel/TextureRect.self_modulate = Color(1.14, 1.06, 0.86)
+		call_deferred("_play_dawn")
+	elif GameController.is_day_10():
 		call_deferred("_start_day_10")
 	else:
 		VillageManager.check_next_refugee()

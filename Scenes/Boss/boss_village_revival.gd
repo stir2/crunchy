@@ -3,6 +3,7 @@ extends Control
 const PORTRAITS = preload("res://Scenes/Village/villager_portraits.gd")
 const HEARTS = preload("res://Scenes/Player/Health/heart_hud.tscn")
 const CENTER := Vector2(320, 180)
+var _repeat_bell := true
 var _ritual := Control.new()
 var _portraits: Array[TextureRect] = []
 
@@ -39,7 +40,11 @@ func play(max_hp: int, restored_hp: int, cue: Callable) -> void:
 	var sequence := create_tween().set_parallel()
 	sequence.tween_property(_ritual, "modulate:a", 1.0, 0.48)
 	sequence.tween_method(_place_portraits, 0.0, 1.0, 2.5)
-	cue.call(&"night_bell-1", -22.0, 1.5)
+	_play_bell(cue, -19.0)
+	await sequence.finished
+	if not DialogueManager.is_busy():
+		DialogueManager.play("boss_revival", "Boss/revival")
+		await DialogueManager.conversation_finished
 	var heart_fill := create_tween()
 	heart_fill.tween_interval(0.75)
 	for hp in range(2, restored_hp + 2, 2):
@@ -47,11 +52,18 @@ func play(max_hp: int, restored_hp: int, cue: Callable) -> void:
 			refill.reset_health(mini(hp, restored_hp))
 			cue.call(&"geiger_counter_tick", -19.0))
 		heart_fill.tween_interval(0.15)
-	await sequence.finished
 	if heart_fill.is_running():
 		await heart_fill.finished
 
+func _play_bell(cue: Callable, volume: float) -> void:
+	if not _repeat_bell:
+		return
+	var bell := cue.call(&"night_bell-1", volume, 0.0, true) as AudioStreamPlayer
+	if bell != null:
+		bell.finished.connect(_play_bell.bind(cue, -30.0), CONNECT_ONE_SHOT)
+
 func reveal_arena() -> void:
+	_repeat_bell = false
 	var reveal := create_tween()
 	reveal.tween_property(_ritual, "modulate:a", 0.0, 0.24)
 	reveal.parallel().tween_property(self, "modulate:a", 0.0, 0.65).set_trans(Tween.TRANS_SINE)

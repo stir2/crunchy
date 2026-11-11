@@ -12,6 +12,7 @@ signal attack_parried(hit: CombatHit, projectile: bool)
 @export_range(0.1, 1.0) var invulnerable_alpha: float = 0.45
 @export_range(1, 100) var spike_damage: int = 1
 @export var spike_knockback: Vector2 = Vector2(180, -180)
+const CHARGE_PARRY_FRAMES := 5
 var _reaction_until: int = -1
 var _flash_until: int = -1
 var _parry_flash_until: int = -1
@@ -37,7 +38,10 @@ func receive_hit(hit: CombatHit, allow_parry := true) -> bool:
 	return health.take_damage(hit)
 
 func try_dash_parry(hit: CombatHit, projectile: Node2D = null) -> bool:
-	if hit == null or is_dead() or hurtbox.invulnerable or player.movement_state != Player.MovementState.DASHING:
+	if hit == null or is_dead() or hurtbox.invulnerable:
+		return false
+	var opening_charge: bool = player.movement_state == Player.MovementState.DASH_CHARGING and player.dash_charge_frames_elapsed <= CHARGE_PARRY_FRAMES
+	if player.movement_state != Player.MovementState.DASHING and not opening_charge:
 		return false
 	# Melee parries apply to enemies, never floor spikes or damage volumes.
 	if projectile == null and (not is_instance_valid(hit.source) or not hit.source.is_in_group("enemies")):
@@ -54,6 +58,8 @@ func try_dash_parry(hit: CombatHit, projectile: Node2D = null) -> bool:
 			return false
 	if projectile != null and not projectile.reflect_from(player):
 		return false
+	if opening_charge:
+		player.begin_dash()
 	var source: Node2D = projectile
 	if source == null:
 		source = hit.attack_area if is_instance_valid(hit.attack_area) else hit.source
