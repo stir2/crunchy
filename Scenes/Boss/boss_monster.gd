@@ -62,10 +62,13 @@ var _last_stand_started := false
 var _last_toll := false
 var _toll_stagger := false
 var _toll_cancel_queued := false
+var _dead_morph := 0.0
 const SWIPE_DROP_TIME := 0.30
 const SLAM_X := 486.0
 const CLAW_LIFT := 183.0
 const DRAG_HAND = preload("res://BossSprites/Sweep Attack/bossHandDrag.png")
+const DEAD_SKULL = preload("res://BossSprites/bossDeadSkull.png")
+const DEAD_SKULL_OFFSET := Vector2(241, 83)
 const SWIPE_WRIST := Vector2(4, -71)
 const BREAK_RETRACT_TIME := 0.90
 const SLAM_LOCK_TIME := 0.43
@@ -86,8 +89,10 @@ const RIGHT_REST := Vector2(527, 265)
 @onready var right_attack: CombatDamageArea = $ClawHand/Attack
 
 @onready var _drag_sprite := Sprite2D.new()
+var _dead_skull := Sprite2D.new()
 
 func _ready() -> void:
+	_setup_skull_layers()
 	_drag_sprite.texture = DRAG_HAND
 	_drag_sprite.centered = false
 	_drag_sprite.offset = Vector2(-69, -6)
@@ -102,6 +107,31 @@ func _ready() -> void:
 	right_attack.attack_direction = Vector2.DOWN
 	_set_phase(Phase.REST, 2.0)
 	_pose()
+	_apply_skull_visuals()
+
+func _setup_skull_layers() -> void:
+	_dead_skull.texture = DEAD_SKULL
+	_dead_skull.centered = false
+	_dead_skull.position = DEAD_SKULL_OFFSET
+	_dead_skull.visible = false
+	$Head.add_child(_dead_skull)
+
+func _update_skull_visuals(delta: float) -> void:
+	var dead_target := 0.0
+	if phase == Phase.DEFEATED or health.is_dead():
+		dead_target = 1.0
+	elif lower_arena:
+		var phase2_hp := maxf(1.0, float(maximum_health) * 0.5)
+		dead_target = clampf(1.0 - float(health.current_health) / phase2_hp, 0.0, 1.0) * 0.90
+	var dead_rate := 3.2 if dead_target >= 1.0 else 1.8
+	_dead_morph = lerpf(_dead_morph, dead_target, 1.0 - exp(-dead_rate * delta))
+	if absf(_dead_morph - dead_target) < 0.004:
+		_dead_morph = dead_target
+	_apply_skull_visuals()
+
+func _apply_skull_visuals() -> void:
+	_dead_skull.visible = _dead_morph > 0.004
+	_dead_skull.modulate = Color(1.0, 1.0, 1.0, _dead_morph)
 
 func _physics_process(delta: float) -> void:
 	if left_hurt.is_hitstopped() or right_hurt.is_hitstopped():
@@ -183,6 +213,7 @@ func _physics_process(delta: float) -> void:
 		_body_shift = _body_start.lerp(lean, smooth)
 	if phase != Phase.DEFEATED:
 		_pose()
+	_update_skull_visuals(delta)
 	if elapsed < duration:
 		return
 	match phase:

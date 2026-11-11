@@ -16,6 +16,7 @@ const DROP_SECONDS := 5.8
 const BOSS_FALL_DELAY := 1.15
 const BOSS_FALL_DURATION := DROP_SECONDS - 0.80
 const PICKUP_DELAY := 0.55
+@export var debug_infinite_health_after_first_death: bool = true
 var active_path := ARENA
 var _lower := false
 var _dropping := false
@@ -38,6 +39,7 @@ var _result_title: Label
 var _retry_button: Button
 var _boss_bar: ProgressBar
 var _hud: Control
+var _restoring_debug_health := false
 @onready var player: Player = $Player
 @onready var monster: Node2D = $Monster
 @onready var camera: Camera2D = $Camera2D
@@ -76,6 +78,7 @@ func _ready() -> void:
 	monster.health.health_changed.connect(_boss_health_changed)
 	monster.defeated.connect(_boss_defeated)
 	monster.defeat_finished.connect(func(): _show_result("No more tribute."))
+	player.health.health_changed.connect(_on_player_health_changed)
 	player.health.died.connect(_player_died)
 	player.get_node("Visuals/AnimatedSprite2D").death_animation_finished.connect(_player_death_finished)
 	_boss_health_changed(monster.health.current_health, monster.health.max_health)
@@ -569,8 +572,24 @@ func _boss_defeated() -> void:
 	player.get_node("Hurtbox").invulnerable = true
 	_shake = 2.5
 
+func _debug_infinite_health_active() -> bool:
+	return debug_infinite_health_after_first_death and _revival_used and not _ending and not _reviving
+
+func _on_player_health_changed(current: int, maximum: int) -> void:
+	if _restoring_debug_health or not _debug_infinite_health_active() or current >= maximum:
+		return
+	_restoring_debug_health = true
+	player.health.current_health = maximum
+	player.health.health_changed.emit(maximum, maximum)
+	_restoring_debug_health = false
+
 func _player_died(_hit: CombatHit) -> void:
 	if _ending or _reviving:
+		return
+	if _debug_infinite_health_active():
+		_restoring_debug_health = true
+		player.health.reset_health(player.health.max_health)
+		_restoring_debug_health = false
 		return
 	if not _revival_used:
 		_revival_used = true
@@ -614,6 +633,11 @@ func _revive() -> void:
 	$Waves.process_mode = Node.PROCESS_MODE_INHERIT
 	_music_cue(&"")
 	_reviving = false
+	if _debug_infinite_health_active() and player.health.current_health < player.health.max_health:
+		_restoring_debug_health = true
+		player.health.current_health = player.health.max_health
+		player.health.health_changed.emit(player.health.max_health, player.health.max_health)
+		_restoring_debug_health = false
 	_cue(&"revive", -12)
 	await get_tree().create_timer(1.0, false).timeout
 	if not _ending and not _dropping:
