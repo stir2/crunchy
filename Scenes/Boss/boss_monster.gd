@@ -62,6 +62,7 @@ var _last_stand_started := false
 var _last_toll := false
 var _toll_stagger := false
 var _toll_cancel_queued := false
+var _turn_amount := 0.0
 var _dead_morph := 0.0
 const SWIPE_DROP_TIME := 0.30
 const SLAM_X := 486.0
@@ -69,6 +70,49 @@ const CLAW_LIFT := 183.0
 const DRAG_HAND = preload("res://BossSprites/Sweep Attack/bossHandDrag.png")
 const DEAD_SKULL = preload("res://BossSprites/bossDeadSkull.png")
 const DEAD_SKULL_OFFSET := Vector2(241, 83)
+const SKULL_TURN_SHADER_CODE := """shader_type canvas_item;
+uniform float turn : hint_range(-1.0, 1.0) = 0.0;
+uniform float center_u = 0.5;
+uniform float half_width_u = 0.5;
+uniform float center_v = 0.5;
+uniform float half_height_v = 0.5;
+varying vec4 v_color;
+
+void vertex() {
+	v_color = COLOR;
+}
+
+void fragment() {
+	if (abs(turn) < 0.003) {
+		COLOR = texture(TEXTURE, UV) * v_color;
+	} else {
+		float s = (UV.x - center_u) / half_width_u;
+		float yn = (UV.y - center_v) / half_height_v;
+		if (abs(s) <= 1.02 && abs(yn) <= 1.04) {
+			float clamp_y = clamp(yn, -1.0, 1.0);
+			float abs_t = abs(turn);
+			float edge_squeeze = mix(1.0, 0.93, abs_t);
+			float bulge = 0.22 * turn;
+			float s0 = s;
+			for (int i = 0; i < 4; i++) {
+				float dome = pow(max(0.0, 1.0 - s0 * s0), 0.75) * (1.0 - 0.16 * clamp_y * clamp_y);
+				s0 = (s - bulge * dome) / edge_squeeze;
+			}
+			float y_tilt = -turn * s0 * 0.032;
+			vec2 warped_uv = vec2(center_u + s0 * half_width_u, UV.y + y_tilt * half_height_v);
+			vec2 tex_size = 1.0 / TEXTURE_PIXEL_SIZE;
+			vec2 snapped_uv = (floor(warped_uv * tex_size) + 0.5) * TEXTURE_PIXEL_SIZE;
+			if (abs(s0) > 1.0 || abs(yn + y_tilt) > 1.0) {
+				COLOR = vec4(0.0);
+			} else {
+				COLOR = texture(TEXTURE, snapped_uv) * v_color;
+			}
+		} else {
+			COLOR = texture(TEXTURE, UV) * v_color;
+		}
+	}
+}
+"""
 const SWIPE_WRIST := Vector2(4, -71)
 const BREAK_RETRACT_TIME := 0.90
 const SLAM_LOCK_TIME := 0.43
@@ -90,6 +134,8 @@ const RIGHT_REST := Vector2(527, 265)
 
 @onready var _drag_sprite := Sprite2D.new()
 var _dead_skull := Sprite2D.new()
+var _head_turn_mat: ShaderMaterial
+var _dead_turn_mat: ShaderMaterial
 
 func _ready() -> void:
 	_setup_skull_layers()
@@ -115,8 +161,55 @@ func _setup_skull_layers() -> void:
 	_dead_skull.position = DEAD_SKULL_OFFSET
 	_dead_skull.visible = false
 	$Head.add_child(_dead_skull)
+	var shader := Shader.new()
+	shader.code = SKULL_TURN_SHADER_CODE
+	_head_turn_mat = ShaderMaterial.new()
+	_head_turn_mat.shader = shader
+	_head_turn_mat.set_shader_parameter("center_u", 319.5 / 640.0)
+	_head_turn_mat.set_shader_parameter("half_width_u", 79.0 / 640.0)
+	_head_turn_mat.set_shader_parameter("center_v", 145.5 / 360.0)
+	_head_turn_mat.set_shader_parameter("half_height_v", 62.5 / 360.0)
+	$Head.material = _head_turn_mat
+	_dead_turn_mat = ShaderMaterial.new()
+	_dead_turn_mat.shader = shader
+	_dead_turn_mat.set_shader_parameter("center_u", 0.5)
+	_dead_turn_mat.set_shader_parameter("half_width_u", 0.5)
+	_dead_turn_mat.set_shader_parameter("center_v", 0.5)
+	_dead_turn_mat.set_shader_parameter("half_height_v", 0.5)
+	_dead_skull.material = _dead_turn_mat
+
+func _target_skull_turn() -> float:
+	match phase:
+		Phase.DEFEATED:
+			return 0.0
+		Phase.SWIPE_WINDUP, Phase.SWIPE_DROP:
+			return signf(_sweep_from - 320.0) * 0.85
+		Phase.SWIPE_DRAG:
+			return sweep_direction() * 0.92
+		Phase.SWIPE_RECOVER:
+			if elapsed < 0.65:
+				return sweep_direction() * 0.92
+		Phase.SLAM_TRACK, Phase.SLAM_LOCK, Phase.SLAM_STRIKE, Phase.SLAM_IMPACT:
+			return 0.92
+		Phase.SLAM_RECOVER:
+			if elapsed < 0.65:
+				return 0.92
+		Phase.VOLLEY:
+			if not _last_toll and elapsed < 2.2 and is_instance_valid(target):
+				var dx := to_local(target.global_position).x - 320.0
+				return clampf(dx / 150.0, -0.85, 0.85)
+		Phase.REST:
+			if is_instance_valid(target):
+				var dx := to_local(target.global_position).x - 320.0
+				return clampf(dx / 240.0, -0.25, 0.25)
+	return 0.0
 
 func _update_skull_visuals(delta: float) -> void:
+	var turn_target := _target_skull_turn()
+	var turn_rate := 4.4 if absf(turn_target) >= absf(_turn_amount) else 3.2
+	_turn_amount = lerpf(_turn_amount, turn_target, 1.0 - exp(-turn_rate * delta))
+	if absf(_turn_amount - turn_target) < 0.004:
+		_turn_amount = turn_target
 	var dead_target := 0.0
 	if phase == Phase.DEFEATED or health.is_dead():
 		dead_target = 1.0
@@ -132,6 +225,10 @@ func _update_skull_visuals(delta: float) -> void:
 func _apply_skull_visuals() -> void:
 	_dead_skull.visible = _dead_morph > 0.004
 	_dead_skull.modulate = Color(1.0, 1.0, 1.0, _dead_morph)
+	if _head_turn_mat != null:
+		_head_turn_mat.set_shader_parameter("turn", _turn_amount)
+	if _dead_turn_mat != null:
+		_dead_turn_mat.set_shader_parameter("turn", _turn_amount)
 
 func _physics_process(delta: float) -> void:
 	if left_hurt.is_hitstopped() or right_hurt.is_hitstopped():
@@ -460,7 +557,7 @@ func stop_attacks() -> void:
 
 func _pose() -> void:
 	$Body.position = _body_shift + Vector2(0, sin(_age * 1.1) * 2)
-	$Head.position = _body_shift + Vector2(_head_tracking * 4.0, sin(_age * 1.1 - 0.3) * 3 + _landing_head_offset)
+	$Head.position = _body_shift + Vector2(_head_tracking * 4.0 + _turn_amount * 7.0, sin(_age * 1.1 - 0.3) * 3 + _landing_head_offset + absf(_turn_amount) * 1.5)
 	$Head.rotation = 0.0
 	var shoulder: Vector2 = Vector2(252, 104) + $Body.position
 	var hand_sprite: Sprite2D = $SwipeHand/Sprite
