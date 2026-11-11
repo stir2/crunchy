@@ -6,7 +6,6 @@
 [node name="OpenRoom" type="Node2D" unique_id=247041278]
 script = ExtResource("1_qid8q")
 room_size = Vector2i(40, 40)
-protect_interior_routes = null
 
 [node name="Solid" type="TileMapLayer" parent="." unique_id=1033750265]
 texture_filter = 1

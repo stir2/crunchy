@@ -78,7 +78,8 @@ static func validate(metadata: AbyssRoomTemplateMetadata) -> PackedStringArray:
 					var cell := Vector2i(x, y)
 					var should_open := open_region or holes.has(cell)
 					if should_open:
-						if _has_collision(layers[0], cell) or _has_collision(layers[1], cell):
+						# One-way platforms are allowed across authored openings.
+						if _has_solid_collision(layers[0], cell) or _has_solid_collision(layers[1], cell):
 							errors.append("Blocked declared opening at %s" % cell)
 					elif not _has_solid_collision(layers[0], cell):
 						errors.append("Undeclared boundary hole at %s" % cell)
