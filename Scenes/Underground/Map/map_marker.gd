@@ -16,7 +16,7 @@ func _draw() -> void:
 			else: draw_rect(Rect2(-3,-8,6,16),Color(0.8,0.65,0.45),false,1.5)
 		"fragment":
 			draw_circle(Vector2(0,-8),6,Color(1,0.75,0.2,0.12))
-			draw_circle(Vector2(0,-8),3,Color(1,0.8,0.25))
+			draw_circle(Vector2(0,-8),3,Color(1,0.8,0.25),active,-1,true)
 		"grave":
 			draw_arc(Vector2(0,-3),4,PI,TAU,12,Color(0.9,0.95,1),2)
 			draw_polyline(PackedVector2Array([Vector2(-4,-3),Vector2(-4,6),Vector2(4,6),Vector2(4,-3)]),Color(0.9,0.95,1),2)

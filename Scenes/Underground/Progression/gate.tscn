@@ -1,6 +1,16 @@
 [gd_scene format=3]
-[ext_resource type="Script" path="res://Scenes/Underground/Progression/special_interactable.gd" id="1"]
+[ext_resource type="Script" path="res://Scenes/Underground/Progression/gate_interactable.gd" id="1"]
 [ext_resource type="PackedScene" path="res://Scenes/Underground/Progression/Visuals/gate_visual.tscn" id="2"]
+[sub_resource type="RectangleShape2D" id="DoorShape"]
+size = Vector2(16,112)
+
 [node name="LevelGate" type="Node2D"]
 script = ExtResource("1")
 [node name="Visuals" parent="." instance=ExtResource("2")]
+
+[node name="DoorBody" type="StaticBody2D" parent="."]
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="DoorBody"]
+shape = SubResource("DoorShape")

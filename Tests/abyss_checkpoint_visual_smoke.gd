@@ -25,6 +25,8 @@ func run() -> void:
 	var registry: AbyssRoomTemplateRegistry = load("res://Scenes/Underground/Rooms/authored_registry.tres")
 	var selector := AbyssRoomTemplateSelector.new(registry,12)
 	check(selector.registration_errors.is_empty(),"Checkpoint registry invalid: "+str(selector.registration_errors))
+	var checkpoint_ids: Array[StringName] = []
+	for metadata in registry.checkpoint_templates: checkpoint_ids.append(metadata.template_id)
 	var region := AbyssRegionConfig.new()
 	region.global_seed = 12
 	region.open_threshold = 0.0
@@ -44,23 +46,31 @@ func run() -> void:
 	check(coords.x != 2147483647,"No planned checkpoint found")
 	if coords.x == 2147483647: quit(1); return
 	var request := selector.select_room(routes,coords)
-	check(request.method == AbyssRoomConstructionRequest.Method.AUTHORED and request.template_id == &"room_checkpoint1","Planned checkpoint did not select checkpoint pool")
+	check(request.method == AbyssRoomConstructionRequest.Method.AUTHORED and checkpoint_ids.has(request.template_id),"Planned checkpoint did not select checkpoint pool")
 	check(selector.select_room(routes,coords).template_id == request.template_id,"Checkpoint selection not deterministic")
 	var ordinary := coords+Vector2i.RIGHT
 	check(not service.has_checkpoint(ordinary),"Fixture ordinary room unexpectedly has checkpoint")
-	check(selector.select_room(routes,ordinary).template_id != &"room_checkpoint1","Checkpoint room leaked into normal pool")
+	check(not checkpoint_ids.has(selector.select_room(routes,ordinary).template_id),"Checkpoint room leaked into normal pool")
+	var authored := request.scene.instantiate() as AbyssAuthoredRoom
+	var painted := preload("res://Scenes/Underground/Progression/checkpoint_tile.gd")
+	var expected_position: Vector2 = painted.position_for(authored,painted.cells(authored)[0])
+	var expected_platforms: Dictionary = {}
+	var authored_platforms := authored.get_node("Platforms") as TileMapLayer
+	for cell in authored_platforms.get_used_cells():
+		expected_platforms[cell] = [authored_platforms.get_cell_source_id(cell),authored_platforms.get_cell_atlas_coords(cell),authored_platforms.get_cell_alternative_tile(cell)]
+	authored.free()
 	var room := AbyssRoomTerrainBuilder.build(request,AbyssTerrainConfig.new(),null,AbyssRoomState.new(),service)
 	root.add_child(room)
 	var platforms := room.get_node("Platforms") as TileMapLayer
-	var landing_valid := platforms.get_used_cells().size() == 13
-	for x in range(14,27):
-		landing_valid = landing_valid and platforms.get_cell_source_id(Vector2i(x,21)) == 0 and platforms.get_cell_atlas_coords(Vector2i(x,21)) == Vector2i(1,0)
-	check(landing_valid,"Starter landing platform cells are invalid")
+	var landing_valid := platforms.get_used_cells().size() == expected_platforms.size()
+	for cell: Vector2i in expected_platforms:
+		landing_valid = landing_valid and expected_platforms[cell] == [platforms.get_cell_source_id(cell),platforms.get_cell_atlas_coords(cell),platforms.get_cell_alternative_tile(cell)]
+	check(landing_valid,"Authored checkpoint platforms changed during construction")
 	var actor := checkpoint(room)
 	check(actor != null,"Painted checkpoint did not instantiate")
 	if actor == null: room.free(); quit(1); return
-	check(actor.position == Vector2(328,312),"Painted tile did not determine exact checkpoint position")
-	check(room.get_node("Decorations").get_used_cells().is_empty(),"Editor tile preview duplicated live checkpoint")
+	check(actor.position == expected_position,"Painted tile did not determine exact checkpoint position")
+	check(painted.cells(room).is_empty(),"Editor tile preview duplicated live checkpoint")
 	var visuals: Node2D = actor.get_node("Visuals")
 	var sprite: AnimatedSprite2D = visuals.get_node("AnimatedSprite2D")
 	check(sprite.sprite_frames.get_frame_count(&"activate") == 31 and sprite.sprite_frames.get_animation_speed(&"activate") == 24,"Sprite sheet frames/FPS incorrect")

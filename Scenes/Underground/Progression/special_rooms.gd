@@ -53,7 +53,7 @@ func _band(level: int, band: int) -> Dictionary:
 					guaranteed = _definition("fragment",level,coords)
 		if level < config.LEVEL_COUNT:
 			var left := Vector2i(bounds.y - 1,y)
-			if routes.regions.get_room(left).region == AbyssRoomData.Region.OPEN and routes.regions.get_room(left + Vector2i.RIGHT).region == AbyssRoomData.Region.OPEN:
+			if routes.regions.get_room(left).region == AbyssRoomData.Region.PACKED and routes.regions.get_room(left + Vector2i.RIGHT).region == AbyssRoomData.Region.PACKED and not routes.get_room(left).required_connections.is_empty() and not routes.get_room(left + Vector2i.RIGHT).required_connections.is_empty():
 				var rank := _roll(left,"gate")
 				if rank < gate_best:
 					gate_best = rank
@@ -72,17 +72,25 @@ func definitions_at(coords: Vector2i) -> Array[Dictionary]:
 		return result
 	var band := floori(float(coords.y) / config.FRAGMENT_INTERVAL)
 	var choices := _band(level,band)
-	var room := routes.get_room(coords)
 	if has_checkpoint(coords):
 		result.append(_definition("checkpoint",level,coords))
-	if room.region == AbyssRoomData.Region.PACKED and not room.required_connections.is_empty():
-		var required: Dictionary = choices.fragment
-		if (not required.is_empty() and Vector2i(required.x,required.y) == coords) or _roll(coords,"extra_fragment") < config.EXTRA_FRAGMENT_PROBABILITY:
-			result.append(_definition("fragment",level,coords))
+	var fragment := fragment_at(coords)
+	if not fragment.is_empty(): result.append(fragment)
 	var gate: Dictionary = choices.gate
 	if not gate.is_empty() and Vector2i(gate.x,gate.y) == coords:
 		result.append(gate.duplicate(true))
 	return result
+func fragment_at(coords: Vector2i) -> Dictionary:
+	var level := level_at(coords)
+	if level == 0 or coords.y < 0: return {}
+	var choices := _band(level,floori(float(coords.y)/config.FRAGMENT_INTERVAL))
+	var required: Dictionary = choices.fragment
+	var guaranteed := not required.is_empty() and Vector2i(required.x,required.y) == coords
+	if not guaranteed and _roll(coords,"extra_fragment") >= config.EXTRA_FRAGMENT_PROBABILITY: return {}
+	var room := routes.get_room(coords)
+	if room.region != AbyssRoomData.Region.PACKED or room.required_connections.is_empty(): return {}
+	return _definition("fragment",level,coords)
+
 func interval_definitions(level: int, interval: int) -> Dictionary:
 	if level < 1 or level > config.LEVEL_COUNT or interval < 0:
 		return {"fragment":{},"gate":{}}
@@ -136,7 +144,8 @@ func activated_checkpoints() -> Array:
 func _checkpoint_score(coords: Vector2i) -> float:
 	if not _checkpoint_scores.has(coords):
 		var valid := coords.y >= 0 and level_at(coords) != 0
-		valid = valid and routes.regions.get_room(coords).region == AbyssRoomData.Region.OPEN
+		if valid and routes.regions.get_room(coords).region == AbyssRoomData.Region.PACKED:
+			valid = not routes.get_room(coords).required_connections.is_empty()
 		_checkpoint_scores[coords] = _roll(coords,"checkpoint") if valid else -1.0
 	return _checkpoint_scores[coords]
 
@@ -145,6 +154,7 @@ func has_checkpoint(coords: Vector2i) -> bool:
 	if score < 0 or score >= config.checkpoint_probability:
 		return false
 	var radius := config.checkpoint_min_spacing_rooms
+	var packed := routes.regions.get_room(coords).region == AbyssRoomData.Region.PACKED
 	# Local priority thinning, including a full halo across chunk/interval/level
 	# boundaries. Never depend on which neighbor was generated first.
 	for dy in range(-radius+1,radius):
@@ -152,6 +162,13 @@ func has_checkpoint(coords: Vector2i) -> bool:
 			if (dx == 0 and dy == 0) or dx*dx+dy*dy >= radius*radius:
 				continue
 			var neighbor := coords+Vector2i(dx,dy)
+			var neighbor_packed := routes.regions.get_room(neighbor).region == AbyssRoomData.Region.PACKED
+			# Keep the original OPEN checkpoint plan unchanged. PACKED candidates
+			# yield to its winners, then use the same priority thinning among themselves.
+			if not packed and neighbor_packed: continue
+			if packed and not neighbor_packed:
+				if has_checkpoint(neighbor): return false
+				continue
 			var other := _checkpoint_score(neighbor)
 			if other >= 0 and (other < score or (other == score and (neighbor.y < coords.y or (neighbor.y == coords.y and neighbor.x < coords.x)))):
 				return false

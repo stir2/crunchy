@@ -16,8 +16,8 @@ static func position_for(room: AbyssAuthoredRoom, cell: Vector2i) -> Vector2:
 
 static func validate(metadata: AbyssRoomTemplateMetadata) -> PackedStringArray:
 	var errors := PackedStringArray()
-	if metadata.region != AbyssRoomTemplateMetadata.Compatibility.OPEN:
-		errors.append("Checkpoint pool rooms must be OPEN")
+	if metadata.region not in [AbyssRoomTemplateMetadata.Compatibility.OPEN, AbyssRoomTemplateMetadata.Compatibility.PACKED]:
+		errors.append("Checkpoint pool rooms must be OPEN or PACKED")
 	for profile in metadata.opening_combinations:
 		if profile == null: continue
 		var scene := profile.scene if profile.scene != null else metadata.scene

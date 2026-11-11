@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://ck5jir3ntl07j" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="1"]
 [ext_resource type="Script" uid="uid://dnt0nogb0yx73" path="res://Scenes/Underground/Generation/room_opening_profile.gd" id="2"]
-[ext_resource type="PackedScene" uid="uid://ddfcu7vufrnl4" path="res://Scenes/Underground/Rooms/Authored/Open/room_platforming1.tscn" id="3"]
+[ext_resource type="PackedScene" uid="uid://ddfcu7vufrnl4" path="res://Scenes/Underground/Rooms/Authored/Open/room_arena1.tscn" id="3"]
 
 [sub_resource type="Resource" id="Open"]
 script = ExtResource("2")
@@ -11,7 +11,7 @@ open_sides = 15
 [resource]
 script = ExtResource("1")
 template_id = &"room_platforming1"
-display_name = "Open platforming 1"
+display_name = "Open Arena 1"
 scene = ExtResource("3")
 region = 0
 room_size = Vector2i(40, 40)

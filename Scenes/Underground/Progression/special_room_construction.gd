@@ -2,6 +2,7 @@ class_name AbyssSpecialRoomConstruction
 extends RefCounted
 const TILES = preload("res://Assets/Tiles/room_placeholders.tres")
 const CHECKPOINT_TILE = preload("res://Scenes/Underground/Progression/checkpoint_tile.gd")
+const GATE_TILE = preload("res://Scenes/Underground/Progression/gate_tile.gd")
 static func _blocked(room: AbyssAuthoredRoom, cell: Vector2i) -> bool:
 	if not Rect2i(Vector2i.ZERO,room.room_size).has_point(cell):
 		return true
@@ -59,9 +60,7 @@ static func apply(room: AbyssAuthoredRoom, request: AbyssRoomConstructionRequest
 	if level == 0:
 		return
 	for definition in service.definitions_at(coords):
-		var point := _position(room,definition.kind)
-		if definition.kind == "gate":
-			point = Vector2(room.room_size.x-0.5,room.room_size.y*0.5)*room.tile_pixels
+		var point := Vector2(room.room_size.x-0.5,room.room_size.y/2+0.5)*room.tile_pixels if definition.kind == "gate" else _position(room,definition.kind)
 		if point.x < 0:
 			room.content_warnings.append("No clear special marker position: " + definition.id)
 			continue
@@ -86,6 +85,8 @@ static func apply(room: AbyssAuthoredRoom, request: AbyssRoomConstructionRequest
 			room.add_child(visual)
 	# The painted sprite is an editor preview; the live stateful visual replaces it.
 	for cell in CHECKPOINT_TILE.cells(room):
+		(room.get_node("Decorations") as TileMapLayer).erase_cell(cell)
+	for cell in GATE_TILE.cells(room):
 		(room.get_node("Decorations") as TileMapLayer).erase_cell(cell)
 	var bounds := service.config.room_bounds(level,service.routes.get_chunk(Vector2i.ZERO).config.chunk_size.x)
 	# Both sides own a tile: neither side can bypass the boundary by loading

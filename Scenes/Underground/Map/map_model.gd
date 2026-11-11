@@ -7,6 +7,8 @@ var service: AbyssSpecialRooms
 var exploration: AbyssExplorationState
 var room_size: Vector2i
 var tile_pixels: int = 16
+var nearby_gate_count: int = 3
+var nearby_fragment_count: int = 3
 
 func _init(specials: AbyssSpecialRooms, state: AbyssExplorationState, size: Vector2i) -> void:
 	service = specials
@@ -62,7 +64,58 @@ func connections(coords: Vector2i) -> Array[Dictionary]:
 			"b":(Vector2(adjacent*room_size)+b)*tile_pixels,"gate":gate})
 	return result
 
-func snapshot(current_level: int) -> Dictionary:
+func _nearby_progression(player_position: Vector2) -> Array[Dictionary]:
+	var candidates: Array[Dictionary] = []
+	var row := floori(player_position.y / (room_size.y*tile_pixels))
+	var band := maxi(0,floori(float(row)/service.config.FRAGMENT_INTERVAL))
+	# Planner queries do not load rooms or instantiate their contents.
+	for interval in range(maxi(0,band-2),band+3):
+		for level in range(1,service.config.LEVEL_COUNT+1):
+			var planned := service.interval_definitions(level,interval)
+			for kind in ["gate","fragment"]:
+				var definition: Dictionary = planned[kind]
+				if definition.is_empty(): continue
+				if kind == "fragment" and service.state.fragments.has(definition.id): continue
+				var coords := Vector2i(definition.x,definition.y)
+				var point := room_center(coords)
+				if kind == "gate":
+					point = (Vector2(coords*room_size)+Vector2(room_size.x-0.5,room_size.y/2+0.5))*tile_pixels
+				candidates.append({"kind":kind,"id":definition.id,"position":point,
+					"active":service.is_gate_unlocked(definition) if kind == "gate" else false})
+	# Include optional fragments too. Expand around the player until no farther
+	# room can displace the closest known fragment candidates.
+	var known: Dictionary = {}
+	for candidate in candidates: known[candidate.id] = true
+	var origin := Vector2i(floori(player_position.x/(room_size.x*tile_pixels)),row)
+	for radius in range(service.config.FRAGMENT_INTERVAL*3):
+		var distances: Array[float] = []
+		for candidate in candidates:
+			if candidate.kind == "fragment": distances.append(player_position.distance_to(candidate.position))
+		distances.sort()
+		if nearby_fragment_count <= 0: break
+		if distances.size() >= nearby_fragment_count and (radius-1)*mini(room_size.x,room_size.y)*tile_pixels > distances[nearby_fragment_count-1]: break
+		for dy in range(-radius,radius+1):
+			for dx in range(-radius,radius+1):
+				if maxi(absi(dx),absi(dy)) != radius: continue
+				var coords := origin+Vector2i(dx,dy)
+				var definition := service.fragment_at(coords)
+				if definition.is_empty() or known.has(definition.id) or service.state.fragments.has(definition.id): continue
+				known[definition.id] = true
+				candidates.append({"kind":"fragment","id":definition.id,"position":room_center(coords),"active":false})
+	candidates.sort_custom(func(a: Dictionary,b: Dictionary) -> bool:
+		var da := player_position.distance_squared_to(a.position)
+		var db := player_position.distance_squared_to(b.position)
+		return String(a.id) < String(b.id) if is_equal_approx(da,db) else da < db)
+	var result: Array[Dictionary] = []
+	var counts := {"gate":0,"fragment":0}
+	for marker in candidates:
+		var limit := nearby_gate_count if marker.kind == "gate" else nearby_fragment_count
+		if counts[marker.kind] >= limit: continue
+		counts[marker.kind] += 1
+		result.append(marker)
+	return result
+
+func snapshot(current_level: int, player_position: Vector2 = Vector2.ZERO) -> Dictionary:
 	var nodes: Dictionary = {}
 	var edges: Array[Dictionary] = []
 	var markers: Array[Dictionary] = []
@@ -91,7 +144,7 @@ func snapshot(current_level: int) -> Dictionary:
 				"checkpoint": active = service.state.checkpoints.get(definition.id,{}).get("activated",false)
 				"gate":
 					active = service.is_gate_unlocked(definition)
-					position = (Vector2(coords*room_size)+Vector2(room_size.x-0.5,room_size.y*0.5))*tile_pixels
+					position = (Vector2(coords*room_size)+Vector2(room_size.x-0.5,room_size.y/2+0.5))*tile_pixels
 				"fragment":
 					if not service.state.fragments.has(definition.id): continue
 					active = true # Collection memory survives consumption.
@@ -100,6 +153,10 @@ func snapshot(current_level: int) -> Dictionary:
 	# then, without upgrading that room to visited or revealing any of its edges.
 	var marker_ids: Dictionary = {}
 	for marker in markers: marker_ids[marker.id] = true
+	for marker in _nearby_progression(player_position):
+		if marker_ids.has(marker.id): continue
+		markers.append(marker)
+		marker_ids[marker.id] = true
 	for id: String in service.state.fragments:
 		if marker_ids.has(id) or not id.begins_with(service.world+"/level/") or not id.contains("/fragment/"): continue
 		var last := id.get_slice("/",id.get_slice_count("/")-1).split(":")
