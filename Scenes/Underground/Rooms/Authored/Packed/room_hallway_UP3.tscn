@@ -81,27 +81,36 @@ position = Vector2(8, 504)
 
 [node name="EnemySpawnMarker" parent="." unique_id=1778811449 instance=ExtResource("3_onr5t")]
 position = Vector2(130, 254)
+marker_id = &"room_hallway_up3_enemyspawnmarker"
 
 [node name="EnemySpawnMarker2" parent="." unique_id=1463887786 instance=ExtResource("3_onr5t")]
 position = Vector2(174, 254)
+marker_id = &"room_hallway_up3_enemyspawnmarker2"
 
 [node name="EnemySpawnMarker3" parent="." unique_id=850550943 instance=ExtResource("3_onr5t")]
 position = Vector2(218, 255)
+marker_id = &"room_hallway_up3_enemyspawnmarker3"
 
 [node name="EnemySpawnMarker4" parent="." unique_id=1975064771 instance=ExtResource("3_onr5t")]
 position = Vector2(419, 254)
+marker_id = &"room_hallway_up3_enemyspawnmarker4"
 
 [node name="EnemySpawnMarker5" parent="." unique_id=1805293971 instance=ExtResource("3_onr5t")]
 position = Vector2(466, 253)
+marker_id = &"room_hallway_up3_enemyspawnmarker5"
 
 [node name="EnemySpawnMarker6" parent="." unique_id=1958784213 instance=ExtResource("3_onr5t")]
 position = Vector2(507, 253)
+marker_id = &"room_hallway_up3_enemyspawnmarker6"
 
 [node name="EnemySpawnMarker7" parent="." unique_id=1098238219 instance=ExtResource("3_onr5t")]
 position = Vector2(176, 61)
+marker_id = &"room_hallway_up3_enemyspawnmarker7"
 
 [node name="EnemySpawnMarker8" parent="." unique_id=1709079609 instance=ExtResource("3_onr5t")]
 position = Vector2(465, 62)
+marker_id = &"room_hallway_up3_enemyspawnmarker8"
 
 [node name="EnemySpawnMarker9" parent="." unique_id=1359499009 instance=ExtResource("3_onr5t")]
 position = Vector2(321, 254)
+marker_id = &"room_hallway_up3_enemyspawnmarker9"

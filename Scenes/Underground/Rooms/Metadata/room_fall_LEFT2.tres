@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="AbyssRoomTemplateMetadata" format=3]
+[gd_resource type="Resource" script_class="AbyssRoomTemplateMetadata" format=3 uid="uid://bm5u6ois4r0gs"]
 
 [ext_resource type="Script" uid="uid://ck5jir3ntl07j" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="1_metadata"]
 [ext_resource type="Script" uid="uid://dnt0nogb0yx73" path="res://Scenes/Underground/Generation/room_opening_profile.gd" id="2_profile"]

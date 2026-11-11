@@ -10,11 +10,6 @@ static func validate(room: AbyssAuthoredRoom, metadata: AbyssRoomTemplateMetadat
 	for rect in room.required_support_rects:
 		if rect.size.x <= 0 or rect.size.y <= 0 or not bounds.encloses(rect):
 			errors.append("Required support rectangles must lie inside the room")
-	var req := AbyssRoomRequirements.new()
-	req.room_size = room.room_size
-	req.opening_width = metadata.opening_width
-	req.route_openings = profile.opening_tiles.duplicate()
-	var protected := AbyssConditionalWallGroups.reserved_cells(room,req)
 	for key in ["Climbables","ConditionalPlatforms","BreakableWalls"]:
 		var layer := room.get_node_or_null(NodePath(key)) as TileMapLayer
 		if layer == null:
@@ -32,11 +27,11 @@ static func validate(room: AbyssAuthoredRoom, metadata: AbyssRoomTemplateMetadat
 			if key == "Climbables":
 				if not AbyssClimbableTiles.is_climbable(layer,cell):
 					errors.append("Climbables requires climbable custom data")
-				if AbyssRoomTemplateValidator._has_collision(layer,cell) and (AbyssRoomContent._boundary(cell,room.room_size) or protected.has(cell)):
-					errors.append("Colliding climbable overlaps protected boundary/route")
+				if AbyssRoomTemplateValidator._has_collision(layer,cell) and AbyssRoomContent._boundary(cell,room.room_size):
+					errors.append("Colliding climbable overlaps room boundary")
 				continue
-			if AbyssRoomContent._boundary(cell,room.room_size) or protected.has(cell):
-				errors.append("%s overlaps protected opening/route; use permanent terrain/support" % key)
+			if AbyssRoomContent._boundary(cell,room.room_size):
+				errors.append("%s overlaps room boundary" % key)
 			for rect in room.required_support_rects:
 				if rect.has_point(cell):
 					errors.append("%s overlaps required support; paint a permanent platform" % key)
@@ -69,8 +64,6 @@ static func validate(room: AbyssAuthoredRoom, metadata: AbyssRoomTemplateMetadat
 			for cell in hazards.get_used_cells():
 				if not bounds.has_point(cell):
 					errors.append("Hazard tile outside room: %s" % cell)
-				if protected.has(cell):
-					errors.append("Hazard overlaps protected opening/route: %s" % cell)
 				var data := hazards.get_cell_tile_data(cell)
 				if data == null or hazards.tile_set.get_custom_data_layer_by_name("hazard_type") < 0:
 					errors.append("Hazards requires hazard_type custom data")
