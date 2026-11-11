@@ -156,7 +156,7 @@ func collect_descent_flesh(world: String, amount: int, origin: Vector2 = Vector2
 		abyss_room_state.markers[key] = "collected"
 	var collected := abyss_room_state.exploration.add_descent_flesh(world,amount,origin)
 	if collected:
-		get_node("/root/SoundManager").play_limited(&"flesh_collect", -22)
+		get_node("/root/SoundManager").play_limited(&"flesh_collect", -15)
 	return collected
 
 func return_abyss_descent(world: String) -> int:
@@ -164,7 +164,7 @@ func return_abyss_descent(world: String) -> int:
 	var amount: int = abyss_room_state.exploration.take_descent_flesh(world)
 	if amount > 0:
 		flesh += amount
-		get_node("/root/SoundManager").play_sfx(&"flesh_bank", -16)
+		get_node("/root/SoundManager").play_sfx(&"flesh_bank", -12)
 	return amount
 
 

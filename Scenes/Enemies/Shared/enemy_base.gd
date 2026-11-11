@@ -330,6 +330,15 @@ func _play_impact() -> void:
 	sound.play()
 
 
+func _step_distance_gain(max_range: float = 540.0) -> float:
+	if not is_instance_valid(target):
+		return -INF
+	var distance := global_position.distance_to(target.global_position)
+	if distance > max_range:
+		return -INF
+	return lerpf(0.0, -8.0, clampf((distance - 180.0) / maxf(1.0, max_range - 180.0), 0.0, 1.0))
+
+
 func _award_flesh() -> void:
 	if flesh_reward > 0:
 		_collect_flesh_reward()

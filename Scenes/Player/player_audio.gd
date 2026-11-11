@@ -56,7 +56,7 @@ func _ready() -> void:
 	_warning = AudioStreamPlayer.new()
 	_warning.stream = sounds.stream_for(&"low_health_initial")
 	_warning.bus = &"SFX"
-	_warning.volume_db = -14 + sounds.gain_for(&"low_health_initial")
+	_warning.volume_db = -10 + sounds.gain_for(&"low_health_initial")
 	add_child(_warning)
 	player.combat.phase_changed.connect(_on_attack_phase)
 	player.combat.hit_confirmed.connect(_on_hit_confirmed)
@@ -149,7 +149,7 @@ func _update_fall(delta: float) -> void:
 	if falling:
 		_fall_distance = drop - 48
 		var strength := clampf(_fall_distance / 240.0, 0, 1)
-		_fall_audio.volume_db = lerpf(-38, -24, strength) + sounds.gain_for(&"freefall") + _movement_duck_db
+		_fall_audio.volume_db = lerpf(-28, -16, strength) + sounds.gain_for(&"freefall") + _movement_duck_db
 		if not _fall_started:
 			_fall_started = true
 			_fall_audio.play()
@@ -185,7 +185,7 @@ func _floor_sound() -> StringName:
 func _on_attack_phase(phase: int) -> void:
 	if phase == PlayerCombatController.AttackState.ACTIVE and _last_swing != player.combat.swing_id:
 		_last_swing = player.combat.swing_id
-		sounds.play_sfx(&"cleaver_swing_alt" if sprite.animation == &"attack_alt" else &"cleaver_swing", -12)
+		sounds.play_sfx(&"cleaver_swing_alt" if sprite.animation == &"attack_alt" else &"cleaver_swing", -11)
 
 
 func _on_hit_confirmed(target: CombatDamageable, _hit: CombatHit) -> void:
@@ -224,11 +224,11 @@ func _movement_voice(sound: StringName, volume_db: float) -> AudioStreamPlayer:
 
 func _on_movement_state(state: int) -> void:
 	if state == Player.MovementState.DASH_CHARGING:
-		_charge_audio.volume_db = -22 + sounds.gain_for(&"bull_rush_charge") + sounds.repetition_gain_for(&"bull_rush_charge")
+		_charge_audio.volume_db = -16 + sounds.gain_for(&"bull_rush_charge") + sounds.repetition_gain_for(&"bull_rush_charge")
 		_charge_audio.pitch_scale = randf_range(0.94, 0.98)
 		_charge_audio.play(sounds.start_offset_for(&"bull_rush_charge"))
 	elif state == Player.MovementState.DASHING:
-		_dash_audio.volume_db = -19 + sounds.gain_for(&"bull_rush") + sounds.repetition_gain_for(&"bull_rush")
+		_dash_audio.volume_db = -14 + sounds.gain_for(&"bull_rush") + sounds.repetition_gain_for(&"bull_rush")
 		_dash_audio.pitch_scale = 1.0
 		_dash_audio.play()
 
@@ -237,12 +237,12 @@ func _on_jumped() -> void:
 	_support_y = player.global_position.y
 	_airborne_peak_y = _support_y
 	_damage_airborne = false
-	sounds.play_sfx(&"jump", -22)
+	sounds.play_sfx(&"jump", -17)
 
 
 func _on_player_hurt(_hit: CombatHit, _amount: int) -> void:
 	if not player.health.is_dead():
-		sounds.play_limited(&"player_hurt", -15 if player.health.current_health <= 2 else -19, 0.25)
+		sounds.play_limited(&"player_hurt", -14 if player.health.current_health <= 2 else -17, 0.25)
 	_duck_movement()
 	# A spike/hit reaction is not a voluntary fall, even after hit-stun expires.
 	_damage_airborne = true
@@ -265,7 +265,7 @@ func _on_landed(impact_speed: float) -> void:
 		surface = &"land_wood" if wood else &"land_stone"
 	_landing_audio.stream = sounds.stream_for(surface)
 	_landing_audio.pitch_scale = lerpf(1.0, 0.86, strength) * randf_range(0.98, 1.02)
-	_landing_audio.volume_db = lerpf(-29, -14, strength) + sounds.gain_for(surface)
+	_landing_audio.volume_db = lerpf(-23, -11, strength) + sounds.gain_for(surface)
 	_landing_audio.play()
 	_step_cooldown = 0.2
 

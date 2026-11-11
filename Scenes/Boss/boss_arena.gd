@@ -72,7 +72,7 @@ func _ready() -> void:
 	monster.last_toll_interrupted.connect(_interrupt_last_toll)
 	monster.sweep_floor = _sweep_floor_y
 	monster.slab_broken.connect(_break_slab)
-	$Waves.wave_started.connect(func(): _cue(&"monster_rumbling_2", -24, 0.9))
+	$Waves.wave_started.connect(func(): _cue(&"boss_summon", -16))
 	monster.health.health_changed.connect(_boss_health_changed)
 	monster.defeated.connect(_boss_defeated)
 	monster.defeat_finished.connect(func(): _show_result("No more tribute."))
@@ -184,6 +184,21 @@ func _drop_to_lower_arena() -> void:
 	_shake = 8.0
 	var landing := _lower_landing_y(player.position.x)
 	_fall_streaks()
+	var sounds := get_node("/root/SoundManager")
+	var freefall_gain: float = sounds.gain_for(&"freefall")
+	var freefall_voice := AudioStreamPlayer.new()
+	freefall_voice.name = "Cue_freefall"
+	freefall_voice.stream = sounds.stream_for(&"freefall")
+	freefall_voice.bus = &"SFX"
+	freefall_voice.volume_db = -38.0 + freefall_gain
+	freefall_voice.pitch_scale = 0.94
+	add_child(freefall_voice)
+	if freefall_voice.stream != null:
+		freefall_voice.play(0.45)
+		var wind := freefall_voice.create_tween()
+		wind.tween_property(freefall_voice, "volume_db", -24.0 + freefall_gain, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		wind.tween_property(freefall_voice, "volume_db", -15.0 + freefall_gain, DROP_SECONDS - 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		wind.parallel().tween_property(freefall_voice, "pitch_scale", 1.08, DROP_SECONDS - 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	var fall := create_tween().set_parallel(true)
 	fall.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	fall.tween_property(player, "position:y", landing - 0.5, DROP_SECONDS)
@@ -198,6 +213,10 @@ func _drop_to_lower_arena() -> void:
 	fall.tween_property(camera, "position:y", 180.0 + LOWER_OFFSET, DROP_SECONDS)
 	fall.tween_property($BackgroundCanvas/Background, "color", Color("271420"), DROP_SECONDS)
 	await fall.finished
+	if is_instance_valid(freefall_voice):
+		var stop_wind := freefall_voice.create_tween()
+		stop_wind.tween_property(freefall_voice, "volume_db", -60.0, 0.06)
+		stop_wind.tween_callback(freefall_voice.queue_free)
 	_lower = true
 	sprite.set_process(true)
 	player.reset_movement()
@@ -205,7 +224,7 @@ func _drop_to_lower_arena() -> void:
 	for offset: float in [-28.0, 0.0, 28.0]:
 		var x := clampf(player.position.x + offset, 8.0, 632.0)
 		_ground_impact(Vector2(x, _lower_landing_y(x)), offset == 0.0)
-	_cue(&"hard_land_stone", -10)
+	_cue(&"hard_land_stone", -7)
 	_shake = 4.2
 	# The Chief lands first; the pursuing mass hits on a separate beat.
 	if monster_fall.is_running():
@@ -282,7 +301,8 @@ func _break_slab() -> void:
 
 func _attack_tell(strike: bool, seconds: float) -> void:
 	if strike:
-		_cue(&"bull_rush_charge", -6, seconds)
+		_cue(&"boss_stab_warning", -14, seconds)
+		_cue(&"boss_stab_creak", -14, seconds)
 		var y: float = _sweep_floor_y(monster.SLAM_X) if _lower else monster.floor_y
 		var point := monster.to_global(Vector2(monster.SLAM_X, y))
 		_show_strike_warning(point, seconds - monster.SLAM_FALL_TIME)
@@ -317,11 +337,10 @@ func _arm_impact(strike: bool, point: Vector2) -> void:
 		var flash := _fx(STRIKE_FX, 184, point + Vector2(14, -3), 0.62, 0.72)
 		flash.offset.y = -74.0
 		_shake = 3.7
-		_cue(&"hard_land_stone", -14)
+		_cue(&"boss_slam", -14)
 	else:
 		_shake = 1.5
-		_cue(&"bull_rush", -21, 0.9)
-		_cue(&"land_stone", -20)
+		_cue(&"boss_hand_drag", -14)
 
 
 func _fx(sheet: Texture2D, cell: int, point: Vector2, seconds: float, scale_factor: float) -> Sprite2D:
@@ -377,7 +396,7 @@ func _fire_burst(index: int) -> void:
 	if _ending or _reviving or _dropping:
 		return
 	var origin: Vector2 = monster.volley_origin()
-	_cue(&"cleaver_swing_alt", -17, 0.35)
+	_cue(&"boss_spit", -16)
 	_music_cue(&"toll_release" if monster.is_last_toll() else &"volley_release")
 	if monster.is_last_toll():
 		var aim := origin.direction_to(_volley_aim)
@@ -536,13 +555,13 @@ func _boss_health_changed(current: int, maximum: int) -> void:
 
 func _boss_defeated() -> void:
 	if _ending: return
+	_cue(&"boss_death", -14)
 	_music_cue(&"victory")
 	_ending = true
 	if get_tree().current_scene != self:
 		get_node("/root/GameController").boss_defeated = true
 	_retry_button.hide()
 	_boss_bar.hide()
-	_cue(&"monster_rumbling_3", -22, 1.7)
 	_clear_volley()
 	$Waves.stop()
 	player.combat.actions_enabled = false

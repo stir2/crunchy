@@ -118,6 +118,7 @@ func _physics_process(delta: float) -> void:
 					hurtbox.receive_hit(hit)
 			elif hurtbox.receive_hit(hit) and radius > 0.0 and hurtbox.damage_owner().has_method("extend_recovery_from_web"):
 				hurtbox.damage_owner().extend_recovery_from_web()
+		SoundManager.play_limited(&"web_hit", -11.5, 0.12)
 		active = false
 		set_physics_process(false)
 		queue_free()

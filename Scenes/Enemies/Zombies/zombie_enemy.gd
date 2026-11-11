@@ -9,6 +9,8 @@ var _bait_left: float = 0.0
 var _in_jump: bool = false
 var _jump_delay: float = 0.0
 var _jump_horizontal: float = 0.0
+var _next_step_ms: int = 0
+var _step_parity: int = 0
 
 
 func _ready() -> void:
@@ -37,6 +39,7 @@ func _ready() -> void:
 	sprite.position = Vector2(0, -14)
 	sprite.offset = Vector2.ZERO
 	sprite.animation_finished.connect(_on_animation_finished)
+	sprite.frame_changed.connect(_on_zombie_frame_changed)
 	_update_animation()
 
 
@@ -214,8 +217,18 @@ func _move_jump(delta: float) -> void:
 		velocity.y += gravity_step * 0.5
 
 
+func _start_windup() -> void:
+	super._start_windup()
+	SoundManager.play_limited(&"zombie_atk_windup", -11.5, 0.2)
+
+
+func _play_impact() -> void:
+	SoundManager.play_limited(&"zombie_hit", -10.5, 0.08)
+
+
 func _begin_attack() -> void:
 	super._begin_attack()
+	SoundManager.play_limited(&"zombie_atk", -10.5, 0.12)
 	hitbox.position.x = _direction * 22
 	sprite.play(&"attack")
 	sprite.set_frame_and_progress(8, 0)
@@ -251,6 +264,7 @@ func _on_died(_hit: CombatHit) -> void:
 	if _dying:
 		return
 	_dying = true
+	SoundManager.play_limited(&"zombie_death", -10.5, 0.15)
 	velocity = Vector2.ZERO
 	_bait_left = 0
 	_resume_animation = false
@@ -268,4 +282,48 @@ func _on_died(_hit: CombatHit) -> void:
 func _on_animation_finished() -> void:
 	if _dying and sprite.animation == &"death":
 		queue_free()
+
+
+func _zombie_floor_surface() -> String:
+	for i in range(get_slide_collision_count()):
+		var contact := get_slide_collision(i)
+		if contact.get_normal().dot(Vector2.UP) < 0.6:
+			continue
+		var collider := contact.get_collider() as Node
+		if collider == null:
+			continue
+		var surface := String(collider.get_meta("footstep_surface", &"stone"))
+		if collider is TileMapLayer and collider.tile_set != null:
+			if collider.tile_set.get_custom_data_layer_by_name("footstep_surface") >= 0:
+				var point := contact.get_position() - contact.get_normal()
+				var cell: Vector2i = collider.local_to_map(collider.to_local(point))
+				var data: TileData = collider.get_cell_tile_data(cell)
+				if data != null:
+					surface = String(data.get_custom_data("footstep_surface"))
+		return "wood" if surface == "wood" else "stone"
+	return "stone"
+
+
+func _on_zombie_frame_changed() -> void:
+	if _dying or _in_jump or sprite.animation != &"walk" or sprite.frame not in [0, 9]:
+		return
+	if not is_on_floor() or absf(velocity.x) <= 12.0:
+		return
+	var now := Time.get_ticks_msec()
+	if now < _next_step_ms:
+		return
+	var distance_gain := _step_distance_gain(540.0)
+	if distance_gain == -INF:
+		return
+	var runner := zombie_kind == ZombieKind.RUNNER
+	_next_step_ms = now + (randi_range(180, 300) if runner else randi_range(260, 440))
+	var surface := _zombie_floor_surface()
+	var drag := (_step_parity == 1 and randf() < 0.72) or (_step_parity == 0 and randf() < 0.35)
+	var cue := StringName(("zombie_drag_" if drag else "zombie_step_") + surface)
+	var pitch_min := (0.68 if _step_parity == 0 else 0.80) if runner else (0.54 if _step_parity == 0 else 0.68)
+	var pitch_max := (0.94 if _step_parity == 0 else 1.16) if runner else (0.76 if _step_parity == 0 else 1.05)
+	var offset := randf_range(0.0, 0.04) if _step_parity == 0 else randf_range(0.03, 0.11)
+	var base_vol := -14.5 + randf_range(-2.0, 1.0) if _step_parity == 0 else -17.0 + randf_range(-2.5, 0.5)
+	_step_parity = 1 - _step_parity
+	SoundManager.play_varied(cue, base_vol + distance_gain, pitch_min, pitch_max, offset, &"ZombieSteps")
 

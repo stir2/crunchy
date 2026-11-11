@@ -15,6 +15,7 @@ var _surface_normal := Vector2.UP
 var _route_timer: float = 0.0
 var _attached: bool = false
 var _jump_timer: float = 0.0
+var _next_walk_ms: int = 0
 
 
 func _ready() -> void:
@@ -41,6 +42,7 @@ func _ready() -> void:
 	_health_bar.position.y = -42
 	_health_label.position.y = -58
 	sprite.animation_finished.connect(_on_spider_animation_finished)
+	sprite.frame_changed.connect(_on_spider_frame_changed)
 	_update_animation()
 	if spider_kind == SpiderKind.CHASER:
 		motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
@@ -269,6 +271,7 @@ func _start_windup() -> void:
 		_recover()
 		return
 	super._start_windup()
+	SoundManager.play_limited(&"spider_hiss", -11.5, 0.2)
 
 
 func _chase_velocity() -> float:
@@ -311,6 +314,7 @@ func _begin_attack() -> void:
 	projectile.travel_velocity = aim.normalized() * projectile_speed * speed_multiplier
 	get_parent().add_child(projectile)
 	projectile.global_position = origin
+	SoundManager.play_limited(&"spider_spit", -11.5, 0.12)
 	_recover()
 	_play_attack_release()
 
@@ -366,6 +370,7 @@ func _on_died(_hit: CombatHit) -> void:
 	if _dying:
 		return
 	_dying = true
+	SoundManager.play_limited(&"spider_death", -10.5, 0.15)
 	hitbox.active = false
 	set_physics_process(false)
 	_health_bar.hide()
@@ -376,6 +381,27 @@ func _on_died(_hit: CombatHit) -> void:
 	sprite.speed_scale = 1.0
 	sprite.play(&"death")
 	sprite.set_frame_and_progress(0, 0.0)
+
+
+func _play_impact() -> void:
+	SoundManager.play_limited(&"spider_hit", -10.5, 0.08)
+
+
+func _on_spider_frame_changed() -> void:
+	if _dying or sprite.animation != &"walk" or sprite.frame != 0:
+		return
+	if not (_attached or is_on_floor()) or velocity.length_squared() <= 144.0:
+		return
+	var now := Time.get_ticks_msec()
+	if now < _next_walk_ms:
+		return
+	var distance_gain := _step_distance_gain(520.0)
+	if distance_gain == -INF:
+		return
+	_next_walk_ms = now + randi_range(440, 760)
+	if randf() < 0.15:
+		return
+	SoundManager.play_varied(&"spider_walk", -15.5 + randf_range(-2.0, 1.0) + distance_gain, 0.74, 1.30, randf_range(0.0, 0.16))
 
 
 func _on_spider_animation_finished() -> void:

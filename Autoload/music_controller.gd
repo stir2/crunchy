@@ -92,7 +92,7 @@ func _process(delta: float) -> void:
 	_landing_left = maxf(0.0, _landing_left - delta)
 	var cue := _boss_cue if route == "boss" and not reviving else &""
 	var landing_mix := _landing_left > 0.0 or cue == &"pickup"
-	var resting_cutoff := 2400.0 if boss_arena and _low_health and not landing_mix else 20000.0
+	var resting_cutoff := 8000.0 if boss_arena and _low_health and not landing_mix else 20000.0
 	var cutoff := resting_cutoff
 	var pitch := 1.0
 	var event_gain := 0.0
@@ -130,7 +130,7 @@ func _process(delta: float) -> void:
 	if _boss_filter != null:
 		_boss_filter.cutoff_hz = lerpf(_boss_filter.cutoff_hz, cutoff, 1.0 - exp(-14.0 * delta))
 	# Duck both stems so the warning cuts through during the crossfade too.
-	var duck_db := LOW_HEALTH_DUCK_DB if _route in ["abyss", "boss"] and _low_health and not landing_mix else 0.0
+	var duck_db := (1.5 if boss_arena else LOW_HEALTH_DUCK_DB) if _route in ["abyss", "boss"] and _low_health and not landing_mix else 0.0
 	if reviving:
 		duck_db = 70.0
 	var fade_speed := 105.0 if reviving else 85.0

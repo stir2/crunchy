@@ -484,7 +484,7 @@ func _on_damaged(_hit: CombatHit, _amount: int) -> void:
 	_hurt_time = 0.12
 	if not _waves_played and health.current_health <= maximum_health * 0.75 and not health.is_dead():
 		_waves_pending = true
-	get_node("/root/SoundManager").play_limited(&"cleaver_impact", -13, 0.06)
+	get_node("/root/SoundManager").play_limited(&"boss_hurt", -17, 0.15)
 
 func _on_died(_hit: CombatHit) -> void:
 	_hurt_time = 0

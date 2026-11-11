@@ -352,7 +352,7 @@ func run() -> void:
 	check(await wait_for(func(): return arena._revival_used and not arena._reviving and not arena.player.health.is_dead()), "Chief did not receive the village revival")
 	check(arena.player.health.current_health == ceili(arena.player.health.max_health * 0.75), "Low village health did not grant the minimum revival heal")
 	check(arena._lower and monster.health.current_health == 77, "Revival reset the boss phase or health")
-	for cue: StringName in [&"Cue_monster_rumbling_1", &"Cue_monster_rumbling_2", &"Cue_hard_land_stone", &"Cue_gate_unlock", &"Cue_toll_impact", &"Cue_night_bell-1", &"Cue_geiger_counter_tick", &"Cue_revive"]:
+	for cue: StringName in [&"Cue_monster_rumbling_1", &"Cue_boss_summon", &"Cue_hard_land_stone", &"Cue_gate_unlock", &"Cue_toll_impact", &"Cue_night_bell-1", &"Cue_geiger_counter_tick", &"Cue_revive"]:
 		check(boss_cues.has(cue), "Boss fight missed audio cue %s" % cue)
 	await wait_for(func(): return not hurtbox.invulnerable)
 	arena.player.health.take_damage(hit)

@@ -67,7 +67,7 @@ func try_dash_parry(hit: CombatHit, projectile: Node2D = null) -> bool:
 	if not _parry_sources.has(identity):
 		_parry_sources[identity] = true
 		_parry_flash_until = Engine.get_physics_frames() + 6
-		get_node("/root/SoundManager").play_limited(&"parry", -14, 0.08)
+		get_node("/root/SoundManager").play_limited(&"parry", -12, 0.08)
 		attack_parried.emit(hit, projectile != null)
 	return true
 
