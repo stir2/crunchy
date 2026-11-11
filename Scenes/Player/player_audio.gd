@@ -11,7 +11,11 @@ var _charge_audio: AudioStreamPlayer
 var _dash_audio: AudioStreamPlayer
 var _fall_audio: AudioStreamPlayer
 var _fall_distance: float = 0.0
+const HEAVY_LANDING_HEIGHT := 224.0
+const HEAVY_LANDING_FREEFALL_SECONDS := 0.18
+const HEAVY_LANDING_GAIN_DB := -5.0
 var _fall_started: bool = false
+var _freefall_time := 0.0
 var _support_y: float = 0.0
 var _airborne_peak_y: float = 0.0
 var _damage_airborne: bool = false
@@ -119,6 +123,7 @@ func _reset_steps() -> void:
 	_step_cooldown = 0
 	_fall_distance = 0
 	_fall_started = false
+	_freefall_time = 0.0
 	_support_y = player.global_position.y
 	_airborne_peak_y = _support_y
 	_damage_airborne = false
@@ -147,6 +152,8 @@ func _update_fall(delta: float) -> void:
 		and not player.is_jump_movement_paused()
 		and not player.climbing.is_climbing() and not player.combat.is_hitstopped())
 	if falling:
+		if _fall_started:
+			_freefall_time += delta
 		_fall_distance = drop - 48
 		var strength := clampf(_fall_distance / 240.0, 0, 1)
 		_fall_audio.volume_db = lerpf(-28, -16, strength) + sounds.gain_for(&"freefall") + _movement_duck_db
@@ -156,6 +163,7 @@ func _update_fall(delta: float) -> void:
 	else:
 		_fall_distance = 0
 		_fall_started = false
+		_freefall_time = 0.0
 		if _fall_audio.playing:
 			_fall_audio.volume_db -= 300 * delta
 			if _fall_audio.volume_db <= -60:
@@ -247,6 +255,7 @@ func _on_player_hurt(_hit: CombatHit, _amount: int) -> void:
 	# A spike/hit reaction is not a voluntary fall, even after hit-stun expires.
 	_damage_airborne = true
 	_fall_started = false
+	_freefall_time = 0.0
 	_fall_audio.stop()
 
 
@@ -257,7 +266,7 @@ func _on_landed(impact_speed: float) -> void:
 	var height := maxf(0, player.global_position.y - _airborne_peak_y)
 	var strength := clampf(height / 256.0, 0, 1)
 	var wood := _floor_sound() == &"footstep_wood"
-	var hard := height >= 160.0 or impact_speed >= 650.0
+	var hard := height >= HEAVY_LANDING_HEIGHT and _freefall_time >= HEAVY_LANDING_FREEFALL_SECONDS and not _damage_airborne
 	var surface: StringName
 	if hard:
 		surface = &"hard_land_wood" if wood else &"hard_land_stone"
@@ -266,6 +275,8 @@ func _on_landed(impact_speed: float) -> void:
 	_landing_audio.stream = sounds.stream_for(surface)
 	_landing_audio.pitch_scale = lerpf(1.0, 0.86, strength) * randf_range(0.98, 1.02)
 	_landing_audio.volume_db = lerpf(-25, -13, strength) + sounds.gain_for(surface)
+	if hard:
+		_landing_audio.volume_db += HEAVY_LANDING_GAIN_DB
 	_landing_audio.play()
 	_step_cooldown = 0.2
 

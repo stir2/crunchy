@@ -13,7 +13,9 @@ func _ready() -> void:
 	%SettingsButton.pressed.connect(func():
 		panel.hide()
 		$SettingsPanel.open())
-	$SettingsPanel.closed.connect(func():
+	$SettingsPanel.closed.connect(func(save_error: String):
+		if not save_error.is_empty():
+			status_label.text = save_error
 		panel.show()
 		%SettingsButton.grab_focus())
 	panel.theme = MENU_STYLE.make_theme()

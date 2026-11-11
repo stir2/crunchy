@@ -19,6 +19,10 @@ func has_save() -> bool:
 	return not _read_save().is_empty()
 
 
+func has_save_file() -> bool:
+	return FileAccess.file_exists(save_path)
+
+
 func save_game() -> bool:
 	last_error = ""
 	if not can_save():
@@ -57,19 +61,6 @@ func load_game() -> bool:
 	var data := _read_save()
 	if data.is_empty():
 		return false
-	var state := AbyssRoomState.new()
-	state.restore(data["abyss"])
-	var progression := AbyssProgressionState.new()
-	progression.restore(data["progression"])
-	if not state.world_settings.is_empty():
-		var configs: Array[Resource] = [AbyssRegionConfig.new(), AbyssRouteConfig.new(), AbyssTerrainConfig.new(), AbyssProgressionConfig.new()]
-		var restored := AbyssRuntimeWorldSettings.restore_configuration(state.world_settings, configs)
-		if not restored.error.is_empty():
-			last_error = restored.error
-			return false
-	elif state.has_layout_progress(progression):
-		last_error = "This save has Abyss progress from an older layout."
-		return false
 	# Restore bonuses before vitals; loading must not grant morning potions again.
 	VillageManager.load_save_data(data["village"])
 	GameController.night_in_progress = false
@@ -79,8 +70,8 @@ func load_game() -> bool:
 	if not data["village"].has("current_day"):
 		VillageManager.sim.current_day = maxi(0, GameController.day - 1)
 	VillageManager.refresh_village_health()
-	GameController.abyss_room_state = state
-	GameController.abyss_progression_state = progression
+	GameController.abyss_room_state = data["abyss"]
+	GameController.abyss_progression_state = data["progression"]
 	GameController.monster_missing = data["monster_missing"]
 	GameController.boss_defeated = data.get("boss_defeated", false)
 	GameController.return_to_stairs = false
@@ -90,7 +81,7 @@ func load_game() -> bool:
 
 func _read_save() -> Dictionary:
 	last_error = "Save missing or invalid."
-	if not FileAccess.file_exists(save_path):
+	if not has_save_file():
 		return {}
 	var parser := JSON.new()
 	if parser.parse(FileAccess.get_file_as_string(save_path)) != OK:
@@ -127,6 +118,17 @@ func _read_save() -> Dictionary:
 	var progression := AbyssProgressionState.new()
 	if progression.restore(value["progression"]) != OK:
 		return {}
+	if not state.world_settings.is_empty():
+		var configs: Array[Resource] = [AbyssRegionConfig.new(), AbyssRouteConfig.new(), AbyssTerrainConfig.new(), AbyssProgressionConfig.new()]
+		var restored := AbyssRuntimeWorldSettings.restore_configuration(state.world_settings, configs)
+		if not restored.error.is_empty():
+			last_error = restored.error
+			return {}
+	elif state.has_layout_progress(progression):
+		last_error = "This save has Abyss progress from an older layout."
+		return {}
+	value["abyss"] = state
+	value["progression"] = progression
 	last_error = ""
 	return value
 

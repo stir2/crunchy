@@ -271,7 +271,7 @@ func _start_windup() -> void:
 		_recover()
 		return
 	super._start_windup()
-	SoundManager.play_limited(&"spider_hiss", -14.5, 0.2)
+	SoundManager.play_limited(&"spider_hiss", -17.5, 0.2)
 
 
 func _chase_velocity() -> float:

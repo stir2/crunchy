@@ -16,7 +16,7 @@ const DROP_SECONDS := 5.8
 const BOSS_FALL_DELAY := 1.15
 const BOSS_FALL_DURATION := DROP_SECONDS - 0.80
 const PICKUP_DELAY := 0.55
-@export var debug_infinite_health_after_first_death: bool = true
+@export var debug_infinite_health_after_first_death: bool = false
 var active_path := ARENA
 var _lower := false
 var _dropping := false
@@ -33,6 +33,7 @@ var _shake_time := 0.0
 var _pause_tick := -1
 var _entry_health := 6
 var _entry_stamina := 100.0
+var _entry_potions := 0
 var _result: PanelContainer
 var _result_layer: Control
 var _result_title: Label
@@ -55,6 +56,7 @@ func _ready() -> void:
 	player.combat.attack_damage = int(game.stats.get("damage", 10))
 	player.run_speed *= 1.0 + float(game.stats.get("speed", 0)) / 100.0
 	player.stamina.max_stamina = float(game.stats.get("max_stamina", 100))
+	_entry_potions = game.potions
 	_entry_stamina = clampf(game.stamina, 0, player.stamina.max_stamina)
 	player.stamina.reset_stamina(_entry_stamina)
 	player.stamina.regeneration_per_second *= 1.0 + get_node("/root/VillageManager").get_effect("stamina_regen_pct") / 100.0
@@ -74,7 +76,7 @@ func _ready() -> void:
 	monster.last_toll_interrupted.connect(_interrupt_last_toll)
 	monster.sweep_floor = _sweep_floor_y
 	monster.slab_broken.connect(_break_slab)
-	$Waves.wave_started.connect(func(): _cue(&"boss_summon", -16))
+	$Waves.wave_started.connect(_on_wave_started)
 	monster.health.health_changed.connect(_boss_health_changed)
 	monster.defeated.connect(_boss_defeated)
 	monster.defeat_finished.connect(_finish_boss_defeat)
@@ -172,6 +174,11 @@ func _lower_landing_y(x: float) -> float:
 	return _lower_floor_row(clampi(floori(x / 16.0), 1, 38)) * 16.0
 
 
+func _on_wave_started() -> void:
+	_cue(&"boss_summon", -10)
+	_music_cue(&"summon")
+
+
 func _music_cue(cue: StringName, time_until_impact := 0.0) -> void:
 	var music := get_node_or_null("/root/SoundManager/MusicController")
 	if music != null:
@@ -246,7 +253,7 @@ func _drop_to_lower_arena() -> void:
 	for offset: float in [-28.0, 0.0, 28.0]:
 		var x := clampf(player.position.x + offset, 8.0, 632.0)
 		_ground_impact(Vector2(x, _lower_landing_y(x)), offset == 0.0)
-	_cue(&"hard_land_stone", -9)
+	_cue(&"hard_land_stone", -14)
 	_shake = 4.2
 	# The Chief lands first; the pursuing mass hits on a separate beat.
 	if monster_fall.is_running():
@@ -362,7 +369,7 @@ func _arm_impact(strike: bool, point: Vector2) -> void:
 		_cue(&"boss_slam", -6)
 	else:
 		_shake = 1.5
-		_cue(&"boss_hand_drag", -6, 0.0, true)
+		_cue(&"boss_hand_drag", -2, 0.0, true)
 
 
 func _fx(sheet: Texture2D, cell: int, point: Vector2, seconds: float, scale_factor: float) -> Sprite2D:
@@ -718,8 +725,10 @@ func _show_result(title: String) -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 func _retry() -> void:
-	get_node("/root/GameController").health = _entry_health
-	get_node("/root/GameController").stamina = int(_entry_stamina)
+	var game := get_node("/root/GameController")
+	game.health = _entry_health
+	game.stamina = int(_entry_stamina)
+	game.potions = _entry_potions
 	_change_scene(ARENA)
 
 func _return_home() -> void:

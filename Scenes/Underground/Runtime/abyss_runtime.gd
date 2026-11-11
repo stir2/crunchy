@@ -5,6 +5,7 @@ signal ready_for_play(destination: Dictionary)
 signal startup_failed(message: String)
 signal streaming_hold_changed(holding: bool)
 signal returned_to_village(flesh_banked: int)
+const DEATH_LANDING_TIMEOUT := 2.0
 @export var auto_start: bool = true
 @export var configuration: AbyssRegionConfig = AbyssRegionConfig.new()
 @export var route_configuration: AbyssRouteConfig = AbyssRouteConfig.new()
@@ -59,7 +60,8 @@ func _ready() -> void:
 	stream.camera = camera
 	stream.container = loaded_rooms
 	stream.runtime = self
-	sprite.death_animation_finished.connect(_on_death_animation_finished)
+	player.damage.died.connect(_on_player_died)
+	sprite.death_animation_finished.connect(_request_death_return)
 	if auto_start:
 		await enter_entrance()
 
@@ -377,16 +379,23 @@ func _complete_safe_return(token: int) -> void:
 		host.change_scene("res://Scenes/Village/House/house.tscn")
 
 
-func _on_death_animation_finished() -> void:
+func _on_player_died(_hit: CombatHit) -> void:
+	if not is_active(): return
+	var token := _serial
+	# The death animation itself waits for a floor, so start the timeout on the lethal hit.
+	await get_tree().create_timer(DEATH_LANDING_TIMEOUT, false, true).timeout
+	if token != _serial or not is_active() or _death_pending or not player.damage.is_dead(): return
+	if not player.is_on_floor():
+		_request_death_return()
+
+func _request_death_return() -> void:
 	if not is_active() or _death_pending or not player.damage.is_dead(): return
 	_death_pending = true
 	_complete_death_return.call_deferred(_serial)
 
 func _complete_death_return(token: int) -> void:
-	# A midair death must finish settling before its husk position is saved.
-	while token == _serial and is_active() and player.damage.is_dead() and not player.is_on_floor():
-		await get_tree().physics_frame
 	if token != _serial or not is_active() or not player.damage.is_dead(): return
+	exploration.settle_death_grave()
 	interactions.set_enabled(false)
 	# Grave/accounting was resolved once by ExplorationTracker on the lethal hit.
 	game.health = 0

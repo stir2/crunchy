@@ -8,6 +8,7 @@ var _room := Vector2i(2147483647,2147483647)
 var _dwell: float = 0.0
 var _death_recorded: bool = false
 var _settling_grave_id: String = ""
+var _last_grounded_position := Vector2.INF
 var _grave: InteractionTarget
 const GRAVE = preload("res://Scenes/Underground/Map/grave_interactable.gd")
 
@@ -33,21 +34,14 @@ func configure(value: AbyssExplorationState, world_id: String) -> void:
 func leave() -> void:
 	_room = Vector2i(2147483647,2147483647)
 	_dwell = 0.0
+	_settling_grave_id = ""
+	_last_grounded_position = Vector2.INF
 	if is_instance_valid(_grave): _grave.queue_free()
 	_grave = null
 
 func _physics_process(delta: float) -> void:
 	if state != null and runtime.is_active() and runtime.player.damage.is_dead() and runtime.player.is_on_floor() and not _settling_grave_id.is_empty():
-		var entry: Dictionary = state.graves.get(world,{})
-		if entry.get("id", "") == _settling_grave_id:
-			var feet := runtime.loaded_rooms.to_local(runtime.player.global_position)
-			var coords := runtime.stream.world_to_room(runtime.player.global_position)
-			entry.position_x = feet.x
-			entry.position_y = feet.y
-			entry.x = coords.x
-			entry.y = coords.y
-			state.changed.emit()
-		_settling_grave_id = ""
+		_settle_grave_at(runtime.player.global_position)
 	if state == null or not runtime.is_active() or runtime._holding or runtime.player.damage.is_dead() or not runtime.player.is_physics_processing():
 		_dwell = 0.0
 		return
@@ -56,6 +50,8 @@ func _physics_process(delta: float) -> void:
 		_room = coords
 		_dwell = 0.0
 	if runtime.stream.specials.level_at(coords) <= 0: return
+	if runtime.player.is_on_floor() and runtime.stream.room_ready(coords):
+		_last_grounded_position = runtime.player.global_position
 	_dwell += delta
 	if _dwell >= visit_dwell_seconds: state.visit(world,coords)
 
@@ -74,6 +70,27 @@ func _on_death(_hit: CombatHit) -> void:
 		state.graves[world] = previous
 		state.changed.emit()
 	game.add_flesh(carried-dropped)
+
+func settle_death_grave() -> void:
+	if runtime.player.is_on_floor():
+		_settle_grave_at(runtime.player.global_position)
+	elif _last_grounded_position != Vector2.INF:
+		_settle_grave_at(_last_grounded_position)
+	else:
+		_settle_grave_at(runtime.destination.spawn_position)
+
+func _settle_grave_at(position: Vector2) -> void:
+	if _settling_grave_id.is_empty(): return
+	var entry: Dictionary = state.graves.get(world,{})
+	if entry.get("id", "") == _settling_grave_id:
+		var feet := runtime.loaded_rooms.to_local(position)
+		var coords := runtime.stream.world_to_room(position)
+		entry.position_x = feet.x
+		entry.position_y = feet.y
+		entry.x = coords.x
+		entry.y = coords.y
+		state.changed.emit()
+	_settling_grave_id = ""
 
 func refresh_grave() -> void:
 	if state == null: return

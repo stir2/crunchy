@@ -15,6 +15,9 @@ var _boss_owner: Node
 var _boss_cue := &""
 var _pickup_started := false
 const LANDING_HOLD_SECONDS := 1.25
+const SUMMON_DUCK_SECONDS := 1.0
+const SUMMON_DUCK_DB := 4.0
+var _summon_duck_left := 0.0
 const VOLLEY_PULSE_SECONDS := 0.18
 const TOLL_PULSE_SECONDS := 0.28
 var _release_left := 0.0
@@ -79,6 +82,7 @@ func _process(delta: float) -> void:
 		_pickup_started = false
 		_release_left = 0.0
 		_landing_left = 0.0
+		_summon_duck_left = 0.0
 	if boss_arena:
 		_voice.bus = &"BossMusic"
 	elif route == "village":
@@ -94,7 +98,6 @@ func _process(delta: float) -> void:
 	var landing_mix := _landing_left > 0.0 or cue == &"pickup"
 	var resting_cutoff := 8000.0 if boss_arena and _low_health and not landing_mix else 20000.0
 	var cutoff := resting_cutoff
-	var pitch := 1.0
 	var event_gain := 0.0
 	match cue:
 		&"fall":
@@ -109,11 +112,9 @@ func _process(delta: float) -> void:
 			cutoff = minf(resting_cutoff, 3500.0)
 		&"toll_release":
 			var pulse := _release_left / TOLL_PULSE_SECONDS
-			pitch = lerpf(1.0, 0.80, pulse)
 			cutoff = lerpf(resting_cutoff, 850.0, pulse)
 		&"volley_release":
 			var pulse := _release_left / VOLLEY_PULSE_SECONDS
-			pitch = lerpf(1.0, 0.91, pulse)
 			cutoff = lerpf(resting_cutoff, 1700.0, pulse)
 	if route == "village":
 		if _village_music_stopped():
@@ -132,11 +133,13 @@ func _process(delta: float) -> void:
 				event_gain = -1.8
 		if _village_filter != null:
 			_village_filter.cutoff_hz = lerpf(_village_filter.cutoff_hz, room_cutoff, 1.0 - exp(-5.0 * delta))
-	_voice.pitch_scale = 1.0 if cue == &"pickup" else lerpf(_voice.pitch_scale, pitch, 1.0 - exp(-12.0 * delta))
 	if _boss_filter != null:
 		_boss_filter.cutoff_hz = lerpf(_boss_filter.cutoff_hz, cutoff, 1.0 - exp(-14.0 * delta))
 	# Duck both stems so the warning cuts through during the crossfade too.
 	var duck_db := (1.5 if boss_arena else LOW_HEALTH_DUCK_DB) if _route in ["abyss", "boss"] and _low_health and not landing_mix else 0.0
+	_summon_duck_left = maxf(0.0, _summon_duck_left - delta)
+	if route == "boss":
+		duck_db += SUMMON_DUCK_DB * smoothstep(0.0, 0.25, _summon_duck_left)
 	if reviving:
 		duck_db = 70.0
 	var fade_speed := 105.0 if reviving else 85.0
@@ -157,11 +160,13 @@ func _process(delta: float) -> void:
 func boss_music_cue(arena: Node, cue: StringName, time_until_impact := 0.0) -> void:
 	if arena != _boss_owner or _route != "boss":
 		return
+	if cue == &"summon":
+		_summon_duck_left = SUMMON_DUCK_SECONDS
+		return
 	if cue == &"pickup":
 		if _pickup_started:
 			return
 		_pickup_started = true
-		_voice.pitch_scale = 1.0
 		_voice.volume_db = -55.0
 		var output_latency := AudioServer.get_output_latency() + AudioServer.get_time_to_next_mix()
 		_voice.play(maxf(0.0, BOSS_DOWNBEAT - time_until_impact + output_latency))
@@ -184,7 +189,7 @@ func _set_route(route: String) -> void:
 		_target_gain = 6
 	elif route == "village":
 		_voice.stream = _looping_stream(VILLAGE)
-		_target_gain = -16.0
+		_target_gain = -12.0
 	elif route == "boss":
 		_voice.stream = _looping_stream(BOSS)
 		_target_gain = -10
@@ -196,7 +201,7 @@ func _set_route(route: String) -> void:
 		_pair.set_sync_stream_volume(0, 0)
 		_pair.set_sync_stream_volume(1, -80)
 		_voice.stream = _pair
-		_target_gain = -18
+		_target_gain = -14
 	_voice.volume_db = _target_gain if route == "village" else -80
 	if route != "village" or not _village_music_stopped():
 		_voice.play()

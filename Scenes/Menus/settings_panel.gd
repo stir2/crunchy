@@ -1,6 +1,6 @@
 extends CenterContainer
 
-signal closed
+signal closed(save_error: String)
 
 const MENU_STYLE = preload("res://Scenes/Menus/menu_style.gd")
 const AUDIO_LABELS := [&"Master", &"Music", &"Sound effects"]
@@ -8,10 +8,10 @@ const AUDIO_LABELS := [&"Master", &"Music", &"Sound effects"]
 var _paper: PanelContainer
 var _content: VBoxContainer
 var _fullscreen_button: Button
-var _status: Label
 var _title: Label
 var _audio_rows: Array[HBoxContainer] = []
 var _sliders: Dictionary = {}
+var _volume_labels: Dictionary = {}
 
 
 func _ready() -> void:
@@ -46,10 +46,6 @@ func _ready() -> void:
 	for index in GameSettings.AUDIO_BUSES.size():
 		_add_audio_row(GameSettings.AUDIO_BUSES[index], AUDIO_LABELS[index])
 
-	_status = _label("")
-	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_status.hide()
-	_content.add_child(_status)
 	var done_button := Button.new()
 	done_button.text = "Done"
 	done_button.pressed.connect(_close)
@@ -61,10 +57,11 @@ func _ready() -> void:
 
 
 func open() -> void:
-	_status.hide()
 	_refresh_display()
 	for bus in _sliders:
-		_sliders[bus].value = GameSettings.volumes[bus]
+		var percent: int = GameSettings.volumes[bus]
+		_sliders[bus].set_value_no_signal(percent)
+		_volume_labels[bus].text = "%d%%" % percent
 	show()
 	_fullscreen_button.grab_focus()
 
@@ -76,12 +73,11 @@ func _input(event: InputEvent) -> void:
 
 
 func _close() -> void:
+	var save_error := ""
 	if GameSettings.save() != OK:
-		_status.text = "Could not save settings."
-		_status.show()
-		return
+		save_error = "Could not save settings. Changes apply for this session."
 	hide()
-	closed.emit()
+	closed.emit(save_error)
 
 
 func _refresh_display() -> void:
@@ -113,7 +109,7 @@ func _add_audio_row(bus: StringName, title: String) -> void:
 
 	var slider := HSlider.new()
 	slider.max_value = 100
-	slider.step = 5
+	slider.step = 1
 	slider.value = GameSettings.volumes[bus]
 	slider.tooltip_text = title + " volume"
 	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -124,6 +120,7 @@ func _add_audio_row(bus: StringName, title: String) -> void:
 	var value := _label("%d%%" % slider.value)
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	row.add_child(value)
+	_volume_labels[bus] = value
 	slider.value_changed.connect(func(percent: float):
 		GameSettings.set_volume(bus, int(percent))
 		value.text = "%d%%" % percent)

@@ -10,12 +10,16 @@ func _ready() -> void:
 	%SettingsButton.pressed.connect(func():
 		$Buttons.hide()
 		$SettingsPanel.open())
-	$SettingsPanel.closed.connect(func():
+	$SettingsPanel.closed.connect(func(save_error: String):
+		if not save_error.is_empty():
+			status_label.text = save_error
 		$Buttons.show()
 		%SettingsButton.grab_focus())
 	%NewGameButton.set_meta("own_click_sound", true)
 	continue_button.set_meta("own_click_sound", true)
 	continue_button.disabled = not SaveManager.has_save()
+	if continue_button.disabled and SaveManager.has_save_file():
+		status_label.text = SaveManager.last_error
 	%NewGameButton.pressed.connect(_new_game)
 	continue_button.pressed.connect(_continue)
 	%QuitButton.pressed.connect(func(): get_tree().quit())
@@ -31,7 +35,7 @@ func _ready() -> void:
 
 
 func _new_game() -> void:
-	if SaveManager.has_save():
+	if SaveManager.has_save_file():
 		new_game_dialog.popup_centered(Vector2i(660, 210))
 		new_game_dialog.get_cancel_button().grab_focus()
 	else:
