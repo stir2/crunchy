@@ -23,9 +23,12 @@ var _action_btns: Array[Button] = []
 var _quick_btns: Array[Button] = []
 var _spin_boxes: Array[SpinBox] = []
 
+## Set to true to allow opening the debug menu even in release/exported builds.
+@export var enabled: bool = true
+
 
 func _ready() -> void:
-	if not OS.is_debug_build():
+	if not enabled:
 		set_process_input(false)
 		return
 	layer = 128

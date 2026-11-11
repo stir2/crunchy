@@ -120,6 +120,7 @@ func _build_floor() -> void:
 	for y in range(-1, 147):
 		tiles.set_cell(Vector2i(-1, y), 0, Vector2i.ZERO)
 		tiles.set_cell(Vector2i(40, y), 0, Vector2i.ZERO)
+	AbyssTerrainArt.refresh_layer(tiles)
 
 func _build_lower_floor() -> void:
 	var tiles: TileMapLayer = $Terrain
@@ -129,6 +130,7 @@ func _build_lower_floor() -> void:
 			tiles.set_cell(Vector2i(x, y), 0, Vector2i(5, 0) if y == top and x in range(28, 33) else Vector2i.ZERO)
 	for x in range(5, 12):
 		tiles.set_cell(Vector2i(x, 138), 0, Vector2i.RIGHT)
+	AbyssTerrainArt.refresh_layer(tiles)
 
 
 func _lower_floor_row(column: int) -> int:
@@ -272,10 +274,10 @@ func _fall_streaks() -> void:
 
 
 func _floor_debris() -> void:
-	var atlas := TILES.get_source(0) as TileSetAtlasSource
+	var atlas := (TILES.get_source(2) if TILES.has_source(2) else TILES.get_source(0)) as TileSetAtlasSource
 	var stone := AtlasTexture.new()
 	stone.atlas = atlas.texture
-	stone.region = atlas.get_tile_texture_region(Vector2i.ZERO)
+	stone.region = atlas.get_tile_texture_region(Vector2i(9, 2) if TILES.has_source(2) else Vector2i.ZERO)
 	for i in range(9):
 		var chunk := Sprite2D.new()
 		chunk.texture = stone
@@ -295,10 +297,13 @@ func _floor_debris() -> void:
 func _break_slab() -> void:
 	_slab_intact = false
 	var tiles: TileMapLayer = $Terrain
+	var erased: Array = []
 	for x in range(28, 33):
 		tiles.erase_cell(Vector2i(x, 141))
+		erased.append(Vector2i(x, 141))
 		_ground_impact(tiles.map_to_local(Vector2i(x, 141)) - Vector2(0, 8), false)
 	tiles.update_internals()
+	AbyssTerrainArt.refresh_layer(tiles, erased)
 	_shake = 4.8
 	_cue(&"toll_impact", -15)
 

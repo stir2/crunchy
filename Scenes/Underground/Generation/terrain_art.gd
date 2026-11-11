@@ -85,6 +85,29 @@ static func refresh(room: AbyssAuthoredRoom, boundary: AbyssCavernBoundaryField,
 				if _filled(cell + OFFSETS[index], occupied, room, boundary): mask |= 1 << index
 			layer.set_cell(cell, SOURCE, atlas_for_mask(mask))
 
+static func refresh_layer(layer: TileMapLayer, changed: Array = []) -> void:
+	if layer == null or layer.tile_set == null or not layer.tile_set.has_source(SOURCE):
+		return
+	var occupied: Dictionary = {}
+	for cell in layer.get_used_cells():
+		if AbyssRoomTemplateValidator._has_solid_collision(layer, cell):
+			occupied[cell] = true
+	var affected: Dictionary = {}
+	for cell: Vector2i in changed:
+		for y in range(-1, 2):
+			for x in range(-1, 2):
+				affected[cell + Vector2i(x, y)] = true
+	var cells: Array = layer.get_used_cells() if changed.is_empty() else affected.keys()
+	for cell: Vector2i in cells:
+		var source := layer.get_cell_source_id(cell)
+		if not (source == SOURCE or (source == 0 and layer.get_cell_atlas_coords(cell) == Vector2i.ZERO)):
+			continue
+		var mask := 0
+		for index in range(OFFSETS.size()):
+			if occupied.has(cell + OFFSETS[index]):
+				mask |= 1 << index
+		layer.set_cell(cell, SOURCE, atlas_for_mask(mask))
+
 static func atlas_for_mask(mask: int) -> Vector2i:
 	# Diagonals matter only when both adjoining cardinal neighbors exist.
 	for corner in [[16,1,2], [32,2,4], [64,4,8], [128,8,1]]:

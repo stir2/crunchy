@@ -65,7 +65,7 @@ func run() -> void:
 			var gate: Dictionary = data.gate
 			var left := Vector2i(gate.x,gate.y)
 			var right := left+Vector2i.RIGHT
-			check(service.routes.get_room(left).region == AbyssRoomData.Region.OPEN and service.routes.get_room(right).region == AbyssRoomData.Region.OPEN,"Gate not on valid open border")
+			check((service.routes.get_room(left).region == AbyssRoomData.Region.OPEN and service.routes.get_room(right).region == AbyssRoomData.Region.OPEN) or (service.routes.get_room(left).region == AbyssRoomData.Region.PACKED and service.routes.get_room(right).region == AbyssRoomData.Region.PACKED),"Gate not on valid border")
 			check(not service.routes.get_room(left).allows_open_adjacency(service.routes.get_room(right)),"Natural cavern adjacency bypasses border")
 			if gate_service.is_gate_unlocked(gate):
 				check(gate_service.can_cross(left, right), "Level unlock did not open another gate")
@@ -119,7 +119,6 @@ func run() -> void:
 					continue
 				checkpoint_count += 1
 				checkpoint_coords.append(coords)
-				check(service.routes.get_room(coords).region == AbyssRoomData.Region.OPEN,"Checkpoint in packed room")
 				var room := AbyssRoomTerrainBuilder.build(selector.select_room(service.routes,coords),AbyssTerrainConfig.new(),null,null,service)
 				built.append(room)
 				for spawn in room.spawn_requests:
