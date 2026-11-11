@@ -12,6 +12,29 @@
 [ext_resource type="Script" uid="uid://d1pwahiyti1lu" path="res://Scenes/Underground/Enemies/enemy_population.gd" id="10_population"]
 [ext_resource type="PackedScene" path="res://Scenes/Underground/HUD/key_fragment_hud.tscn" id="11_key_hud"]
 
+[ext_resource type="Shader" path="res://Scenes/Underground/Runtime/abyss_backdrop.gdshader" id="12_backdrop"]
+[ext_resource type="Shader" path="res://Scenes/Underground/Runtime/abyss_atmosphere.gdshader" id="13_atmosphere"]
+[ext_resource type="Texture2D" path="res://tileSprites/48x48tileset.png" id="14_stone"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_mist"]
+frequency = 0.018
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_mist"]
+width = 256
+height = 256
+seamless = true
+noise = SubResource("FastNoiseLite_mist")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_backdrop"]
+resource_local_to_scene = true
+shader = ExtResource("12_backdrop")
+shader_parameter/stone_atlas = ExtResource("14_stone")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_atmosphere"]
+resource_local_to_scene = true
+shader = ExtResource("13_atmosphere")
+shader_parameter/fog_noise = SubResource("NoiseTexture2D_mist")
+
 [node name="AbyssRuntime" type="Node2D" unique_id=678067981]
 script = ExtResource("1_runtime")
 
@@ -19,6 +42,7 @@ script = ExtResource("1_runtime")
 layer = -10
 
 [node name="Background" type="ColorRect" parent="BackgroundCanvas" unique_id=1614838707]
+material = SubResource("ShaderMaterial_backdrop")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -38,7 +62,17 @@ script = ExtResource("4_camera")
 [node name="StreamingController" type="Node" parent="." unique_id=1796754078]
 script = ExtResource("3_stream")
 
+[node name="AtmosphereCanvas" type="CanvasLayer" parent="."]
+
+[node name="Atmosphere" type="ColorRect" parent="AtmosphereCanvas"]
+material = SubResource("ShaderMaterial_atmosphere")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
 [node name="HealthCanvas" type="CanvasLayer" parent="." unique_id=508030899]
+layer = 2
 
 [node name="HeartHUD" parent="HealthCanvas" unique_id=1921032736 instance=ExtResource("5_hearts")]
 layout_mode = 3

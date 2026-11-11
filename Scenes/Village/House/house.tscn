@@ -10,6 +10,11 @@
 [ext_resource type="Texture2D" path="res://uiSprites/ration.png" id="10_ration"]
 [ext_resource type="Texture2D" path="res://uiSprites/potionGreen.png" id="15_potion"]
 
+[ext_resource type="Shader" path="res://Scenes/Village/House/window_mist.gdshader" id="21_window_mist"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_window_mist"]
+shader = ExtResource("21_window_mist")
+
 [sub_resource type="StyleBoxFlat" id="Plum"]
 bg_color = Color(0.14, 0.09, 0.16, 0.94)
 border_width_bottom = 2
@@ -179,6 +184,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+material = SubResource("ShaderMaterial_window_mist")
 texture = ExtResource("5_window")
 expand_mode = 1
 stretch_mode = 6

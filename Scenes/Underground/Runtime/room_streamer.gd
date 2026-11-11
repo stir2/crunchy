@@ -23,6 +23,7 @@ var runtime: Node
 var terrain_config: AbyssTerrainConfig
 var room_pixels: Vector2
 var _room_size: Vector2i
+var _drip_material := ShaderMaterial.new()
 var deferred_templates: PackedStringArray = []
 var _pending: Array[Vector2i] = []
 var _settling: Dictionary[Vector2i, int] = {}
@@ -34,6 +35,7 @@ var _preparing_row: int = 0
 var _cache_chunk := Vector2i(2147483647,2147483647)
 
 func _ready() -> void:
+	_drip_material.shader = preload("res://Scenes/Underground/Runtime/cave_drip.gdshader")
 	process_physics_priority = -100 # Guard motion before Player physics.
 
 func configure(region: AbyssRegionConfig, route: AbyssRouteConfig, terrain: AbyssTerrainConfig, progression: AbyssProgressionConfig, registry: AbyssRoomTemplateRegistry, state: AbyssRoomState, progression_state: AbyssProgressionState) -> bool:
@@ -144,6 +146,34 @@ func _process(_delta: float) -> void:
 		if not active or Time.get_ticks_usec()-started >= construction_budget_ms*1000.0:
 			break
 
+func _add_cave_drip(room: Node2D, coords: Vector2i) -> void:
+	# Sparse, deterministic placement under a ceiling with at least 12 clear tiles.
+	if posmod(coords.x * 7 + coords.y * 11, 3) != 0:
+		return
+	var solid := room.get_node_or_null("Solid") as TileMapLayer
+	if solid == null:
+		return
+	for x in range(3, _room_size.x - 3, 3):
+		var clear_tiles := 0
+		for y in range(_room_size.y):
+			if solid.get_cell_source_id(Vector2i(x, y)) != -1:
+				clear_tiles = 0
+			elif clear_tiles > 0 or (y > 0 and solid.get_cell_source_id(Vector2i(x, y - 1)) != -1):
+				clear_tiles += 1
+				if clear_tiles == 12:
+					var start := solid.map_to_local(Vector2i(x, y - 11))
+					var tile_height := solid.tile_set.tile_size.y
+					var drip := ColorRect.new()
+					drip.name = "CeilingDrip"
+					drip.material = _drip_material
+					drip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+					drip.z_index = -1
+					drip.position = room.to_local(solid.to_global(start)) - Vector2(2, tile_height * 0.5)
+					drip.size = Vector2(4, tile_height * 12)
+					drip.set_instance_shader_parameter("phase", posmod(coords.x * 13 + coords.y * 19, 31) / 31.0)
+					room.add_child(drip)
+					return
+
 func _build_room(coords: Vector2i) -> void:
 	var request := selector.select_room(routes,coords)
 	var room := AbyssRoomTerrainBuilder.build(request,terrain_config,boundary,mutations,specials)
@@ -155,6 +185,7 @@ func _build_room(coords: Vector2i) -> void:
 	room.visible = false
 	container.add_child(room)
 	rooms[coords] = room
+	_add_cave_drip(room, coords)
 	for child in room.get_children():
 		if child is TileMapLayer:
 			child.update_internals()

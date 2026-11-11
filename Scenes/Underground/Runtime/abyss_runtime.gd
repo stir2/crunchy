@@ -6,6 +6,7 @@ signal startup_failed(message: String)
 signal streaming_hold_changed(holding: bool)
 signal returned_to_village(flesh_banked: int)
 const DEATH_LANDING_TIMEOUT := 2.0
+const FOG_EXP_RANGE := 6.389056 # exp(2.0) - 1.0
 @export var auto_start: bool = true
 @export var configuration: AbyssRegionConfig = AbyssRegionConfig.new()
 @export var route_configuration: AbyssRouteConfig = AbyssRouteConfig.new()
@@ -36,6 +37,10 @@ var _base_stamina_regen: float
 var _return_pending: bool = false
 var _death_pending: bool = false
 var _state: AbyssRoomState
+var _visual_depth := 0.0
+var _fog_time := 0.0
+@onready var _backdrop: ShaderMaterial = $BackgroundCanvas/Background.material
+@onready var _atmosphere: ShaderMaterial = $AtmosphereCanvas/Atmosphere.material
 @onready var entrance_return: InteractionTarget = $EntranceReturn
 @onready var flesh_hud: AbyssFleshHUD = $FleshHUD
 @onready var exploration: AbyssExplorationTracker = $ExplorationTracker
@@ -128,6 +133,9 @@ func enter_entrance() -> bool:
 	$StartupStatusCanvas.hide()
 	_set_visibility(true)
 	camera.activate(player,stream)
+	_visual_depth = 0.0
+	_fog_time = 0.0
+	_update_atmosphere(0.0)
 	player.set_physics_process(true)
 	interactions.set_enabled(true)
 	ready_for_play.emit(destination.duplicate(true))
@@ -199,10 +207,30 @@ func _physics_process(_delta: float) -> void:
 		_jump_released = _jump_released or Input.is_action_just_released("Jump")
 		_dash_pressed = _dash_pressed or Input.is_action_just_pressed("Action")
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	# Keep the existing SaveManager payload current during an active descent too.
 	if is_active() and game.abyss_room_state == _state:
 		_capture_vitals()
+		_update_atmosphere(delta)
+
+func _update_atmosphere(delta: float) -> void:
+	var level := stream.specials.level_at(stream.current_room)
+	var target := clampf(float(level - 1) / (AbyssProgressionConfig.LEVEL_COUNT - 1), 0.0, 1.0)
+	_visual_depth = lerpf(_visual_depth, target, 1.0 - exp(-delta * 2.5))
+	_fog_time += delta
+	var viewport_size := get_viewport_rect().size
+	var canvas := get_canvas_transform()
+	var inverse := canvas.affine_inverse()
+	var origin := inverse * Vector2.ZERO
+	var world_size := inverse * viewport_size - origin
+	for material in [_backdrop, _atmosphere]:
+		material.set_shader_parameter("view_origin", origin)
+		material.set_shader_parameter("view_size", world_size)
+		material.set_shader_parameter("depth", _visual_depth)
+	_atmosphere.set_shader_parameter("player_uv", (canvas * player.global_position) / viewport_size)
+	_backdrop.set_shader_parameter("drift_time", _fog_time)
+	_atmosphere.set_shader_parameter("drift_time", _fog_time)
+	_atmosphere.set_shader_parameter("fog_density", 0.04 + 0.155 * (exp(_visual_depth * 2.0) - 1.0) / FOG_EXP_RANGE)
 
 ## Future host calls this on leaving. It can keep this node or free it afterward.
 func leave() -> void:
@@ -232,6 +260,7 @@ func leave() -> void:
 func _set_visibility(show_runtime: bool) -> void:
 	visible = show_runtime
 	$BackgroundCanvas.visible = show_runtime
+	$AtmosphereCanvas.visible = show_runtime
 	$HealthCanvas.visible = show_runtime
 	flesh_hud.visible = show_runtime
 
