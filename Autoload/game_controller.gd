@@ -18,7 +18,11 @@ signal health_changed(current: int, max_health: int)
 signal stamina_changed(current: int, max_stamina: int)
 
 const RUN_LENGTH := 10
-const TRIPS_PER_DAY := 3
+const SHORT_RUN_LENGTH := 5
+const SHORT_QUOTAS: Array[int] = [12, 18, 25, 32, 0]
+
+var run_length := RUN_LENGTH
+const TRIPS_PER_DAY := 5
 # 4 starting villagers, 2 days of upkeep each
 const STARTING_RATIONS := 8
 # Health is in half-hearts: 2 HP = 1 full heart
@@ -92,8 +96,9 @@ func _ready() -> void:
 
 
 func quota_for_day(for_day: int) -> int:
-	if for_day >= 1 and for_day <= QUOTA_TABLE.size():
-		return QUOTA_TABLE[for_day - 1]
+	var quotas := SHORT_QUOTAS if run_length == SHORT_RUN_LENGTH else QUOTA_TABLE
+	if for_day >= 1 and for_day <= quotas.size():
+		return quotas[for_day - 1]
 	return 0
 
 
@@ -101,8 +106,8 @@ func current_quota() -> int:
 	return quota_for_day(day)
 
 
-func is_day_10() -> bool:
-	return day == RUN_LENGTH
+func is_final_day() -> bool:
+	return day == run_length
 
 
 func set_stat_bonus(key: String, value: int) -> void:
@@ -206,12 +211,12 @@ func use_trip() -> bool:
 	return true
 
 
-## Trips are spent on descent, so trips_left == 0 means this is the third trip.
+## Trips are spent on descent, so trips_left == 0 means this is the last trip of the day.
 func is_last_trip() -> bool:
 	return trips_left == 0
 
 
-## Share of carried flesh lost on death: 50%, or 25% on the third descent.
+## Share of carried flesh lost on death: 50%, or 25% on the last descent of the day.
 func death_loss_fraction() -> float:
 	return 0.25 if is_last_trip() else 0.5
 
@@ -243,13 +248,13 @@ func start_day() -> void:
 	_reset_daily_state()
 	abyss_room_state.begin_day(day)
 	day_started.emit(day)
-	if is_day_10():
+	if is_final_day():
 		finale_reached.emit(village_health)
 
 
 ## Called when the player sleeps at the desk. The last day has no toll.
 func end_day() -> void:
-	if night_in_progress or day >= RUN_LENGTH:
+	if night_in_progress or day >= run_length:
 		return
 	night_in_progress = true
 	night_started.emit(day, flesh, current_quota())
@@ -261,7 +266,7 @@ func finish_night(quota_met: bool) -> void:
 	night_in_progress = false
 	day_ended.emit(day, quota_met)
 	day += 1
-	if day > RUN_LENGTH:
+	if day > run_length:
 		_reset_daily_state()
 		finale_reached.emit(village_health)
 	else:

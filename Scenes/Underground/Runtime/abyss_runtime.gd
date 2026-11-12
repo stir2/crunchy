@@ -17,6 +17,7 @@ const FOG_EXP_RANGE := 6.389056 # exp(2.0) - 1.0
 @export var apply_pixel_presentation: bool = true
 @export var viewport_pixels: Vector2i = Vector2i(640,360)
 @export var standalone_window_pixels: Vector2i = Vector2i(1280,720)
+var entry_checkpoint_id := ""
 var destination: Dictionary = {}
 var last_error: String = ""
 var _active: bool = false
@@ -68,7 +69,7 @@ func _ready() -> void:
 	player.damage.died.connect(_on_player_died)
 	sprite.death_animation_finished.connect(_request_death_return)
 	if auto_start:
-		await enter_entrance()
+		await enter_entrance(entry_checkpoint_id)
 
 func is_starting() -> bool:
 	return _starting
@@ -76,9 +77,8 @@ func is_starting() -> bool:
 func is_active() -> bool:
 	return _active and not _starting
 
-## Only entrance spawning is implemented. Future checkpoint APIs can supply a
-## destination dictionary with room_coords/spawn_position after loading its area.
-func enter_entrance() -> bool:
+## Resolve the extraction point independently from the selected arrival point.
+func enter_entrance(checkpoint_id: String = "") -> bool:
 	if _starting:
 		return false
 	if _active:
@@ -105,6 +105,12 @@ func enter_entrance() -> bool:
 	state.begin_day(game.day)
 	_day = state.current_day
 	_restore_vitals(state)
+	var checkpoint := {}
+	if not checkpoint_id.is_empty():
+		checkpoint = stream.specials.checkpoint_destination(checkpoint_id)
+		if checkpoint.is_empty():
+			fail_startup("That checkpoint is unavailable. Return to the stairs to choose a destination.")
+			return false
 	var entrance := stream.routes.entrance_room()
 	if stream.specials.level_at(entrance) != 1:
 		fail_startup("Configured route entrance is outside Level 1")
@@ -124,9 +130,24 @@ func enter_entrance() -> bool:
 	if destination.is_empty():
 		fail_startup("No safe 30x36 entrance landing in the existing Level 1 terrain")
 		return false
+	entrance_return.global_position = destination.spawn_position + Vector2(0, -18)
+	if not checkpoint.is_empty():
+		var coords: Vector2i = checkpoint.room_coords
+		stream.current_room = coords
+		stream.request_neighborhood(coords)
+		while not stream.neighborhood_ready(coords):
+			await get_tree().process_frame
+			if token != _serial or not is_inside_tree():
+				return false
+		await get_tree().physics_frame
+		if token != _serial:
+			return false
+		destination = AbyssEntranceSpawn.find_checkpoint(player, stream, checkpoint)
+		if destination.is_empty():
+			fail_startup("No safe landing near that checkpoint. Return to the stairs to choose a destination.")
+			return false
 	if not player.damage.is_dead(): state.exploration.begin_descent(stream.specials.world)
 	player.global_position = destination.spawn_position
-	entrance_return.global_position = destination.spawn_position+Vector2(0,-18)
 	player.reset_movement() # Temporary abilities only; never heal/reset stamina.
 	_starting = false
 	_active = true
@@ -156,6 +177,21 @@ func _configure_world(state: AbyssRoomState) -> bool:
 		if template_registry.resource_path.is_empty():
 			fail_startup("Save the runtime template registry as a .tres resource first")
 			return false
+		if game.run_length == GameController.SHORT_RUN_LENGTH:
+			configuration.global_seed = 514087
+			configuration.open_threshold = 1.0
+			route_configuration.main_route_horizontal_wander = 0.0
+			route_configuration.main_path_stretch = 1.0
+			route_configuration.branching_probability = 0.25
+			route_configuration.branch_min_length = 1
+			route_configuration.branch_max_length = 2
+			route_configuration.room_density = 0.28
+			route_configuration.secondary_branch_probability = 0.0
+			route_configuration.inter_chunk_loop_probability = 0.0
+			route_configuration.attachment_band_height = 2
+			progression_configuration.level_width_chunks = 2
+			progression_configuration.depth_chunks = 2
+			progression_configuration.fragment_interval = configuration.chunk_size.y
 		settings = AbyssRuntimeWorldSettings.capture(configs,template_registry)
 	var restored := AbyssRuntimeWorldSettings.restore_configuration(settings, configs)
 	if not restored.error.is_empty():

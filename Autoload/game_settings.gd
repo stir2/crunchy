@@ -4,6 +4,7 @@ const PATH := "user://settings.cfg"
 const AUDIO_BUSES := [&"Master", &"Music", &"SFX"]
 
 var fullscreen := false
+var show_abyss_minimap := true
 var volumes: Dictionary = {}
 var _default_gains: Dictionary = {}
 
@@ -12,6 +13,7 @@ func _ready() -> void:
 	var config := ConfigFile.new()
 	config.load(PATH)
 	fullscreen = bool(config.get_value("display", "fullscreen", false))
+	show_abyss_minimap = bool(config.get_value("display", "abyss_minimap", true))
 	for bus in AUDIO_BUSES:
 		var index := AudioServer.get_bus_index(bus)
 		_default_gains[bus] = AudioServer.get_bus_volume_db(index)
@@ -41,6 +43,7 @@ func set_volume(bus: StringName, percent: int) -> void:
 func save() -> Error:
 	var config := ConfigFile.new()
 	config.set_value("display", "fullscreen", fullscreen)
+	config.set_value("display", "abyss_minimap", show_abyss_minimap)
 	for bus in AUDIO_BUSES:
 		config.set_value("audio", bus, volumes[bus])
 	return config.save(PATH)

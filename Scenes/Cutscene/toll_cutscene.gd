@@ -138,8 +138,11 @@ class DigitReel extends Control:
 		return symbols[posmod(v, symbols.size())]
 
 	func _fit_font(sym: String) -> int:
-		if counting and sym != "∞" and sym.length() > 0:
-			return mini(base_font_size, int(cell_w * 0.9 / (0.58 * sym.length())))
+		if counting and not sym.is_empty():
+			var font := get_theme_font("font")
+			var width := font.get_string_size(sym, HORIZONTAL_ALIGNMENT_LEFT, -1, base_font_size).x
+			if width > cell_w * 0.9:
+				return maxi(1, floori(base_font_size * cell_w * 0.9 / width))
 		return base_font_size
 
 	const GHOST_MULT := [0.0, -1.0, -0.5, 0.5, 1.0]
@@ -154,9 +157,6 @@ class DigitReel extends Control:
 			var v := base + j - 1
 			var sym := _symbol_for(v)
 			var y := (float(v) - wheel) * cell_h + kick
-			# The infinity glyph sits below the font's visual center.
-			if sym == "∞":
-				y -= 19.0
 			var layers: Array = _slots[j]
 			var changed: bool = (layers[0] as Label).text != sym
 			for g in 5:
@@ -241,7 +241,7 @@ func _ready() -> void:
 
 	var quota := GameController.current_quota()
 	# Day 10 quota is 0 -> display the impossible toll: "∞"
-	_is_infinity = quota == 0 or GameController.is_day_10()
+	_is_infinity = quota == 0 or GameController.is_final_day()
 	var target := "∞" if _is_infinity else str(quota)
 
 	_setup_reels(target)
@@ -250,7 +250,6 @@ func _ready() -> void:
 
 	_build_night_backdrop()
 	housing.modulate.a = 0.0
-	housing.visible = false
 	_run_sequence()
 
 
@@ -336,6 +335,7 @@ func _build_night_backdrop() -> void:
 	_quota_caption.name = "QuotaCaption"
 	_quota_caption.text = "DAY %d · FLESH QUOTA" % GameController.day
 	_quota_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_quota_caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_quota_caption.add_theme_font_size_override("font_size", 32)
 	_quota_caption.add_theme_color_override("font_color", Color("b4aaa0"))
 	_quota_caption.modulate.a = 0.0
@@ -363,7 +363,6 @@ func _run_sequence() -> void:
 	if _phase != Phase.PRELUDE or not is_inside_tree():
 		return # skipped during the prelude
 	_phase = Phase.SPINNING
-	housing.visible = true
 	var reveal := create_tween().set_parallel(true)
 	reveal.tween_property(housing, "modulate:a", 1.0, 0.45)
 	reveal.tween_property(_quota_caption, "modulate:a", 1.0, 0.6)
@@ -389,7 +388,6 @@ func _on_reel_landed() -> void:
 
 
 func _skip_to_landed() -> void:
-	housing.visible = true
 	housing.modulate.a = 1.0
 	_quota_caption.modulate.a = 1.0
 	for reel in _reels:

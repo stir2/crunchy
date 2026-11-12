@@ -213,7 +213,7 @@ func _set_route(route: String) -> void:
 
 
 func _village_music_stopped() -> bool:
-	return GameController.is_day_10() and not GameController.boss_defeated
+	return GameController.is_final_day() and not GameController.boss_defeated
 
 
 func _looping_stream(path: String) -> AudioStreamWAV:

@@ -67,7 +67,7 @@ func connections(coords: Vector2i) -> Array[Dictionary]:
 func _nearby_progression(player_position: Vector2) -> Array[Dictionary]:
 	var candidates: Array[Dictionary] = []
 	var row := floori(player_position.y / (room_size.y*tile_pixels))
-	var band := maxi(0,floori(float(row)/service.config.FRAGMENT_INTERVAL))
+	var band := maxi(0,floori(float(row)/service.config.fragment_interval))
 	# Planner queries do not load rooms or instantiate their contents.
 	for interval in range(maxi(0,band-2),band+3):
 		for level in range(1,service.config.LEVEL_COUNT+1):
@@ -87,7 +87,8 @@ func _nearby_progression(player_position: Vector2) -> Array[Dictionary]:
 	var known: Dictionary = {}
 	for candidate in candidates: known[candidate.id] = true
 	var origin := Vector2i(floori(player_position.x/(room_size.x*tile_pixels)),row)
-	for radius in range(service.config.FRAGMENT_INTERVAL*3):
+	var search_radius := 0 if service.config.depth_chunks > 0 else service.config.fragment_interval * 3
+	for radius in range(search_radius):
 		var distances: Array[float] = []
 		for candidate in candidates:
 			if candidate.kind == "fragment": distances.append(player_position.distance_to(candidate.position))
@@ -115,11 +116,19 @@ func _nearby_progression(player_position: Vector2) -> Array[Dictionary]:
 		result.append(marker)
 	return result
 
-func snapshot(current_level: int, player_position: Vector2 = Vector2.ZERO) -> Dictionary:
+func snapshot(current_level: int, player_position: Vector2 = Vector2.ZERO, local_rooms := Rect2i(), show_hints := true) -> Dictionary:
 	var nodes: Dictionary = {}
 	var edges: Array[Dictionary] = []
 	var markers: Array[Dictionary] = []
-	var rooms := exploration.visited_rooms(service.world)
+	var rooms: Array[Vector2i] = []
+	if local_rooms.has_area():
+		for y in range(local_rooms.position.y, local_rooms.end.y):
+			for x in range(local_rooms.position.x, local_rooms.end.x):
+				var coords := Vector2i(x, y)
+				if exploration.is_visited(service.world, coords):
+					rooms.append(coords)
+	else:
+		rooms = exploration.visited_rooms(service.world)
 	var seen_edges: Dictionary = {}
 	for coords in rooms:
 		nodes[coords] = {"coords":coords,"position":room_anchor(coords),"visited":true,
@@ -128,6 +137,7 @@ func snapshot(current_level: int, player_position: Vector2 = Vector2.ZERO) -> Di
 		for connection in connections(coords):
 			var adjacent: Vector2i = connection.neighbor
 			if not nodes.has(adjacent):
+				if local_rooms.has_area(): continue
 				nodes[adjacent] = {"coords":adjacent,"position":room_anchor(adjacent),"visited":false,
 					"color":color_for(service.level_at(adjacent),current_level,false)}
 			if not nodes[adjacent].visited or seen_edges.has(connection.id): continue
@@ -146,23 +156,25 @@ func snapshot(current_level: int, player_position: Vector2 = Vector2.ZERO) -> Di
 					active = service.is_gate_unlocked(definition)
 					position = (Vector2(coords*room_size)+Vector2(room_size.x-0.5,room_size.y/2+0.5))*tile_pixels
 				"fragment":
+					if not show_hints: continue
 					if not service.state.fragments.has(definition.id): continue
 					active = true # Collection memory survives consumption.
+			if local_rooms.has_area() and definition.kind == "checkpoint" and not active: continue
 			markers.append({"kind":definition.kind,"id":definition.id,"position":position,"active":active})
 	# Collection can happen before the dwell threshold. Keep the memory dot even
 	# then, without upgrading that room to visited or revealing any of its edges.
 	var marker_ids: Dictionary = {}
 	for marker in markers: marker_ids[marker.id] = true
-	for marker in _nearby_progression(player_position):
+	for marker in (_nearby_progression(player_position) if show_hints else []):
 		if marker_ids.has(marker.id): continue
 		markers.append(marker)
 		marker_ids[marker.id] = true
-	for id: String in service.state.fragments:
+	for id: String in (service.state.fragments.keys() if show_hints else []):
 		if marker_ids.has(id) or not id.begins_with(service.world+"/level/") or not id.contains("/fragment/"): continue
 		var last := id.get_slice("/",id.get_slice_count("/")-1).split(":")
 		if last.size() != 2 or not last[0].is_valid_int() or not last[1].is_valid_int(): continue
 		markers.append({"kind":"fragment","id":id,"position":room_anchor(Vector2i(int(last[0]),int(last[1]))),"active":true})
 	var grave: Dictionary = exploration.graves.get(service.world,{})
-	if not grave.is_empty():
+	if not grave.is_empty() and (not local_rooms.has_area() or local_rooms.has_point(Vector2i(grave.x, grave.y))):
 		markers.append({"kind":"grave","id":grave.id,"position":Vector2(grave.position_x,grave.position_y),"active":true})
 	return {"nodes":nodes,"edges":edges,"markers":markers}

@@ -5,6 +5,8 @@ var progression: AbyssSpecialRooms
 var gate: Dictionary = {}
 var gate_cells: Array[Vector2i] = []
 func configure(service: AbyssSpecialRooms, definition: Dictionary) -> void:
+	# The gate actor supplies the visible art. Keep the placeholder cells collision-only.
+	self_modulate.a = 0.0
 	progression = service
 	gate = definition
 	service.state.changed.connect(_refresh)

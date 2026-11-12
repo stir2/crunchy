@@ -89,7 +89,7 @@ func _ready() -> void:
 		_pause_menu = preload("res://Scenes/Menus/pause_menu.tscn").instantiate()
 		add_child(_pause_menu)
 	monster.modulate.a = 0.0
-	var show_intro := get_parent() != get_tree().root and GameController.is_day_10() and not GameController.window_history.has("boss_intro")
+	var show_intro := get_parent() != get_tree().root and GameController.is_final_day() and not GameController.window_history.has("boss_intro")
 	var reveal := create_tween()
 	reveal.tween_property(monster, "modulate:a", 1.0, 3.2 if show_intro else 1.1).set_trans(Tween.TRANS_SINE)
 	if show_intro:

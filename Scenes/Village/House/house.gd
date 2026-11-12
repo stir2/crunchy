@@ -13,6 +13,14 @@ enum RoomPanel { STAIRS = 0, DESK = 1, WINDOW = 2 }
 var current_panel: RoomPanel = RoomPanel.DESK
 var ending_dialog: AcceptDialog
 var sleep_dialog: ConfirmationDialog
+var _descent_panel: Control
+var _destination_list: VBoxContainer
+var _destination_scroll: ScrollContainer
+var _descent_cancel: Button
+var _destination_map: AbyssMapView
+var _destination_confirm: Button
+var _destination_buttons: Dictionary = {}
+var _selected_destination := ""
 var _morning_transition: bool = false
 var _credits_active := false
 var _greeted_refugee: String = ""
@@ -81,6 +89,9 @@ func _fit_room_panels() -> void:
 	$Panels.size = get_viewport_rect().size
 
 func _ready() -> void:
+	var pointer := preload("res://Scenes/Village/House/controller_pointer.gd").new()
+	pointer.name = "ControllerPointer"
+	$UI.add_child(pointer)
 	get_viewport().size_changed.connect(_fit_room_panels)
 	_fit_room_panels()
 	_build_dialogs()
@@ -114,7 +125,8 @@ func _ready() -> void:
 	left_nav_btn.pressed.connect(_on_left_nav_pressed)
 	right_nav_btn.pressed.connect(_on_right_nav_pressed)
 
-	descend_btn.pressed.connect(_descend)
+	descend_btn.pressed.connect(_open_descent_panel)
+	_build_descent_panel(modal_theme)
 	open_blueprint_btn.pressed.connect(_open_blueprint)
 
 	village_panel.closed.connect(_close_blueprint)
@@ -152,13 +164,17 @@ func _ready() -> void:
 	_refresh_top_hud()
 	if GameController.boss_defeated:
 		call_deferred("_play_dawn")
-	elif GameController.is_day_10():
-		call_deferred("_start_day_10")
+	elif GameController.is_final_day():
+		call_deferred("_start_final_day")
 	else:
 		VillageManager.check_next_refugee()
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel") and _descent_panel.visible:
+		_close_descent_panel()
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("ui_cancel") and village_panel.visible:
 		if village_panel.assignment_target != &"":
 			village_panel._cancel_assignment()
@@ -238,10 +254,171 @@ func _close_blueprint() -> void:
 	village_panel.hide()
 
 
-func _descend() -> void:
+func _build_descent_panel(panel_theme: Theme) -> void:
+	var shade := ColorRect.new()
+	shade.color = Color(0.09, 0.05, 0.11, 0.65)
+	$UI.add_child(shade)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_descent_panel = shade
+	var center := CenterContainer.new()
+	shade.add_child(center)
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var panel := PanelContainer.new()
+	panel.theme = panel_theme
+	panel.custom_minimum_size.x = 1050
+	center.add_child(panel)
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 16)
+	panel.add_child(content)
+	var title := Label.new()
+	title.text = "Where will you descend?"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	content.add_child(title)
+	var destinations := HBoxContainer.new()
+	destinations.add_theme_constant_override("separation", 16)
+	content.add_child(destinations)
+	var scroll := ScrollContainer.new()
+	_destination_scroll = scroll
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true
+	scroll.custom_minimum_size.x = 300
+	destinations.add_child(scroll)
+	_destination_list = VBoxContainer.new()
+	_destination_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_destination_list.add_theme_constant_override("separation", 8)
+	scroll.add_child(_destination_list)
+	_destination_map = AbyssMapView.new()
+	_destination_map.custom_minimum_size = Vector2(640, 420)
+	_destination_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_destination_map.clip_contents = true
+	_destination_map.show_player = false
+	_destination_map.pin_gates = false
+	_destination_map.checkpoint_selected.connect(_select_descent_destination)
+	destinations.add_child(_destination_map)
+	var map_help := Label.new()
+	map_help.text = "Click an activated checkpoint to select it. Drag to pan and scroll to zoom."
+	map_help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	content.add_child(map_help)
+	_destination_confirm = Button.new()
+	_destination_confirm.pressed.connect(func():
+		_close_descent_panel()
+		_descend(_selected_destination))
+	content.add_child(_destination_confirm)
+	var cancel := Button.new()
+	_descent_cancel = cancel
+	cancel.text = "Back to stairs"
+	cancel.pressed.connect(_close_descent_panel)
+	content.add_child(cancel)
+	shade.hide()
+
+
+func _open_descent_panel() -> void:
+	if GameController.is_final_day():
+		_descend()
+		return
+	if descend_btn.disabled or _descent_panel.visible:
+		return
+	for child in _destination_list.get_children():
+		_destination_list.remove_child(child)
+		child.queue_free()
+	_destination_buttons.clear()
+	var entrance := _add_descent_destination("Abyss Entrance", "")
+	var settings := GameController.abyss_room_state.world_settings
+	var progression := GameController.abyss_progression_state
+	var region := AbyssRegionConfig.new()
+	var route := AbyssRouteConfig.new()
+	var rules := AbyssProgressionConfig.new()
+	var configs: Array[Resource] = [region, route, AbyssTerrainConfig.new(), rules]
+	if not AbyssRuntimeWorldSettings.restore_configuration(settings, configs).error.is_empty():
+		_descend()
+		return
+	var routes := AbyssRouteGenerator.new(region, route, rules)
+	var specials := AbyssSpecialRooms.new(routes, rules, progression)
+	var model := AbyssMapModel.new(specials, GameController.abyss_room_state.exploration, region.room_size)
+	var entrance_position := model.room_center(routes.entrance_room())
+	var markers: Array[Dictionary] = []
+	var checkpoints := progression.activated_checkpoints()
+	checkpoints.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if a.level != b.level:
+			return a.level < b.level
+		if a.y != b.y:
+			return a.y < b.y
+		return a.x < b.x)
+	var count_by_level := {}
+	for checkpoint: Dictionary in checkpoints:
+		var level := int(checkpoint.level)
+		var destination := specials.checkpoint_destination(checkpoint.id)
+		if destination.is_empty():
+			continue
+		markers.append({"kind": "checkpoint", "active": true, "id": checkpoint.id,
+			"position": model.room_anchor(destination.room_coords)})
+		var count := int(count_by_level.get(level, 0)) + 1
+		count_by_level[level] = count
+		_add_descent_destination("Level %d  /  Checkpoint %d" % [level, count], checkpoint.id)
+	if _destination_list.get_child_count() == 1:
+		_descend()
+		return
+	var buttons := _destination_list.get_children()
+	_destination_scroll.custom_minimum_size.y = minf(240, buttons.size() * 56 - 8)
+	buttons.append(_destination_confirm)
+	buttons.append(_descent_cancel)
+	for i in buttons.size():
+		var button: Button = buttons[i]
+		button.focus_next = button.get_path_to(buttons[(i + 1) % buttons.size()])
+		button.focus_previous = button.get_path_to(buttons[posmod(i - 1, buttons.size())])
+		button.focus_neighbor_bottom = button.focus_next
+		button.focus_neighbor_top = button.focus_previous
+		button.focus_neighbor_left = NodePath(".")
+		button.focus_neighbor_right = NodePath(".")
+	var graph := model.snapshot(1, entrance_position, Rect2i(), false)
+	# Saved activation can precede the discovery dwell threshold.
+	graph.markers = graph.markers.filter(func(marker: Dictionary) -> bool:
+		return not _destination_buttons.has(marker.id))
+	graph.markers.append_array(markers)
+	_destination_map.selectable_checkpoints = _destination_buttons
+	var room_pixels := float(region.room_size.x * model.tile_pixels)
+	var bounds := Rect2(entrance_position, Vector2.ZERO)
+	for marker in markers:
+		bounds = bounds.expand(marker.position)
+	var fit := _destination_map.custom_minimum_size - Vector2(64, 64)
+	_destination_map.map_zoom = minf(1.0, minf(fit.x / maxf(1.0, bounds.size.x),
+		fit.y / maxf(1.0, bounds.size.y)) * room_pixels / _destination_map.room_spacing)
+	_destination_map.minimum_zoom = minf(0.35, _destination_map.map_zoom)
+	_destination_map.set_graph(graph, room_pixels, bounds.get_center())
+	_destination_map.recenter()
+	_descent_panel.show()
+	_select_descent_destination("")
+	entrance.grab_focus()
+
+
+func _add_descent_destination(label: String, checkpoint_id: String) -> Button:
+	var button := Button.new()
+	button.text = label
+	button.custom_minimum_size.y = 48
+	button.toggle_mode = true
+	button.pressed.connect(_select_descent_destination.bind(checkpoint_id))
+	_destination_buttons[checkpoint_id] = button
+	_destination_list.add_child(button)
+	return button
+
+
+func _select_descent_destination(checkpoint_id: String) -> void:
+	_selected_destination = checkpoint_id
+	for id: String in _destination_buttons:
+		_destination_buttons[id].set_pressed_no_signal(id == checkpoint_id)
+	_destination_map.select_checkpoint(checkpoint_id)
+	_destination_confirm.text = "Descend here  /  " + _destination_buttons[checkpoint_id].text
+
+
+func _close_descent_panel() -> void:
+	_descent_panel.hide()
+	descend_btn.grab_focus()
+
+
+func _descend(checkpoint_id: String = "") -> void:
 	if _morning_transition or DialogueManager.is_busy() or GameController.night_in_progress or refugee_modal.visible:
 		return
-	if GameController.is_day_10():
+	if GameController.is_final_day():
 		if GameController.monster_missing and not GameController.boss_defeated:
 			get_tree().current_scene.transition_to_scene("res://Scenes/Boss/boss_arena.tscn", 0.95)
 		return
@@ -257,14 +434,14 @@ func _descend() -> void:
 			return
 	if GameController.trips_left <= 0:
 		return
-	main.change_scene(ABYSS_SCENE)
+	main.change_scene(ABYSS_SCENE, checkpoint_id)
 	var runtime := main.active_scene as AbyssRuntime
 	if runtime != null:
 		runtime.ready_for_play.connect(GameController.use_trip.unbind(1), CONNECT_ONE_SHOT)
 
 
 func _on_sleep_requested() -> void:
-	if _morning_transition or DialogueManager.is_busy() or GameController.is_day_10() or GameController.night_in_progress or refugee_modal.visible:
+	if _morning_transition or DialogueManager.is_busy() or GameController.is_final_day() or GameController.night_in_progress or refugee_modal.visible:
 		return
 	var preview := VillageManager.night_preview()
 	if GameController.day == 1 and not GameController.window_history.has(DAY_ONE_TUTORIAL.SKIPPED):
@@ -288,14 +465,14 @@ func _sleep() -> void:
 
 
 func _refresh_top_hud() -> void:
-	top_day_label.text = "Day %d/%d" % [GameController.day, GameController.RUN_LENGTH]
+	top_day_label.text = "Day %d/%d" % [GameController.day, GameController.run_length]
 	top_flesh_label.text = "%d / %d Flesh" % [GameController.flesh, GameController.current_quota()]
 	top_rations_label.text = "%d Rations" % GameController.rations
 	if top_potions_label != null:
 		top_potions_label.text = "%d Potions" % GameController.potions
 	top_trips_label.text = "%d/%d Trips" % [GameController.trips_left, GameController.TRIPS_PER_DAY]
-	if GameController.is_day_10():
-		top_flesh_label.text = "Toll ended" if GameController.boss_defeated else "Toll: ∞"
+	if GameController.is_final_day():
+		top_flesh_label.text = "Toll ended" if GameController.boss_defeated else "Toll: ÃƒÂ¢Ã‹â€ Ã…Â¾"
 		top_trips_label.text = "The village is safe" if GameController.boss_defeated else ("Investigate the abyss" if GameController.monster_missing else "Check the window")
 	top_hearts.set_display_health(GameController.health, int(GameController.stats.get("max_health", 6)))
 	top_vitals_label.text = "Stamina: %d/%d  |  Village Health: %d%%" % [
@@ -313,25 +490,25 @@ func _refresh_panel_content() -> void:
 	open_blueprint_btn.disabled = talking or _waiting_for_window()
 	if stairs_trips_label != null:
 		stairs_trips_label.text = "Trips Remaining Today: %d / %d" % [GameController.trips_left, GameController.TRIPS_PER_DAY]
-		if GameController.is_day_10():
+		if GameController.is_final_day():
 			stairs_trips_label.text = "The monster has fallen." if GameController.boss_defeated else ("The sound came from down here." if GameController.monster_missing else "Check the window first.")
 	if descend_btn != null:
 		var can_descend := GameController.trips_left > 0
-		if GameController.is_day_10():
+		if GameController.is_final_day():
 			can_descend = GameController.monster_missing and not GameController.boss_defeated
 		descend_btn.disabled = talking or _morning_transition or GameController.night_in_progress or not can_descend
-		descend_btn.text = "Run complete" if GameController.boss_defeated else ("Investigate the abyss" if GameController.is_day_10() else "DESCEND")
+		descend_btn.text = "Run complete" if GameController.boss_defeated else ("Investigate the abyss" if GameController.is_final_day() else "DESCEND")
 	if window_button != null:
-		window_button.visible = not GameController.is_day_10() and not talking
-		listen_button.visible = not GameController.is_day_10() and not talking
+		window_button.visible = not GameController.is_final_day() and not talking
+		listen_button.visible = not GameController.is_final_day() and not talking
 		window_button.disabled = talking or GameController.night_in_progress
 		listen_button.disabled = talking or GameController.night_in_progress
 	if village_panel != null:
-		village_panel.sleep_button.disabled = talking or GameController.is_day_10() or GameController.night_in_progress
+		village_panel.sleep_button.disabled = talking or GameController.is_final_day() or GameController.night_in_progress
 
 
 func _on_refugee_waiting(candidate: Dictionary) -> void:
-	if GameController.is_day_10() or _morning_transition:
+	if GameController.is_final_day() or _morning_transition:
 		return
 	refugee_portrait.texture = PORTRAITS.texture_for(String(candidate.get("name", "Traveler")))
 	var is_bum: bool = candidate.get("is_bum", false)
@@ -520,7 +697,7 @@ func _build_dialogs() -> void:
 
 
 func _update_window_ambience() -> void:
-	if current_panel == RoomPanel.WINDOW and not GameController.is_day_10() and not GameController.boss_defeated:
+	if current_panel == RoomPanel.WINDOW and not GameController.is_final_day() and not GameController.boss_defeated:
 		_window_ambience_timer.start(0.85)
 	else:
 		_window_ambience_timer.stop()
@@ -578,10 +755,10 @@ func _listen_outside() -> void:
 
 
 func _waiting_for_window() -> bool:
-	return GameController.is_day_10() and not GameController.monster_missing
+	return GameController.is_final_day() and not GameController.monster_missing
 
 
-func _start_day_10() -> void:
+func _start_final_day() -> void:
 	if not is_inside_tree() or DialogueManager.is_busy():
 		return
 	if not GameController.monster_missing and not GameController.window_history.has("day_10_morning"):
@@ -589,7 +766,7 @@ func _start_day_10() -> void:
 
 
 func _refresh_window_art() -> void:
-	$Panels/WindowPanel/TextureRect.texture = WINDOW_ART.texture_for(GameController.day, GameController.boss_defeated)
+	$Panels/WindowPanel/TextureRect.texture = WINDOW_ART.texture_for(GameController.day, GameController.boss_defeated, GameController.run_length)
 
 
 func _check_window_story() -> void:
@@ -598,7 +775,7 @@ func _check_window_story() -> void:
 	if _waiting_for_window():
 		DialogueManager.talk_to_monster()
 		return
-	var stage := WINDOW_ART.stage(GameController.day, GameController.boss_defeated)
+	var stage := WINDOW_ART.stage(GameController.day, GameController.boss_defeated, GameController.run_length)
 	if stage >= 1 and stage <= 3:
 		var id := "window_approach_%d" % stage
 		if not GameController.window_history.has(id):

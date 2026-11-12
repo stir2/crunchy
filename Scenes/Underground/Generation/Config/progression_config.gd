@@ -11,6 +11,20 @@ const LEVEL_COUNT := 3
 const FRAGMENT_INTERVAL := 50
 const EXTRA_FRAGMENT_PROBABILITY := 1.0 / 200.0
 const FRAGMENTS_PER_KEY := 2
+# Zero depth retains the original unbounded campaign.
+@export var depth_chunks := 0
+@export var fragment_interval := FRAGMENT_INTERVAL
+
+# The deeper band's checkpoint and both cross-level passages use this row.
+func compact_gate_row() -> int:
+	return fragment_interval + 3
+
+
+func contains_chunk(coords: Vector2i) -> bool:
+	return depth_chunks == 0 or (coords.y >= 0 and coords.y < depth_chunks and level_at_chunk(coords.x) != 0)
+
+
+
 func level_at_chunk(x: int) -> int:
 	var index := floori(float(x - first_chunk_x) / level_width_chunks)
 	return index + 1 if index >= 0 and index < LEVEL_COUNT else 0
@@ -21,4 +35,4 @@ func same_level(a: int, b: int) -> bool:
 	return floori(float(a - first_chunk_x) / level_width_chunks) == floori(float(b - first_chunk_x) / level_width_chunks)
 
 func is_valid() -> bool:
-	return checkpoint_min_spacing_rooms >= 1 and level_width_chunks >= 2 and is_finite(checkpoint_probability) and checkpoint_probability >= 0 and checkpoint_probability <= 1
+	return depth_chunks >= 0 and fragment_interval > 0 and checkpoint_min_spacing_rooms >= 1 and level_width_chunks >= 2 and is_finite(checkpoint_probability) and checkpoint_probability >= 0 and checkpoint_probability <= 1

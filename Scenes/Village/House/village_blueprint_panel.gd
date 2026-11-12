@@ -321,7 +321,7 @@ func refresh() -> void:
 	if get_viewport().gui_is_dragging():
 		return
 	var preview := VillageManager.night_preview()
-	var quota := "closed" if GameController.boss_defeated else ("∞" if GameController.is_day_10() else str(GameController.current_quota()))
+	var quota := "closed" if GameController.boss_defeated else ("∞" if GameController.is_final_day() else str(GameController.current_quota()))
 	_status.text = "DAY %d     Flesh %d / %s     Rations %d     Potions %d     Population %d     Village health %d%%" % [GameController.day, GameController.flesh, quota, GameController.rations, GameController.potions, VillageManager.get_population(), GameController.village_health]
 	_status.add_theme_color_override("font_color", INK)
 	for id in _markers:
@@ -347,13 +347,13 @@ func refresh() -> void:
 		_bums.add_child(_portrait_card(worker, false))
 	if _bums.get_child_count() == 0:
 		_bums.add_child(_label("No bums.", 28))
-	sleep_button.disabled = DialogueManager.is_busy() or GameController.is_day_10() or GameController.night_in_progress
+	sleep_button.disabled = DialogueManager.is_busy() or GameController.is_final_day() or GameController.night_in_progress
 	var outcome := "Toll met. Everyone survives the toll." if preview.toll_met else (
 		"You choose who is taken." if preview.player_chooses else "The monster chooses who is taken.")
 	var food := int(preview.rations + preview.expected_production + preview.expected_bonus - preview.food_cost)
 	var food_result := "%d rations after dinner" % food if food >= 0 else "Dinner is short by %d rations" % -food
 	sleep_button.tooltip_text = "%s\n%s" % [outcome, food_result]
-	if GameController.is_day_10():
+	if GameController.is_final_day():
 		sleep_button.tooltip_text = "The monster has fallen." if GameController.boss_defeated else "Visit the window and investigate the Abyss."
 
 

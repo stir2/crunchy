@@ -84,6 +84,8 @@ func parent_chunk(coords: Vector2i) -> Vector2i:
 		return coords + (Vector2i(signi(finish - coords.x), 0) if coords.x != finish else Vector2i.DOWN)
 	var band := floori(float(coords.y) / _routes.attachment_band_height)
 	var hub_y := band * _routes.attachment_band_height + _hash(Vector2i(0, band), 191) % _routes.attachment_band_height
+	if progression != null and progression.depth_chunks > 0:
+		hub_y = mini(hub_y, progression.depth_chunks - 1)
 	var hub_x := _column(hub_y, coords.x)
 	if coords.y != hub_y and (coords.x == hub_x or _hash(coords, 197) % 100 < 48):
 		return coords + Vector2i(0, signi(hub_y - coords.y))
@@ -107,7 +109,8 @@ func boundary_contracts(coords: Vector2i) -> Array[Dictionary]:
 	var origin := coords * _config.chunk_size
 	for side in range(4):
 		var neighbor: Vector2i = coords + DIRS[side]
-		if progression != null and not progression.same_level(coords.x, neighbor.x):
+		if progression != null and (not progression.same_level(coords.x, neighbor.x)
+			or not progression.contains_chunk(neighbor)):
 			continue
 		var canonical := coords if side == 1 or side == 2 else neighbor
 		var spine := _is_main_transition(coords, neighbor)
@@ -297,6 +300,9 @@ func get_chunk(coords: Vector2i) -> AbyssChunkData:
 		return _chunks[coords]
 	var chunk := regions.get_chunk(coords)
 	chunk.route_config = _routes
+	if progression != null and not progression.contains_chunk(coords):
+		_chunks[coords] = chunk
+		return chunk
 	var rect := Rect2i(coords * _config.chunk_size, _config.chunk_size)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = _hash(coords, 307)
@@ -307,6 +313,9 @@ func get_chunk(coords: Vector2i) -> AbyssChunkData:
 	if is_main_chunk(coords):
 		var entry := Vector2i.ZERO
 		var exit := Vector2i.ZERO
+		if progression != null and progression.depth_chunks > 0:
+			entry = Vector2i(entrance_for_band(coords.y, coords.x).x, rect.position.y)
+			exit = Vector2i(entry.x, rect.end.y - 1)
 		for contract in contracts:
 			if contract.kind == AbyssRouteConnection.Kind.MAIN:
 				if regions.room_to_chunk(contract.b) == parent_chunk(coords):
@@ -325,8 +334,18 @@ func get_chunk(coords: Vector2i) -> AbyssChunkData:
 				root = contract.a
 	var network: Dictionary = _occupied(edges, rect)
 	network[root] = true
-	for contract in contracts:
-		var start: Vector2i = contract.a
+	var attachments := contracts.duplicate()
+	if progression != null and progression.depth_chunks > 0:
+		var gate_y := progression.compact_gate_row()
+		if gate_y >= rect.position.y and gate_y < rect.end.y:
+			var level := progression.level_at_chunk(coords.x)
+			var bounds := progression.room_bounds(level, _config.chunk_size.x)
+			if level > 1 and rect.position.x == bounds.x:
+				attachments.append({"a": Vector2i(bounds.x, gate_y)})
+			if level < progression.LEVEL_COUNT and rect.end.x == bounds.y:
+				attachments.append({"a": Vector2i(bounds.y - 1, gate_y)})
+	for attachment in attachments:
+		var start: Vector2i = attachment.a
 		if not network.has(start):
 			var target := root
 			var distance := 2147483647
@@ -348,7 +367,8 @@ func get_chunk(coords: Vector2i) -> AbyssChunkData:
 			_append_path(edges, path, AbyssRouteConnection.Kind.ACCESS)
 			for pos in path:
 				network[pos] = true
-		_add(edges, contract.a, contract.b, contract.kind)
+		if attachment.has("b"):
+			_add(edges, start, attachment.b, attachment.kind)
 	# Stages 3 and 4: bounded branch trees, then deliberate loop edges.
 	var branches := _grow_branches(edges, rect, rng)
 	if _routes.branching_probability > 0:

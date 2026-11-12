@@ -123,12 +123,12 @@ func run() -> void:
 	var house: Node = host.active_scene
 	house._descend()
 	var abyss := host.active_scene as AbyssRuntime
-	check(game.trips_left == 3, "Trip spent before loading finished")
+	check(game.trips_left == 5, "Trip spent before loading finished")
 	if abyss == null or not await wait_for(abyss.is_active):
 		check(false, "Descent failed")
 		finish()
 		return
-	check(game.trips_left == 2, "Successful entry did not consume exactly one trip")
+	check(game.trips_left == 4, "Successful entry did not consume exactly one trip")
 	check(abyss.player.health.max_health == 8 and abyss.player.stamina.max_stamina == 115, "Village vitals did not reach the Abyss")
 	check(abyss.player.combat.attack_damage == 3, "Blacksmith bonus or Abyss baseline incorrect")
 	check(is_equal_approx(abyss.player.stamina.regeneration_per_second, 3.3), "Abyss Farmer percentage incorrect")
@@ -149,6 +149,9 @@ func run() -> void:
 		finish()
 		return
 	check(game.flesh == 12, "Extraction did not bank the toll")
+	# Classic saves from before campaign selection have neither compact layout field.
+	game.abyss_room_state.world_settings["3"].erase("depth_chunks")
+	game.abyss_room_state.world_settings["3"].erase("fragment_interval")
 	check(saves.save_game(), "Current layout save failed")
 	host.change_scene(MENU)
 	check(host.continue_game(), "Current layout Continue failed")
@@ -156,17 +159,29 @@ func run() -> void:
 		check(false, "Continue did not return to the village")
 		finish()
 		return
-	check(game.flesh == 12 and game.trips_left == 2, "Continue lost daily progress")
+	check(game.flesh == 12 and game.trips_left == 4, "Continue lost daily progress")
 	host.active_scene._on_sleep_requested()
+	var day_one_preview: ConfirmationDialog = host.active_scene.sleep_dialog
+	check(day_one_preview.visible and day_one_preview.dialog_text.contains("The toll is met."),
+		"Day 1 sleep preview did not show a met toll")
+	day_one_preview.get_ok_button().pressed.emit()
 	if not await wait_for(func(): return host.active_path == host.CUTSCENE_SCENE):
 		check(false, "Sleep did not reach the morning cutscene")
 		finish()
 		return
+	var morning: Node = host.active_scene
+	if await wait_for(func(): return not morning._intro_running):
+		var advance := InputEventAction.new()
+		advance.action = &"ui_accept"
+		advance.pressed = true
+		morning._unhandled_input(advance)
+		if host.active_scene == morning:
+			morning._unhandled_input(advance)
 	if not await wait_for(func(): return host.active_path == HOUSE and not host._transitioning):
 		check(false, "Morning cutscene did not reach the village")
 		finish()
 		return
-	check(game.day == 2 and game.flesh == 0 and game.trips_left == 3, "Daily progress did not reset")
+	check(game.day == 2 and game.flesh == 0 and game.trips_left == 5, "Daily progress did not reset")
 
 	while host.active_scene.refugee_modal.visible:
 		host.active_scene._on_turn_away_refugee_pressed()
@@ -192,7 +207,7 @@ func run() -> void:
 	check(not saves.load_game() and not saves.last_error.is_empty(), "Legacy layout passed Continue validation")
 	host.active_scene._descend()
 	abyss = host.active_scene as AbyssRuntime
-	check(abyss != null and not abyss.last_error.is_empty() and game.trips_left == 3, "Failed descent consumed a trip or hid the error")
+	check(abyss != null and not abyss.last_error.is_empty() and game.trips_left == 5, "Failed descent consumed a trip or hid the error")
 	if abyss == null:
 		finish()
 		return
@@ -248,7 +263,7 @@ func run() -> void:
 			break
 		for enemy: Node in waves._live.duplicate():
 			enemy.take_damage(999)
-		await process_frame
+		await physics_frame
 	check(mixed_spawns == waves.FORMATIONS[0] + waves.FORMATIONS[1] and not waves.active, "Mixed summon encounter did not complete")
 	hit.amount = 148
 	monster.health.take_damage(hit)

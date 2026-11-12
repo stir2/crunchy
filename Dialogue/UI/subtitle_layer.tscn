@@ -10,7 +10,7 @@
 [ext_resource type="AudioStream" path="res://addons/dialogic/Example Assets/sound-effects/typing4.wav" id="12_type_4"]
 [ext_resource type="AudioStream" path="res://addons/dialogic/Example Assets/sound-effects/typing5.wav" id="13_type_5"]
 
-[ext_resource type="FontFile" path="res://Assets/Fonts/Alkhemikal.ttf" id="5_alkhemikal"]
+[ext_resource type="FontVariation" path="res://Assets/Fonts/AlkhemikalUI.tres" id="5_alkhemikal"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_frame"]
 bg_color = Color(0.025, 0.025, 0.03, 0.93)

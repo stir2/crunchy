@@ -25,30 +25,31 @@ func _exit_tree() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel") and active_path != MENU_SCENE and not _transitioning:
+	if (event.is_action_pressed("ui_cancel") or event.is_action_pressed("Controller Pause")) and active_path != MENU_SCENE and not _transitioning:
 		pause_menu.toggle()
 		get_viewport().set_input_as_handled()
 
 
-func start_new_game() -> void:
+func start_new_game(length: int = GameController.RUN_LENGTH) -> void:
 	if _transitioning:
 		return
 	SoundManager.queue_start_cue()
+	GameController.run_length = length
 	VillageManager.start_new_run()
 	transition_to_scene(CUTSCENE_SCENE, 0.85)
 
 
-func continue_game() -> bool:
+func continue_game(length: int = GameController.RUN_LENGTH) -> bool:
 	if _transitioning:
 		return false
-	if not SaveManager.load_game():
+	if not SaveManager.load_game(length):
 		return false
 	SoundManager.queue_start_cue()
 	_continue_intro()
 	return true
 
 
-func change_scene(path: String) -> void:
+func change_scene(path: String, checkpoint_id: String = "") -> void:
 	var packed := load(path) as PackedScene
 	if packed == null:
 		push_error("change_scene: could not load %s" % path)
@@ -61,6 +62,8 @@ func change_scene(path: String) -> void:
 	DebugMenu.close()
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	active_scene = packed.instantiate()
+	if active_scene is AbyssRuntime:
+		active_scene.entry_checkpoint_id = checkpoint_id
 	add_child(active_scene)
 
 

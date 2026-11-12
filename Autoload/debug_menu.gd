@@ -173,16 +173,18 @@ func _build_ui() -> void:
 	_trips_spin = _add_var_row(grid, "Trips Left:", 0, 10, 1, func(v):
 		GameController.trips_left = int(v)
 	)
-	var trips_btn := _quick_btn("Reset (3)", func(): GameController.trips_left = 3; _refresh_values())
+	var trips_btn := _quick_btn("Reset (%d)" % GameController.TRIPS_PER_DAY, func():
+		GameController.trips_left = GameController.TRIPS_PER_DAY
+		_refresh_values())
 	grid.add_child(trips_btn)
 
 	# Day
-	_day_spin = _add_var_row(grid, "Day (1-10):", 1, 10, 1, func(v):
+	_day_spin = _add_var_row(grid, "Day:", 1, GameController.run_length, 1, func(v):
 		GameController.day = int(v)
 		_refresh_values()
 	)
 	var next_day_btn := _quick_btn("Next Day", func():
-		GameController.day = mini(GameController.day + 1, 10)
+		GameController.day = mini(GameController.day + 1, GameController.run_length)
 		_refresh_values()
 	)
 	grid.add_child(next_day_btn)
@@ -364,7 +366,10 @@ func _refresh_values() -> void:
 	if _trips_spin != null:
 		_trips_spin.value = GameController.trips_left
 	if _day_spin != null:
+		_day_spin.set_block_signals(true)
+		_day_spin.max_value = GameController.run_length
 		_day_spin.value = GameController.day
+		_day_spin.set_block_signals(false)
 	if _vhealth_spin != null:
 		_vhealth_spin.value = GameController.village_health
 	if _hp_spin != null:

@@ -34,7 +34,7 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if panel.visible and event.is_action_pressed("ui_cancel"):
+	if panel.visible and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("Controller Pause")):
 		if leave_dialog.visible:
 			leave_dialog.hide()
 		else:

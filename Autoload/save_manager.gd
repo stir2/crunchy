@@ -1,7 +1,8 @@
 extends Node
-## One local save slot. Saves are made at home, between night resolutions.
+## One local save slot per campaign. Saves are made at home, between night resolutions.
 
 const SAVE_PATH := "user://save.json"
+const SHORT_SAVE_PATH := "user://save_short.json"
 const VERSION := 1
 
 var last_error := ""
@@ -19,15 +20,19 @@ func has_save() -> bool:
 	return not _read_save().is_empty()
 
 
-func menu_preview() -> Dictionary:
-	var data := _read_save()
+func menu_preview(length: int = GameController.run_length) -> Dictionary:
+	var data := _read_save(length)
 	if data.is_empty():
 		return {}
 	return {"day": int(data.game.day), "boss_defeated": data.get("boss_defeated", false)}
 
 
-func has_save_file() -> bool:
-	return FileAccess.file_exists(save_path)
+func _slot(length: int) -> String:
+	return SHORT_SAVE_PATH if length == GameController.SHORT_RUN_LENGTH else save_path
+
+
+func has_save_file(length: int = GameController.run_length) -> bool:
+	return FileAccess.file_exists(_slot(length))
 
 
 func save_game() -> bool:
@@ -38,6 +43,7 @@ func save_game() -> bool:
 	var game := {}
 	for key in ["day", "trips_left", "flesh", "rations", "potions", "village_health", "health", "stamina"]:
 		game[key] = GameController.get(key)
+	var path := _slot(GameController.run_length)
 	var data := {
 		"version": VERSION,
 		"game": game,
@@ -48,8 +54,10 @@ func save_game() -> bool:
 		"boss_defeated": GameController.boss_defeated,
 		"window_history": GameController.window_history.duplicate(),
 	}
+	if GameController.run_length == GameController.SHORT_RUN_LENGTH:
+		data["run_length"] = GameController.SHORT_RUN_LENGTH
 	# Write beside the slot first so a failed write leaves the old save intact.
-	var file := FileAccess.open(save_path + ".tmp", FileAccess.WRITE)
+	var file := FileAccess.open(path + ".tmp", FileAccess.WRITE)
 	if file == null:
 		last_error = "Could not open the save file."
 		return false
@@ -58,17 +66,18 @@ func save_game() -> bool:
 	var error := file.get_error()
 	file.close()
 	if error == OK:
-		error = DirAccess.rename_absolute(save_path + ".tmp", save_path)
+		error = DirAccess.rename_absolute(path + ".tmp", path)
 	if error != OK:
 		last_error = "Could not write the save file (%s)." % error_string(error)
 	return error == OK
 
 
-func load_game() -> bool:
-	var data := _read_save()
+func load_game(length: int = GameController.run_length) -> bool:
+	var data := _read_save(length)
 	if data.is_empty():
 		return false
 	# Restore bonuses before vitals; loading must not grant morning potions again.
+	GameController.run_length = length
 	VillageManager.load_save_data(data["village"])
 	GameController.night_in_progress = false
 	for key in data["game"]:
@@ -86,15 +95,18 @@ func load_game() -> bool:
 	return true
 
 
-func _read_save() -> Dictionary:
+func _read_save(length: int = GameController.run_length) -> Dictionary:
 	last_error = "Save missing or invalid."
-	if not has_save_file():
+	if not has_save_file(length):
 		return {}
 	var parser := JSON.new()
-	if parser.parse(FileAccess.get_file_as_string(save_path)) != OK:
+	if parser.parse(FileAccess.get_file_as_string(_slot(length))) != OK:
 		return {}
 	var value: Variant = parser.data
 	if not value is Dictionary or value.get("version") != VERSION:
+		return {}
+	if value.get("run_length", GameController.RUN_LENGTH) != length:
+		last_error = "This save belongs to a different campaign."
 		return {}
 	if not value.get("game") is Dictionary or not value.get("village") is Dictionary or not value.get("abyss") is String:
 		return {}
@@ -115,7 +127,7 @@ func _read_save() -> Dictionary:
 		var number: Variant = game.get(key)
 		if not (number is int or number is float) or not is_finite(float(number)) or number < 0 or number != int(number):
 			return {}
-	if game.day < 1 or game.day > 10 or game.trips_left > 3 or game.village_health > 100:
+	if game.day < 1 or game.day > length or game.trips_left > GameController.TRIPS_PER_DAY or game.village_health > 100:
 		return {}
 	if not _valid_village(value["village"]):
 		return {}

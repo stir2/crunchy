@@ -28,20 +28,31 @@ offset_top = 12.0
 mouse_filter = 2
 theme_override_font_sizes/font_size = 16
 text = "ABYSS"
-[node name="Legend" type="Label" parent="Panel"]
+[node name="Legend" type="VBoxContainer" parent="Panel"]
 layout_mode = 1
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 12.0
-offset_top = -52.0
+offset_top = -58.0
 offset_right = -12.0
 offset_bottom = -8.0
 mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="Controls" type="Label" parent="Panel/Legend"]
+layout_mode = 2
+mouse_filter = 2
 theme_override_font_sizes/font_size = 16
-text = "M / Esc: close   ·   Drag / movement keys: pan   ·   Wheel: zoom
-◇ Checkpoint   ▯ Gate   ● Collected fragment   † Grave"
+text = "M / Esc: close   |   Drag / movement keys: pan   |   Wheel: zoom   |   N: toggle minimap in game"
 horizontal_alignment = 1
+
+[node name="Markers" type="HBoxContainer" parent="Panel/Legend"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 20
+alignment = 1
+
 [node name="Center" type="Button" parent="Panel"]
 layout_mode = 1
 anchor_left = 1.0

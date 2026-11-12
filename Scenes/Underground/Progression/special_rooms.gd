@@ -19,7 +19,8 @@ func _init(generator: AbyssRouteGenerator, settings: AbyssProgressionConfig, mut
 func _settings() -> AbyssRegionConfig:
 	return routes.get_chunk(Vector2i.ZERO).config
 func level_at(room: Vector2i) -> int:
-	return config.level_at_chunk(routes.regions.room_to_chunk(room).x)
+	var chunk := routes.regions.room_to_chunk(room)
+	return config.level_at_chunk(chunk.x) if config.contains_chunk(chunk) else 0
 func level_key(level: int) -> String:
 	return "%s/level/%d" % [world,level]
 func _id(kind: String, level: int, room: Vector2i) -> String:
@@ -40,18 +41,31 @@ func _band(level: int, band: int) -> Dictionary:
 	var best := INF
 	var guaranteed: Dictionary = {}
 	var gate_best := INF
+	var checkpoint := Vector2i(bounds.x - 1, -1)
+	var checkpoint_best := INF
+	var band_start := band * config.fragment_interval
 	var gate: Dictionary = {}
-	for y in range(band * config.FRAGMENT_INTERVAL, (band + 1) * config.FRAGMENT_INTERVAL):
+	for y in range(band * config.fragment_interval, (band + 1) * config.fragment_interval):
 		for x in range(bounds.x,bounds.y):
 			var coords := Vector2i(x,y)
 			var room := routes.regions.get_room(coords)
+			if config.depth_chunks > 0 and y == band_start + 3 and routes.get_room(coords).is_main_route:
+				var checkpoint_rank := _roll(coords, "checkpoint")
+				if checkpoint_rank < checkpoint_best:
+					checkpoint_best = checkpoint_rank
+					checkpoint = coords
 			# Eligible fragments are on the existing connected logical network.
 			if room.region == AbyssRoomData.Region.PACKED:
 				var rank := _roll(coords,"guaranteed_fragment")
+				if config.depth_chunks > 0:
+					if y == band_start + 3:
+						continue
+					if not routes.get_room(coords).is_main_route:
+						rank += 1.0
 				if rank < best and not routes.get_room(coords).required_connections.is_empty():
 					best = rank
 					guaranteed = _definition("fragment",level,coords)
-		if level < config.LEVEL_COUNT:
+		if level < config.LEVEL_COUNT and (config.depth_chunks == 0 or y == config.compact_gate_row()):
 			var left := Vector2i(bounds.y - 1,y)
 			if routes.regions.get_room(left).region == AbyssRoomData.Region.PACKED and routes.regions.get_room(left + Vector2i.RIGHT).region == AbyssRoomData.Region.PACKED and not routes.get_room(left).required_connections.is_empty() and not routes.get_room(left + Vector2i.RIGHT).required_connections.is_empty():
 				var rank := _roll(left,"gate")
@@ -61,6 +75,8 @@ func _band(level: int, band: int) -> Dictionary:
 					gate["destination_level"] = level+1
 					gate["fragments_per_key"] = config.FRAGMENTS_PER_KEY
 	var result := {"fragment":guaranteed,"gate":gate}
+	if config.depth_chunks > 0:
+		result["checkpoint"] = checkpoint
 	if guaranteed.is_empty():
 		push_error("No eligible PACKED fragment room in level %d interval %d; configuration cannot satisfy progression" % [level,band])
 	_bands[key] = result
@@ -70,7 +86,7 @@ func definitions_at(coords: Vector2i) -> Array[Dictionary]:
 	var level := level_at(coords)
 	if level == 0 or coords.y < 0:
 		return result
-	var band := floori(float(coords.y) / config.FRAGMENT_INTERVAL)
+	var band := floori(float(coords.y) / config.fragment_interval)
 	var choices := _band(level,band)
 	if has_checkpoint(coords):
 		result.append(_definition("checkpoint",level,coords))
@@ -83,16 +99,17 @@ func definitions_at(coords: Vector2i) -> Array[Dictionary]:
 func fragment_at(coords: Vector2i) -> Dictionary:
 	var level := level_at(coords)
 	if level == 0 or coords.y < 0: return {}
-	var choices := _band(level,floori(float(coords.y)/config.FRAGMENT_INTERVAL))
+	var choices := _band(level,floori(float(coords.y)/config.fragment_interval))
 	var required: Dictionary = choices.fragment
 	var guaranteed := not required.is_empty() and Vector2i(required.x,required.y) == coords
-	if not guaranteed and _roll(coords,"extra_fragment") >= config.EXTRA_FRAGMENT_PROBABILITY: return {}
+	if not guaranteed and (config.depth_chunks > 0 or _roll(coords,"extra_fragment") >= config.EXTRA_FRAGMENT_PROBABILITY): return {}
 	var room := routes.get_room(coords)
 	if room.region != AbyssRoomData.Region.PACKED or room.required_connections.is_empty(): return {}
 	return _definition("fragment",level,coords)
 
 func interval_definitions(level: int, interval: int) -> Dictionary:
-	if level < 1 or level > config.LEVEL_COUNT or interval < 0:
+	if level < 1 or level > config.LEVEL_COUNT or interval < 0 or (
+		config.depth_chunks > 0 and interval * config.fragment_interval >= config.depth_chunks * _settings().chunk_size.y):
 		return {"fragment":{},"gate":{}}
 	return _band(level,interval).duplicate(true)
 func checkpoint_destination(id: String) -> Dictionary:
@@ -100,6 +117,11 @@ func checkpoint_destination(id: String) -> Dictionary:
 	if not entry.get("activated",false) or entry.get("world_level", "") != level_key(int(entry.get("level",0))):
 		return {}
 	var coords := Vector2i(int(entry.x),int(entry.y))
+	var level := level_at(coords)
+	if level == 0 or level != int(entry.level) or id != _id("checkpoint", level, coords) or not has_checkpoint(coords):
+		return {}
+	if level > 1 and not state.unlocked_levels.get(level_key(level), false):
+		return {}
 	return {"id":id,"world_id":world,"level":int(entry.level),"room_coords":coords,"chunk_coords":routes.regions.room_to_chunk(coords),"spawn_position":Vector2(entry.spawn_x,entry.spawn_y)}
 func request_checkpoint_chunk(id: String) -> bool:
 	var destination := checkpoint_destination(id)
@@ -110,7 +132,7 @@ func request_checkpoint_chunk(id: String) -> bool:
 func gate_at(coords: Vector2i) -> Dictionary:
 	if coords.y < 0 or level_at(coords) == 0:
 		return {}
-	var gate: Dictionary = _band(level_at(coords),floori(float(coords.y) / config.FRAGMENT_INTERVAL)).gate
+	var gate: Dictionary = _band(level_at(coords),floori(float(coords.y) / config.fragment_interval)).gate
 	return gate if not gate.is_empty() and Vector2i(gate.x,gate.y) == coords else {}
 func can_cross(a: Vector2i, b: Vector2i) -> bool:
 	if absi(a.x-b.x) + absi(a.y-b.y) != 1:
@@ -150,6 +172,11 @@ func _checkpoint_score(coords: Vector2i) -> float:
 	return _checkpoint_scores[coords]
 
 func has_checkpoint(coords: Vector2i) -> bool:
+	if config.depth_chunks > 0:
+		var level := level_at(coords)
+		if level == 0:
+			return false
+		return coords == _band(level, floori(float(coords.y) / config.fragment_interval)).checkpoint
 	var score := _checkpoint_score(coords)
 	if score < 0 or score >= config.checkpoint_probability:
 		return false
@@ -179,8 +206,8 @@ func retain_cached_rooms(bounds: Rect2i) -> void:
 	for coords in _checkpoint_scores.keys():
 		if not bounds.has_point(coords):
 			_checkpoint_scores.erase(coords)
-	var first_band := floori(float(bounds.position.y) / config.FRAGMENT_INTERVAL) - 1
-	var last_band := floori(float(bounds.end.y) / config.FRAGMENT_INTERVAL) + 1
+	var first_band := floori(float(bounds.position.y) / config.fragment_interval) - 1
+	var last_band := floori(float(bounds.end.y) / config.fragment_interval) + 1
 	for key: Vector2i in _bands.keys():
 		if key.y < first_band or key.y > last_band:
 			_bands.erase(key)

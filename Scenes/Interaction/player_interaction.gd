@@ -98,13 +98,17 @@ func can_reach_travel_target(target: InteractionTarget) -> bool:
 func _binding_text(action: StringName) -> String:
 	for event in InputMap.action_get_events(action):
 		if event is InputEventKey:
-			return OS.get_keycode_string(event.physical_keycode if event.physical_keycode != 0 else event.keycode)
+			var keyboard := OS.get_keycode_string(event.physical_keycode if event.physical_keycode != 0 else event.keycode)
+			if not Input.get_connected_joypads().is_empty():
+				if action == &"Interact 1": return keyboard + " / Y"
+				if action == &"Interact 2": return keyboard + " / RT"
+			return keyboard
 	return String(action)
 
 func _prompt_for(target: InteractionTarget, channel: InteractionTarget.Channel, action: StringName) -> String:
 	if target == null: return ""
 	var text := target.get_prompt_for_action(player,channel)
-	return "%s — %s" % [_binding_text(action),text] if target.can_interact_for_action(player,channel) else text
+	return "%s â€” %s" % [_binding_text(action),text] if target.can_interact_for_action(player,channel) else text
 
 func _update_prompt() -> void:
 	var allowed := actions_allowed()

@@ -9,11 +9,13 @@ const STAGES: Array[Texture2D] = [
 	preload("res://uiSprites/villageProgress0005.png"),
 ]
 
-static func stage(day: int, boss_defeated: bool) -> int:
+static func stage(day: int, boss_defeated: bool, run_length: int = 10) -> int:
 	if boss_defeated:
 		return 0
-	if day >= 10:
+	if day >= run_length:
 		return 4
+	if run_length == 5:
+		return clampi(day - 1, 0, 3)
 	if day >= 8:
 		return 3
 	if day >= 6:
@@ -22,5 +24,5 @@ static func stage(day: int, boss_defeated: bool) -> int:
 		return 1
 	return 0
 
-static func texture_for(day: int, boss_defeated: bool) -> Texture2D:
-	return STAGES[stage(day, boss_defeated)]
+static func texture_for(day: int, boss_defeated: bool, run_length: int = 10) -> Texture2D:
+	return STAGES[stage(day, boss_defeated, run_length)]

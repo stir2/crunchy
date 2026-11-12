@@ -11,6 +11,10 @@ var _owns_pause: bool = false
 var _fade: Tween
 var _dialogic_paused: bool = false
 var _dirty: bool = false
+var _minimap_dirty := true
+var _minimap_room := Vector2i(2147483647, 2147483647)
+var _minimap: AbyssMapView
+@onready var _settings: Node = get_node("/root/GameSettings")
 @onready var _dialogue: Node = get_node_or_null("/root/Dialogic")
 @onready var panel: Control = $Panel
 @onready var view: AbyssMapView = $Panel/View
@@ -19,6 +23,57 @@ func _ready() -> void:
 	runtime = get_parent() as AbyssRuntime
 	visible = false
 	$Panel/Center.pressed.connect(view.recenter)
+	_build_legend()
+	# This layer belongs to gameplay HUD, independent of the paused full map.
+	var hud := CanvasLayer.new()
+	hud.layer = layer - 1
+	add_child(hud)
+	_minimap = AbyssMapView.new()
+	hud.add_child(_minimap)
+	_minimap.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	_minimap.self_modulate.a = 0.55
+	_minimap.marker_scale = 0.7
+	get_viewport().size_changed.connect(_fit_minimap)
+	_fit_minimap()
+	_minimap.clip_contents = true
+	_minimap.pin_gates = false
+	_minimap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_minimap.hide()
+
+func _fit_minimap() -> void:
+	if not _minimap.is_inside_tree():
+		return
+	var viewport_size := _minimap.get_viewport_rect().size
+	var width := roundf(minf(viewport_size.x * 0.225, viewport_size.y * 0.40))
+	var margin := roundf(viewport_size.y * 0.02)
+	_minimap.offset_left = -margin - width
+	_minimap.offset_right = -margin
+	_minimap.offset_top = margin
+	_minimap.offset_bottom = margin + roundf(width * 0.60)
+	_minimap.room_spacing = width / 6.0
+	_minimap.recenter()
+
+
+func _build_legend() -> void:
+	for entry in [["checkpoint", "Discovered checkpoint"], ["checkpoint", "Activated checkpoint"], ["gate", "Gate"], ["fragment", "Collected fragment"], ["grave", "Grave"]]:
+		var label := Label.new()
+		label.text = entry[1]
+		label.add_theme_font_size_override("font_size", 16)
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var item := HBoxContainer.new()
+		item.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var icon_space := Control.new()
+		icon_space.custom_minimum_size = Vector2(16, 20)
+		icon_space.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var icon := view.marker_scene.instantiate() as Node2D
+		icon.kind = entry[0]
+		icon.active = entry[1] in ["Collected fragment", "Activated checkpoint"]
+		icon.position = Vector2(8, 18 if icon.kind == "fragment" else 10)
+		icon_space.add_child(icon)
+		item.add_child(icon_space)
+		item.add_child(label)
+		$Panel/Legend/Markers.add_child(item)
+
 
 func configure(service: AbyssSpecialRooms, state: AbyssExplorationState, size: Vector2i) -> void:
 	close_map()
@@ -28,6 +83,7 @@ func configure(service: AbyssSpecialRooms, state: AbyssExplorationState, size: V
 	model = AbyssMapModel.new(service,state,size)
 	state.changed.connect(_mark_dirty)
 	service.state.changed.connect(_mark_dirty)
+	_mark_dirty()
 
 func open_map() -> bool:
 	if opened or model == null or not runtime.is_active() or get_tree().paused: return false
@@ -57,16 +113,27 @@ func close_map() -> void:
 		_owns_pause = false
 
 func _input(event: InputEvent) -> void:
-	if event.is_action_pressed("Abyss Map") and not event.is_echo():
+	if event.is_action_pressed("Abyss Minimap") and not event.is_echo() and runtime.is_active() and not get_tree().paused:
+		_settings.show_abyss_minimap = not _settings.show_abyss_minimap
+		_settings.save()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("Abyss Map") and not event.is_echo():
 		if opened: close_map()
 		else: open_map()
 		if runtime.is_active(): get_viewport().set_input_as_handled()
-	elif opened and event.is_action_pressed("ui_cancel"):
+	elif opened and event.is_action_pressed("Map Recenter"):
+		view.recenter()
+		get_viewport().set_input_as_handled()
+	elif opened and (event.is_action_pressed("Map Zoom In") or event.is_action_pressed("Map Zoom Out")):
+		view.zoom_at(1.2 if event.is_action_pressed("Map Zoom In") else 1.0 / 1.2, view.size * 0.5)
+		get_viewport().set_input_as_handled()
+	elif opened and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("Controller Pause")):
 		close_map()
 		get_viewport().set_input_as_handled()
 
 func _mark_dirty() -> void:
 	_dirty = true
+	_minimap_dirty = true
 
 func _refresh_graph() -> void:
 	var position := runtime.loaded_rooms.to_local(runtime.player.global_position)
@@ -77,6 +144,19 @@ func _refresh_graph() -> void:
 	_dirty = false
 
 func _process(delta: float) -> void:
+	_minimap.visible = _settings.show_abyss_minimap and model != null and runtime.is_active() and not get_tree().paused
+	if _minimap.visible:
+		var position := runtime.loaded_rooms.to_local(runtime.player.global_position)
+		var room := runtime.stream.world_to_room(runtime.player.global_position)
+		if _minimap_dirty or room != _minimap_room:
+			var nearby := Rect2i(room - Vector2i(4, 3), Vector2i(9, 7))
+			var graph := model.snapshot(model.service.level_at(room), position, nearby, false)
+			_minimap.set_graph(graph, float(model.room_size.x * model.tile_pixels), position)
+			_minimap_dirty = false
+			_minimap_room = room
+		if not position.is_equal_approx(_minimap.center):
+			_minimap.player_position = position
+			_minimap.recenter()
 	if opened:
 		if _dirty: _refresh_graph()
 		var direction := Input.get_vector("Move Left","Move Right","Move Up","Move Down")

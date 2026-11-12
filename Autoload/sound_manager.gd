@@ -191,7 +191,13 @@ func next_rumble() -> AudioStream:
 
 func _on_node_added(node: Node) -> void:
 	if node is BaseButton or node is Player:
-		_register.call_deferred(node)
+		_register_pending.call_deferred(weakref(node))
+
+
+func _register_pending(reference: WeakRef) -> void:
+	var node := reference.get_ref() as Node
+	if node != null:
+		_register(node)
 
 
 func _register_tree(node: Node) -> void:

@@ -36,17 +36,19 @@ func is_busy() -> bool:
 
 
 func talk_to_monster() -> void:
-	if GameController.is_day_10():
+	if GameController.is_final_day():
 		if not GameController.monster_missing:
 			play("missing_monster", "Monster/missing_monster")
 		return
+	var short_campaign := GameController.run_length == GameController.SHORT_RUN_LENGTH
+	var middle_day := 2 if short_campaign else 4
 	var file := "monster_early"
-	if GameController.day >= 7:
+	if GameController.day >= (4 if short_campaign else 7):
 		file = "monster_late"
-	elif GameController.day >= 4:
+	elif GameController.day >= middle_day:
 		file = "monster_middle"
 	if GameController.window_history.has(file):
-		if GameController.day >= 4 and not GameController.window_history.has("ancestors"):
+		if GameController.day >= middle_day and not GameController.window_history.has("ancestors"):
 			play("ancestors", "Monster/ancestors")
 		else:
 			play("", "Monster/nothing_to_say")
@@ -55,7 +57,7 @@ func talk_to_monster() -> void:
 
 
 func listen_outside() -> void:
-	if GameController.is_day_10():
+	if GameController.is_final_day():
 		return
 	# Recent losses come first, even if today's ordinary conversation was heard.
 	var fallen := VillageManager.get_fallen()
@@ -85,20 +87,20 @@ func _matches(condition: String) -> bool:
 		"hungry":
 			return GameController.rations < VillageManager.get_population()
 		"late":
-			return GameController.day >= 6
+			return GameController.day >= (4 if GameController.run_length == GameController.SHORT_RUN_LENGTH else 6)
 		"healthy":
 			return GameController.village_health >= 70 and GameController.day > 1
 		"loss":
 			return not VillageManager.get_fallen().is_empty()
 		"middle":
-			return GameController.day >= 4
+			return GameController.day >= (2 if GameController.run_length == GameController.SHORT_RUN_LENGTH else 4)
 		"after_first":
 			return GameController.day > 1
 	return true
 
 
 func action_thought(action: String) -> bool:
-	if is_busy() or GameController.is_day_10():
+	if is_busy() or GameController.is_final_day():
 		return false
 	var daily_key := "thought_%s_day_%d" % [action, GameController.day]
 	if GameController.window_history.has(daily_key):

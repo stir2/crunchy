@@ -5,7 +5,7 @@
 
 [ext_resource type="Texture2D" path="res://uiSprites/villageProgress0001.png" id="2_window"]
 
-[ext_resource type="FontFile" path="res://Assets/Fonts/Alkhemikal.ttf" id="3_title"]
+[ext_resource type="FontVariation" path="res://Assets/Fonts/AlkhemikalUI.tres" id="3_title"]
 
 [ext_resource type="Shader" path="res://Scenes/Village/House/window_mist.gdshader" id="21_window_mist"]
 

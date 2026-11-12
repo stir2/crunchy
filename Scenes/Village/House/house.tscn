@@ -120,7 +120,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
 theme_override_font_sizes/font_size = 28
-text = "Trips Remaining Today: 3 / 3"
+text = "Trips Remaining Today: 5 / 5"
 horizontal_alignment = 1
 
 [node name="DeskPanel" type="Control" parent="Panels" unique_id=1335313157]
@@ -318,7 +318,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.98, 0.90, 0.84, 1)
 theme_override_font_sizes/font_size = 32
-text = "3/3 Trips"
+text = "5/5 Trips"
 vertical_alignment = 1
 
 [node name="VSeparator" type="VSeparator" parent="UI/TopHUD/Margin/HBox" unique_id=862934949]

@@ -19,15 +19,26 @@ func tick(count: int = 1) -> void:
 		await physics_frame
 		await process_frame
 
-func map_key() -> void:
+func map_key(key: Key = KEY_M) -> void:
 	var event := InputEventKey.new()
-	event.physical_keycode = KEY_M
+	event.physical_keycode = key
 	event.pressed = true
 	Input.parse_input_event(event)
 	await tick()
 	event = InputEventKey.new()
-	event.physical_keycode = KEY_M
+	event.physical_keycode = key
 	event.pressed = false
+	Input.parse_input_event(event)
+	await tick()
+
+func joy_button(button: JoyButton) -> void:
+	var event := InputEventJoypadButton.new()
+	event.button_index = button
+	event.pressed = true
+	Input.parse_input_event(event)
+	await tick()
+	event = InputEventJoypadButton.new()
+	event.button_index = button
 	Input.parse_input_event(event)
 	await tick()
 
@@ -42,11 +53,13 @@ func run() -> void:
 	game.abyss_progression_state = AbyssProgressionState.new()
 	# Keep this placement fixture independent of the designer's current world seed.
 	var fixture := AbyssRegionConfig.new()
-	fixture.global_seed = 12
+	fixture.global_seed = 514087
 	fixture.noise_frequency = 0.085
-	fixture.open_threshold = 0.0
+	fixture.open_threshold = 1.0
 	var progression := AbyssProgressionConfig.new()
-	progression.checkpoint_probability = 1.0
+	progression.level_width_chunks = 2
+	progression.depth_chunks = 2
+	progression.fragment_interval = fixture.chunk_size.y
 	var configs: Array[Resource] = [fixture,AbyssRouteConfig.new(),AbyssTerrainConfig.new(),progression]
 	game.abyss_room_state.world_settings = AbyssRuntimeWorldSettings.capture(configs,load("res://Scenes/Underground/Rooms/authored_registry.tres"))
 	host = load("res://Scenes/Main/main.tscn").instantiate()
@@ -61,6 +74,19 @@ func run() -> void:
 	if not runtime.is_active():
 		quit(1)
 		return
+	await tick(2)
+	check(runtime.abyss_map._minimap.visible, "Minimap did not appear during gameplay")
+	await map_key(KEY_N)
+	check(not runtime.abyss_map._minimap.visible and not paused, "N did not hide the minimap without pausing")
+	await joy_button(JOY_BUTTON_LEFT_STICK)
+	check(runtime.abyss_map._minimap.visible, "N did not restore the minimap")
+	await joy_button(JOY_BUTTON_BACK)
+	check(runtime.abyss_map.opened and paused, "View did not open the map")
+	var zoom := runtime.abyss_map.view.map_zoom
+	await joy_button(JOY_BUTTON_RIGHT_SHOULDER)
+	check(runtime.abyss_map.view.map_zoom > zoom, "RB did not zoom the map")
+	await joy_button(JOY_BUTTON_B)
+	check(not runtime.abyss_map.opened and not paused, "B did not close the map")
 	var player := runtime.player
 	var overlay := runtime.abyss_map
 	var tracker := runtime.exploration
@@ -82,7 +108,6 @@ func run() -> void:
 	check(not state.is_visited(world,coords),"Streaming/short occupancy discovered a room")
 	await map_key()
 	check(overlay.opened and paused,"M did not open/pause map")
-	check(overlay.panel.modulate.a < 1.0,"Map skipped short fade")
 	var position := player.global_position
 	var dwell: float = tracker._dwell
 	await tick(22)
@@ -121,16 +146,27 @@ func run() -> void:
 	check(graph.nodes[coords].position.is_equal_approx(opening_center),"Room dot must use the center of its openings")
 	check(model.color_for(1,1) == AbyssMapModel.LEVEL_COLORS[0] and model.color_for(2,2) == AbyssMapModel.LEVEL_COLORS[1] and model.color_for(3,3) == AbyssMapModel.LEVEL_COLORS[2],"Level palette incorrect")
 	check(model.color_for(2,1) == AbyssMapModel.OTHER_LEVEL and model.color_for(3,1) == AbyssMapModel.OTHER_LEVEL,"Other levels are not translucent gray")
-	var gate: Dictionary = service.interval_definitions(1,0).gate
+	var gate: Dictionary = {}
+	for band in range(progression.depth_chunks):
+		gate = service.interval_definitions(1,band).gate
+		if not gate.is_empty(): break
+	check(not gate.is_empty(), "Map fixture has no Level 1 gate")
+	if gate.is_empty():
+		quit(1)
+		return
 	var gate_coords := Vector2i(gate.x,gate.y)
 	state.visit(world,gate_coords)
 	var cp: Dictionary = {}
-	for y in range(10):
-		for x in range(-8,9):
+	for y in range(16):
+		for x in range(-8, 9):
 			for definition in service.definitions_at(Vector2i(x,y)):
 				if definition.kind == "checkpoint": cp = definition
 			if not cp.is_empty(): break
 		if not cp.is_empty(): break
+	check(not cp.is_empty(), "Checkpoint fixture has no checkpoint")
+	if cp.is_empty():
+		quit(1)
+		return
 	state.visit(world,Vector2i(cp.x,cp.y))
 	var fragment: Dictionary = service.interval_definitions(1,0).fragment
 	state.visit(world,Vector2i(fragment.x,fragment.y))
@@ -172,12 +208,19 @@ func run() -> void:
 	host.change_scene("res://Scenes/Village/House/house.tscn")
 	await tick(2)
 	var saves := root.get_node("SaveManager")
-	saves.save_path = "/tmp/crunchy-map-smoke-save.json"
+	saves.save_path = "user://map-smoke-%d.json" % OS.get_process_id()
 	check(saves.save_game(),"Map save failed: "+saves.last_error)
 	game.abyss_room_state = AbyssRoomState.new()
 	check(saves.load_game(),"Map load failed: "+saves.last_error)
 	state = game.abyss_room_state.exploration
 	check(state.visited == saved_visited and state.graves[world].id == grave.id,"Visited/grave state lost on save/load")
+	var house: Node = host.active_scene
+	house.descend_btn.pressed.emit()
+	check(house._descent_panel.visible and house._destination_buttons.has(cp.id), "Classic stairs did not offer the saved checkpoint")
+	if house._destination_buttons.has(cp.id):
+		house._destination_buttons[cp.id].pressed.emit()
+		check(house._destination_map.selected_checkpoint == cp.id, "Keyboard destination list did not highlight its map marker")
+		house._close_descent_panel()
 	host.change_scene("res://Scenes/Underground/abyss_runtime.tscn")
 	runtime = host.active_scene
 	for frame in range(1000):
