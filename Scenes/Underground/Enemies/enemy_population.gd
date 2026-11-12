@@ -3,6 +3,8 @@ extends Node2D
 const POOL = preload("res://Scenes/Underground/Enemies/default_enemy_pool.tres")
 const DROP = preload("res://Scenes/Underground/Enemies/flesh_drop.tscn")
 @export var enemy_pool: AbyssEnemyPool = POOL
+## Overrides selection/scaling for new enemy records only; never changes world progression.
+@export_enum("Automatic:0", "Level 1:1", "Level 2:2", "Level 3:3") var debug_enemy_level: int = 0
 @export_range(0, 20, 1) var max_enemies_per_room: int = 3
 @export_range(0.0, 4.0, 0.25) var pursuit_rooms: float = 1.0
 @export_range(0.0, 10.0, 0.25) var disengage_seconds: float = 2.0
@@ -63,6 +65,8 @@ func _room_ready(coords: Vector2i) -> void:
 
 func register_room(room: AbyssAuthoredRoom) -> void:
 	var level := stream.specials.level_at(room.construction_requirements.global_coords)
+	if level > 0 and debug_enemy_level > 0:
+		level = clampi(debug_enemy_level, 1, AbyssProgressionConfig.LEVEL_COUNT)
 	var candidates: Array[EnemySpawnRequest] = []
 	for request in room.spawn_requests:
 		if request is EnemySpawnRequest and request.should_spawn(): candidates.append(request)

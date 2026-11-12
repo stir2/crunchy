@@ -13,6 +13,7 @@ var _trips_spin: SpinBox
 var _vhealth_spin: SpinBox
 var _hp_spin: SpinBox
 var _stamina_spin: SpinBox
+var _enemy_level_select: OptionButton
 var _quota_label: Label
 var _scroll: ScrollContainer
 var _root_vbox: VBoxContainer
@@ -207,6 +208,25 @@ func _build_ui() -> void:
 	var sta_btn := _quick_btn("Full Sta", func(): GameController.stamina = GameController.stats.get("max_stamina", 100); _refresh_values())
 	grid.add_child(sta_btn)
 
+	var enemy_level_label := Label.new()
+	enemy_level_label.text = "Enemy Level:"
+	grid.add_child(enemy_level_label)
+	_var_labels.append(enemy_level_label)
+	_enemy_level_select = OptionButton.new()
+	for level_name in ["Automatic", "Level 1", "Level 2", "Level 3"]:
+		_enemy_level_select.add_item(level_name)
+	_enemy_level_select.tooltip_text = "Changes newly spawned enemy selection and scaling. Existing enemies keep their saved state."
+	_enemy_level_select.item_selected.connect(func(index: int):
+		var population := _enemy_population()
+		if not _updating and population != null:
+			population.set("debug_enemy_level", index)
+	)
+	grid.add_child(_enemy_level_select)
+	var enemy_level_note := Label.new()
+	enemy_level_note.text = "New enemies only"
+	grid.add_child(enemy_level_note)
+	_var_labels.append(enemy_level_note)
+
 	var sep2 := HSeparator.new()
 	root_vbox.add_child(sep2)
 
@@ -331,6 +351,10 @@ func _fit_layout() -> void:
 
 func _refresh_values() -> void:
 	_updating = true
+	if _enemy_level_select != null:
+		var population := _enemy_population()
+		_enemy_level_select.disabled = population == null
+		_enemy_level_select.select(int(population.get("debug_enemy_level")) if population != null else 0)
 	if _flesh_spin != null:
 		_flesh_spin.value = GameController.flesh
 	if _rations_spin != null:
@@ -354,3 +378,16 @@ func _refresh_values() -> void:
 			"YES" if GameController.flesh >= GameController.current_quota() else "NO"
 		]
 	_updating = false
+
+
+func _enemy_population() -> Node:
+	return _find_enemy_population(get_tree().current_scene)
+
+
+func _find_enemy_population(node: Node) -> Node:
+	if node == null: return null
+	if node is AbyssRuntime: return node.get_node_or_null("EnemyPopulation")
+	for child in node.get_children():
+		var population := _find_enemy_population(child)
+		if population != null: return population
+	return null
