@@ -10,6 +10,7 @@ extends Resource
 
 @export_group("Economy")
 @export var training_cost := 2
+@export var first_assignment_free := false
 @export var rations_per_worker := 2
 @export var potion_cost := 3
 @export var bonus_rations_per_excess_flesh := 0.25
@@ -47,6 +48,18 @@ extends Resource
 @export var buildings: Array[BuildingData] = []
 
 var _default_buildings: Array[BuildingData] = []
+
+
+func apply_short_campaign_balance() -> void:
+	healthy_population = 6
+	mourning_nights = 2
+	first_assignment_free = true
+	var short_buildings: Array[BuildingData] = []
+	for building in get_buildings():
+		var short_building := building.duplicate() as BuildingData
+		short_building.upgrade_costs = PackedInt32Array([5, 9])
+		short_buildings.append(short_building)
+	buildings = short_buildings
 
 
 func get_buildings() -> Array[BuildingData]:

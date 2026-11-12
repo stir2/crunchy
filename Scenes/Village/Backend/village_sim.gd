@@ -167,7 +167,7 @@ func can_assign(villager_id: int, target: StringName) -> bool:
 	return true
 
 
-## Ration cost to assign or train. 0 for queue, learned trades, or Day 1 free picks.
+## Ration cost to assign or train. 0 for queue, learned trades, or free first assignments.
 func assignment_cost(villager_id: int, target: StringName) -> int:
 	if not can_assign(villager_id, target):
 		return -1
@@ -176,7 +176,7 @@ func assignment_cost(villager_id: int, target: StringName) -> int:
 	var v := get_villager(villager_id)
 	if v.assignment == target or v.knows_profession(target):
 		return 0
-	if is_first_day and v.known_professions.is_empty():
+	if (is_first_day or config.first_assignment_free) and v.known_professions.is_empty():
 		return 0
 	return config.training_cost
 

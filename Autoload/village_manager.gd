@@ -26,12 +26,20 @@ func _ready() -> void:
 	_grant_daily_potions()
 
 
-func new_game(seed_value: int = 0) -> void:
-	config = null
+func _campaign_config() -> VillageConfig:
+	var base_config: VillageConfig
 	if ResourceLoader.exists(CONFIG_PATH):
-		config = load(CONFIG_PATH) as VillageConfig
-	if config == null:
-		config = VillageConfig.new()
+		base_config = load(CONFIG_PATH) as VillageConfig
+	if base_config == null:
+		base_config = VillageConfig.new()
+	if GameController.run_length == GameController.SHORT_RUN_LENGTH:
+		base_config = base_config.duplicate() as VillageConfig
+		base_config.apply_short_campaign_balance()
+	return base_config
+
+
+func new_game(seed_value: int = 0) -> void:
+	config = _campaign_config()
 	sim = VillageSim.new(config, seed_value)
 	_choosing = false
 	_toll = {}
@@ -204,6 +212,8 @@ func get_save_data() -> Dictionary:
 func load_save_data(data: Dictionary) -> void:
 	_choosing = false
 	_toll = {}
+	config = _campaign_config()
+	sim.config = config
 	sim.load_dict(data)
 	_sync_stats()
 	villagers_changed.emit()

@@ -477,7 +477,7 @@ func _worker_info(worker: Villager) -> String:
 	var trades := PackedStringArray()
 	for id in worker.known_professions:
 		trades.append(VillageManager.get_building(id).display_name)
-	return ("New worker · first trade free" if GameController.day == 1 else "Untrained worker") if trades.is_empty() else "Trained: " + ", ".join(trades)
+	return ("New worker · first trade free" if GameController.day == 1 or VillageManager.config.first_assignment_free else "Untrained worker") if trades.is_empty() else "Trained: " + ", ".join(trades)
 
 
 func _format_building_perk(building: BuildingData) -> String:

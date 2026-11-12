@@ -29,6 +29,7 @@ var _player: Player
 var _landing_until_tick: int = -1
 var _next_slash: int = 0
 var _dialogue_idle := false
+@onready var _slash_effect: Sprite2D = get_node_or_null("SlashEffect")
 
 func _ready() -> void:
 	_player = get_parent().get_parent() as Player
@@ -38,6 +39,9 @@ func _ready() -> void:
 	_player.movement_reset.connect(_on_reset)
 	_player.get_node("Health").health_reset.connect(_on_reset)
 	animation_finished.connect(_on_animation_finished)
+	if _slash_effect != null:
+		frame_changed.connect(_sync_slash_effect)
+		animation_changed.connect(_sync_slash_effect)
 	update_animation()
 
 func _on_animation_finished() -> void:
@@ -182,7 +186,19 @@ func play_attack(facing: int) -> void:
 	play(slash)
 	set_frame_and_progress(0, 0.0)
 
+func _sync_slash_effect() -> void:
+	# Sample the slash overlay from the attack clock so it shares swing freeze and hitstop.
+	var effect_frame: int = frame - _player.combat.active_start_frame if is_instance_valid(_player.combat) else -1
+	_slash_effect.visible = is_attack_animation() and effect_frame >= 0 and effect_frame < 2
+	if _slash_effect.visible:
+		var row := 2 if animation == &"attack" else 1
+		_slash_effect.frame_coords = Vector2i(effect_frame, row)
+		_slash_effect.offset = attack_offset + Vector2(-30, 0)
+
+
 func finish_attack() -> void:
+	if _slash_effect != null:
+		_slash_effect.hide()
 	flip_h = true
 	get_parent().scale.x = absf(get_parent().scale.x) * _player.facing_direction
 	update_animation()

@@ -19,7 +19,7 @@ signal stamina_changed(current: int, max_stamina: int)
 
 const RUN_LENGTH := 10
 const SHORT_RUN_LENGTH := 5
-const SHORT_QUOTAS: Array[int] = [12, 18, 25, 32, 0]
+const SHORT_QUOTAS: Array[int] = [12, 18, 26, 36, 0]
 
 var run_length := RUN_LENGTH
 const TRIPS_PER_DAY := 5

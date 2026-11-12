@@ -92,10 +92,23 @@ func run() -> void:
 	Input.action_press("Action")
 	await tick(2)
 	check(not camera.is_processing(),"Dash charge triggered launch shake early")
+	check(effects.get_node_or_null("DashStartBurst") == null,"Dash smoke played during charge")
 	Input.action_release("Action")
 	await tick(2)
 	check(camera.is_processing() and camera._shake_strength == camera.dash_shake_pixels,"Dash launch did not trigger configured shake")
+	var dash_start := effects.get_node_or_null("DashStartBurst") as AnimatedSprite2D
+	check(dash_start != null and dash_start.animation == &"dash_start" and dash_start.flip_h,
+		"Right dash did not play mirrored start smoke")
+	for frame in range(60):
+		if player.movement_state != Player.MovementState.DASHING:
+			break
+		await tick()
+	var dash_end := effects.get_node_or_null("DashEndBurst") as AnimatedSprite2D
+	check(dash_end != null and dash_end.animation == &"dash_end" and dash_end.flip_h,
+		"Right dash did not play mirrored end smoke")
 	player.reset_movement()
+	await tick()
+	check(effects.get_child_count() == 0,"Reset retained dash smoke")
 	var hit := CombatHit.new()
 	hit.amount = 1
 	hit.direction = Vector2.LEFT

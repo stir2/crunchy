@@ -1,7 +1,137 @@
 [gd_resource type="SpriteFrames" format=3 uid="uid://ci8rlfvgosdhx"]
 
+[ext_resource type="Texture2D" uid="uid://gjvbtmobg6ud" path="res://SpriteSheets/fxSmokeDashEnd_120x100_24fps.png" id="dash_end"]
+[ext_resource type="Texture2D" uid="uid://c53tsl1tvovkg" path="res://SpriteSheets/fxSmokeDashStart_120x100_24fps.png" id="dash_start"]
 [ext_resource type="Texture2D" uid="uid://dseenmtyy22hi" path="res://Assets/Sprites/Particles/fxSmokeJumpUp_100x100_24fps.png" id="jump"]
 [ext_resource type="Texture2D" uid="uid://301af76lkchm" path="res://Assets/Sprites/Particles/fxSmokeJumpLand_100x100_24fps.png" id="land"]
+
+[sub_resource type="AtlasTexture" id="dash_end_0"]
+atlas = ExtResource("dash_end")
+region = Rect2(0, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_end_1"]
+atlas = ExtResource("dash_end")
+region = Rect2(120, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_end_2"]
+atlas = ExtResource("dash_end")
+region = Rect2(240, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_end_3"]
+atlas = ExtResource("dash_end")
+region = Rect2(360, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_end_4"]
+atlas = ExtResource("dash_end")
+region = Rect2(480, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_end_5"]
+atlas = ExtResource("dash_end")
+region = Rect2(600, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_end_6"]
+atlas = ExtResource("dash_end")
+region = Rect2(720, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_end_7"]
+atlas = ExtResource("dash_end")
+region = Rect2(840, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_end_8"]
+atlas = ExtResource("dash_end")
+region = Rect2(960, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_end_9"]
+atlas = ExtResource("dash_end")
+region = Rect2(1080, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_end_10"]
+atlas = ExtResource("dash_end")
+region = Rect2(1200, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_end_11"]
+atlas = ExtResource("dash_end")
+region = Rect2(1320, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_end_12"]
+atlas = ExtResource("dash_end")
+region = Rect2(1440, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_end_13"]
+atlas = ExtResource("dash_end")
+region = Rect2(1560, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_end_14"]
+atlas = ExtResource("dash_end")
+region = Rect2(1680, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_end_15"]
+atlas = ExtResource("dash_end")
+region = Rect2(1800, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_end_16"]
+atlas = ExtResource("dash_end")
+region = Rect2(1920, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_end_17"]
+atlas = ExtResource("dash_end")
+region = Rect2(2040, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_start_0"]
+atlas = ExtResource("dash_start")
+region = Rect2(0, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_start_1"]
+atlas = ExtResource("dash_start")
+region = Rect2(120, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_start_2"]
+atlas = ExtResource("dash_start")
+region = Rect2(240, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_start_3"]
+atlas = ExtResource("dash_start")
+region = Rect2(360, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_start_4"]
+atlas = ExtResource("dash_start")
+region = Rect2(480, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_start_5"]
+atlas = ExtResource("dash_start")
+region = Rect2(600, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_start_6"]
+atlas = ExtResource("dash_start")
+region = Rect2(720, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_start_7"]
+atlas = ExtResource("dash_start")
+region = Rect2(840, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_start_8"]
+atlas = ExtResource("dash_start")
+region = Rect2(960, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_start_9"]
+atlas = ExtResource("dash_start")
+region = Rect2(1080, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_start_10"]
+atlas = ExtResource("dash_start")
+region = Rect2(1200, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_start_11"]
+atlas = ExtResource("dash_start")
+region = Rect2(1320, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_start_12"]
+atlas = ExtResource("dash_start")
+region = Rect2(1440, 0, 120, 100)
+
+[sub_resource type="AtlasTexture" id="dash_start_13"]
+atlas = ExtResource("dash_start")
+region = Rect2(1560, 0, 120, 100)
 
 [sub_resource type="AtlasTexture" id="jump_0"]
 atlas = ExtResource("jump")
@@ -85,6 +215,112 @@ region = Rect2(900, 0, 100, 100)
 
 [resource]
 animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("dash_end_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_end_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_end_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_end_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_end_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_end_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_end_6")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_end_7")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_end_8")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_end_9")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_end_10")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_end_11")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_end_12")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_end_13")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_end_14")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_end_15")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_end_16")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_end_17")
+}],
+"loop": 0,
+"name": &"dash_end",
+"speed": 24.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("dash_start_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_start_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_start_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_start_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_start_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_start_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_start_6")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_start_7")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_start_8")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_start_9")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_start_10")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_start_11")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_start_12")
+}, {
+"duration": 1.0,
+"texture": SubResource("dash_start_13")
+}],
+"loop": 0,
+"name": &"dash_start",
+"speed": 24.0
+}, {
 "frames": [{
 "duration": 1.0,
 "texture": SubResource("jump_0")

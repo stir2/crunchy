@@ -145,15 +145,22 @@ func test_slash_variants_and_hitstop() -> void:
 	check(not sprite.flip_h and player.visuals.scale.x < 0, "Right Slash1 orientation incorrect")
 	Input.action_release("Attack") # Verify one tapped swing independently of hold repetition.
 	var saw_hitstop := false
+	var saw_slash_effect := false
+	var slash_effect := sprite.get_node("SlashEffect") as Sprite2D
 	for frame in range(180):
 		if not player.combat.is_attacking(): break
 		if player.combat.is_hitstopped():
 			saw_hitstop = true
 			check(not sprite.is_playing(), "Slash hitstop advanced playback")
+		if slash_effect.visible:
+			saw_slash_effect = true
+			check(slash_effect.frame_coords == Vector2i(sprite.frame - player.combat.active_start_frame, 2),
+				"Slash overlay drifted from the attack clock")
 		if player.combat.attack_state == player.combat.AttackState.ACTIVE:
 			check(sprite.frame >= 3 and sprite.frame <= 5, "Damage outside visible slash arc")
 		await tick()
 	check(not player.combat.is_attacking() and saw_hitstop and target.get_node("Damageable").health == 19, "Slash1 completion/one-hit/hitstop failed")
+	check(saw_slash_effect and not slash_effect.visible,"Slash overlay did not play and clear")
 	Input.action_release("Attack")
 	await tick()
 	var left_target := load("res://Tests/Scenes/Player/combat_dummy.tscn").instantiate() as CharacterBody2D

@@ -22,6 +22,8 @@
 [ext_resource type="SpriteFrames" path="res://Scenes/Player/Health/heal_sprite_frames.tres" id="15_heal_frames"]
 [ext_resource type="Script" path="res://Scenes/Player/Health/player_healing_effect.gd" id="16_heal_effect"]
 
+[ext_resource type="Texture2D" path="res://SpriteSheets/chiefSlashFx_100x100_24fps.png" id="17_slash_fx"]
+
 [sub_resource type="RectangleShape2D" id="Rectangle_player"]
 resource_local_to_scene = true
 size = Vector2(30, 36)
@@ -55,6 +57,12 @@ autoplay = "idle"
 offset = Vector2(0, 3)
 flip_h = true
 script = ExtResource("5_animation")
+
+[node name="SlashEffect" type="Sprite2D" parent="Visuals/AnimatedSprite2D"]
+visible = false
+texture = ExtResource("17_slash_fx")
+hframes = 3
+vframes = 4
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=631741114]
 position = Vector2(0, -18)

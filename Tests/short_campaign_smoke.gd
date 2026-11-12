@@ -117,7 +117,7 @@ func _run() -> void:
 	host.change_scene(HOUSE)
 	game.day = 4
 	game.trips_left = 5
-	_check(game.current_quota() == 32, "Short Day 4 quota is wrong")
+	_check(game.current_quota() == 36, "Short Day 4 quota is wrong")
 	_check(saves.save_game(), "Short save failed: " + saves.last_error)
 	_check(saves.menu_preview(5).get("day", 0) == 4, "Short save preview lost the day")
 	host.change_scene(MENU)
