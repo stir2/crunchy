@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://btu6yqphb1ahc" path="res://Scenes/Underground/Generation/room_template_registry.gd" id="1"]
 [ext_resource type="Script" uid="uid://ck5jir3ntl07j" path="res://Scenes/Underground/Generation/room_template_metadata.gd" id="2"]
-[ext_resource type="Resource" uid="uid://jxb65eqmbaaq" path="res://Scenes/Underground/Rooms/Metadata/room_fall_LEFT3.tres" id="authored_room_fall_LEFT3"]
+[ext_resource type="Resource" path="res://Scenes/Underground/Rooms/Metadata/room_fall_LEFT3.tres" id="authored_room_fall_LEFT3"]
 [ext_resource type="Resource" uid="uid://ba6ay6q5mbtvl" path="res://Scenes/Underground/Rooms/Metadata/room_open_arena2.tres" id="authored_room_open_arena2"]
 [ext_resource type="Resource" uid="uid://cr2xtagbg5b8m" path="res://Scenes/Underground/Rooms/Metadata/room_open_checkpoint.tres" id="authored_room_open_checkpoint"]
 [ext_resource type="Resource" uid="uid://bv3fpct48xpqm" path="res://Scenes/Underground/Rooms/Metadata/room_open_corner_NE1.tres" id="authored_room_open_corner_NE1"]
