@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="AbyssProgressionConfig" format=3]
+
+[ext_resource type="Script" path="res://Scenes/Underground/Generation/Config/progression_config.gd" id="1_progression"]
+
+[resource]
+script = ExtResource("1_progression")
+level_width_chunks = 2
+fragment_interval = 25

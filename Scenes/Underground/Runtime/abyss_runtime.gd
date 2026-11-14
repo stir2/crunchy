@@ -12,6 +12,8 @@ const FOG_EXP_RANGE := 6.389056 # exp(2.0) - 1.0
 @export var route_configuration: AbyssRouteConfig = AbyssRouteConfig.new()
 @export var terrain_configuration: AbyssTerrainConfig = AbyssTerrainConfig.new()
 @export var progression_configuration: AbyssProgressionConfig = AbyssProgressionConfig.new()
+## Applied only when creating a new five-day world; saved layouts keep their settings.
+@export var short_campaign_progression_configuration: AbyssProgressionConfig = preload("res://Scenes/Underground/Generation/Config/short_campaign_progression.tres")
 @export var template_registry: AbyssRoomTemplateRegistry = preload("res://Scenes/Underground/Rooms/authored_registry.tres")
 @export_group("Local Presentation")
 @export var apply_pixel_presentation: bool = true
@@ -178,20 +180,9 @@ func _configure_world(state: AbyssRoomState) -> bool:
 			fail_startup("Save the runtime template registry as a .tres resource first")
 			return false
 		if game.run_length == GameController.SHORT_RUN_LENGTH:
-			configuration.global_seed = 514087
-			configuration.open_threshold = 1.0
-			route_configuration.main_route_horizontal_wander = 0.0
-			route_configuration.main_path_stretch = 1.0
-			route_configuration.branching_probability = 0.25
-			route_configuration.branch_min_length = 1
-			route_configuration.branch_max_length = 2
-			route_configuration.room_density = 0.28
-			route_configuration.secondary_branch_probability = 0.0
-			route_configuration.inter_chunk_loop_probability = 0.0
-			route_configuration.attachment_band_height = 2
-			progression_configuration.level_width_chunks = 2
-			progression_configuration.depth_chunks = 2
-			progression_configuration.fragment_interval = configuration.chunk_size.y
+			configuration.global_seed = randi()
+			progression_configuration = short_campaign_progression_configuration.duplicate() as AbyssProgressionConfig
+			configs[3] = progression_configuration
 		settings = AbyssRuntimeWorldSettings.capture(configs,template_registry)
 	var restored := AbyssRuntimeWorldSettings.restore_configuration(settings, configs)
 	if not restored.error.is_empty():

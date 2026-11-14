@@ -5,6 +5,7 @@ const HOUSE := "res://Scenes/Village/House/house.tscn"
 const MENU := "res://Scenes/Menus/main_menu.tscn"
 const BOSS := "res://Scenes/Boss/boss_arena.tscn"
 
+const SCAN_ROWS := 400
 var failures := 0
 
 
@@ -37,6 +38,7 @@ func _run() -> void:
 	await create_timer(1.0).timeout
 	host.change_scene(HOUSE)
 	game.window_history["descend_first"] = true
+	seed(12345) # Reproducible new-world seed while exercising the runtime randomization.
 	host.active_scene.descend_btn.pressed.emit()
 	var abyss := host.active_scene as AbyssRuntime
 	if abyss == null:
@@ -47,26 +49,51 @@ func _run() -> void:
 		if abyss.is_active() or not abyss.last_error.is_empty():
 			break
 		await process_frame
-	_check(abyss.is_active(), "Compact Abyss failed to stream")
+	_check(abyss.is_active(), "Short Abyss failed to stream")
 	if not abyss.is_active():
 		quit(1)
 		return
 	var planner := abyss.stream.specials
 	var routes := abyss.stream.routes
+	_check(planner.config.depth_chunks == 0 and planner.config.level_width_chunks == 2
+		and planner.config.fragment_interval == 25 and planner.config.checkpoint_probability == 0.08
+		and planner.config.checkpoint_min_spacing_rooms == 4, "Short progression profile is incorrect")
+	_check(abyss.configuration.open_threshold == AbyssRegionConfig.new().open_threshold,
+		"Short campaign removed natural caverns")
+	var expected_route := AbyssRouteConfig.new()
+	for property in expected_route.get_property_list():
+		if property.usage & PROPERTY_USAGE_SCRIPT_VARIABLE and property.usage & PROPERTY_USAGE_STORAGE:
+			_check(abyss.route_configuration.get(property.name) == expected_route.get(property.name),
+				"Short campaign changed the original route setting: " + str(property.name))
+	var saved_settings: Dictionary = game.abyss_room_state.world_settings.duplicate(true)
+	var checkpoint_rooms: Dictionary = {}
 	var entry := routes.entrance_room()
 	for level in range(1, 4):
 		var visited := _connected_rooms(planner, entry, level)
+		var candidates: Array = visited.keys()
+		candidates.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return a.y < b.y if a.y != b.y else a.x < b.x)
+		var checkpoints: Array[Vector2i] = []
+		for coords: Vector2i in candidates:
+			if coords.y >= 0 and coords.y < SCAN_ROWS and planner.has_checkpoint(coords):
+				checkpoints.append(coords)
+				if checkpoints.size() == 2: break
+		_check(checkpoints.size() == 2, "Missing reachable checkpoints in Level %d" % level)
+		if checkpoints.size() != 2:
+			quit(1)
+			return
+		checkpoint_rooms[level] = checkpoints
 		for interval in range(2):
 			var plan := planner.interval_definitions(level, interval)
 			_check(not plan.fragment.is_empty() and visited.has(Vector2i(plan.fragment.x, plan.fragment.y)),
 				"A required key fragment is unreachable in Level %d" % level)
-			_check(visited.has(plan.checkpoint) and planner.has_checkpoint(plan.checkpoint),
-				"A compact checkpoint is unreachable in Level %d" % level)
 			if not plan.fragment.is_empty():
 				planner.state.collect_fragment(plan.fragment)
-		_check(planner.interval_definitions(level, 0).gate.is_empty()
-			and planner.interval_definitions(level, 2).gate.is_empty(), "Compact Abyss contains an extra gate")
-		var gate: Dictionary = planner.interval_definitions(level, 1).gate
+		var gate: Dictionary = {}
+		for interval in range(SCAN_ROWS / planner.config.fragment_interval):
+			var candidate: Dictionary = planner.interval_definitions(level, interval).gate
+			if not candidate.is_empty() and visited.has(Vector2i(candidate.x,candidate.y)):
+				gate = candidate
+				break
 		if level == 3:
 			_check(gate.is_empty(), "A gate leads out of Level 3")
 			break
@@ -86,13 +113,13 @@ func _run() -> void:
 		for boundary in [west, east]:
 			if boundary != null:
 				boundary.get_parent().free()
-	_check(planner.level_at(Vector2i(0, 16)) == 0 and planner.level_at(Vector2i(24, 0)) == 3
-		and planner.level_at(Vector2i(40, 0)) == 0, "Compact layout exceeded its depth or level count")
+	_check(planner.level_at(Vector2i(0, 800)) == 1 and planner.level_at(Vector2i(24, 0)) == 3
+		and planner.level_at(Vector2i(40, 0)) == 0, "Short layout lost unbounded depth or level boundaries")
 	# Build the actual checkpoint rooms and query their collision geometry.
 	abyss.stream.active = false
 	for level in range(1, 4):
 		for interval in range(2):
-			var coords: Vector2i = planner.interval_definitions(level, interval).checkpoint
+			var coords: Vector2i = checkpoint_rooms[level][interval]
 			if not abyss.stream.rooms.has(coords):
 				abyss.stream._build_room(coords)
 			await physics_frame
@@ -103,8 +130,8 @@ func _run() -> void:
 					landing = AbyssEntranceSpawn.find_checkpoint(abyss.player, abyss.stream,
 						{"id": String(request.marker_id), "room_coords": coords})
 					break
-			_check(not landing.is_empty(), "Checkpoint lacks a safe landing in Level %d, band %d" % [level, interval])
-	var checkpoint_coords: Vector2i = planner.interval_definitions(1, 0).checkpoint
+			_check(not landing.is_empty(), "Checkpoint lacks a safe landing in Level %d, checkpoint %d" % [level, interval])
+	var checkpoint_coords: Vector2i = checkpoint_rooms[1][0]
 	if not abyss.stream.rooms.has(checkpoint_coords):
 		abyss.stream._build_room(checkpoint_coords)
 	var checkpoint_id := ""
@@ -123,6 +150,9 @@ func _run() -> void:
 	host.change_scene(MENU)
 	_check(saves.menu_preview(10).is_empty(), "Short save appeared in the classic slot")
 	_check(saves.load_game(5) and game.run_length == 5 and game.day == 4 and game.trips_left == 5, "Short save failed to restore")
+	# JSON normalizes StringName dictionary keys and integer-valued numbers.
+	_check(JSON.parse_string(JSON.stringify(game.abyss_room_state.world_settings)) == JSON.parse_string(JSON.stringify(saved_settings)),
+		"Save/load changed the short world's seed or layout settings")
 	host.change_scene(HOUSE)
 	var house: Node = host.active_scene
 	house.descend_btn.pressed.emit()
@@ -187,6 +217,9 @@ func _run() -> void:
 	game.run_length = 10
 	_check(not game.is_final_day() and game.quota_for_day(4) == 40 and game.quota_for_day(9) == 98,
 		"Classic campaign quota or finale changed")
+	_check(AbyssProgressionConfig.new().level_width_chunks == 3
+		and AbyssProgressionConfig.new().fragment_interval == 50
+		and AbyssProgressionConfig.new().depth_chunks == 0, "Classic progression defaults changed")
 	DirAccess.remove_absolute(saves.SHORT_SAVE_PATH)
 	await create_timer(2.0).timeout
 	print("Short campaign smoke: failures=", failures)
@@ -198,8 +231,11 @@ func _connected_rooms(planner: AbyssSpecialRooms, entry: Vector2i, level: int) -
 	var frontier: Array[Vector2i] = [entry]
 	while not frontier.is_empty():
 		var coords: Vector2i = frontier.pop_back()
-		_check(planner.level_at(coords) == level, "The route bypassed a gate or finite bounds")
+		_check(planner.level_at(coords) == level, "The route bypassed a level gate")
 		for connection in planner.routes.get_room(coords).required_connections:
+			# A finite investigation window must not flood the unbounded world forever.
+			if connection.neighbor.y < -32 or connection.neighbor.y >= SCAN_ROWS + 32:
+				continue
 			if not visited.has(connection.neighbor):
 				visited[connection.neighbor] = true
 				frontier.append(connection.neighbor)
