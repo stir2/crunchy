@@ -152,15 +152,22 @@ func test_slash_variants_and_hitstop() -> void:
 		if player.combat.is_hitstopped():
 			saw_hitstop = true
 			check(not sprite.is_playing(), "Slash hitstop advanced playback")
-		if slash_effect.visible:
+		check(not slash_effect.visible, "Player slash overlay appeared without an impact")
+		if target.get_node("Damageable").health == 20:
+			check(sprite._slash_impacts.is_empty(), "Slash effect appeared before confirmed damage")
+		for impact in sprite._slash_impacts:
+			if not impact.visible: continue
 			saw_slash_effect = true
-			check(slash_effect.frame_coords == Vector2i(sprite.frame - player.combat.active_start_frame, 2),
-				"Slash overlay drifted from the attack clock")
+			check(impact.frame_coords == Vector2i(sprite.frame - int(impact.get_meta("start_frame")), 2),
+				"Slash impact drifted from the attack clock")
+			if player.combat.is_hitstopped():
+				check(impact.global_position.is_equal_approx(target.get_node("Damageable").global_position),
+					"Slash impact did not appear on the enemy hurtbox")
 		if player.combat.attack_state == player.combat.AttackState.ACTIVE:
 			check(sprite.frame >= 3 and sprite.frame <= 5, "Damage outside visible slash arc")
 		await tick()
 	check(not player.combat.is_attacking() and saw_hitstop and target.get_node("Damageable").health == 19, "Slash1 completion/one-hit/hitstop failed")
-	check(saw_slash_effect and not slash_effect.visible,"Slash overlay did not play and clear")
+	check(saw_slash_effect and sprite._slash_impacts.is_empty(),"Slash impact did not play and clear")
 	Input.action_release("Attack")
 	await tick()
 	var left_target := load("res://Tests/Scenes/Player/combat_dummy.tscn").instantiate() as CharacterBody2D
@@ -187,6 +194,16 @@ func test_slash_variants_and_hitstop() -> void:
 	check(sprite.animation == &"attack", "Slash variants did not alternate on separate presses")
 	player.damage.receive_hit(CombatHit.new())
 	check(not player.combat.is_attacking(), "Damage did not interrupt new slash playback")
+	target.position.x = 900
+	left_target.position.x = -900
+	await place()
+	Input.action_press("Attack")
+	await tick()
+	Input.action_release("Attack")
+	for frame in range(180):
+		check(sprite._slash_impacts.is_empty() and not slash_effect.visible, "Missed swing created a slash effect")
+		if not player.combat.is_attacking(): break
+		await tick()
 	target.queue_free()
 	left_target.queue_free()
 

@@ -29,6 +29,7 @@ var _player: Player
 var _landing_until_tick: int = -1
 var _next_slash: int = 0
 var _dialogue_idle := false
+var _slash_impacts: Array[Sprite2D] = []
 @onready var _slash_effect: Sprite2D = get_node_or_null("SlashEffect")
 
 func _ready() -> void:
@@ -40,6 +41,7 @@ func _ready() -> void:
 	_player.get_node("Health").health_reset.connect(_on_reset)
 	animation_finished.connect(_on_animation_finished)
 	if _slash_effect != null:
+		_player.get_node("CombatController").hit_confirmed.connect(_on_slash_hit)
 		frame_changed.connect(_sync_slash_effect)
 		animation_changed.connect(_sync_slash_effect)
 	update_animation()
@@ -186,19 +188,36 @@ func play_attack(facing: int) -> void:
 	play(slash)
 	set_frame_and_progress(0, 0.0)
 
+func _on_slash_hit(target: CombatDamageable, hit: CombatHit) -> void:
+	# Dash contacts also confirm hits, but only damaging swings create a slash.
+	if hit.amount <= 0 or not is_attack_animation():
+		return
+	var impact := _slash_effect.duplicate() as Sprite2D
+	impact.top_level = true
+	impact.z_index = 1
+	impact.scale = Vector2(-_player.combat.locked_facing, 1)
+	impact.set_meta("start_frame", frame)
+	add_child(impact)
+	impact.global_position = target.global_position
+	_slash_impacts.append(impact)
+	_sync_slash_effect()
+
+
 func _sync_slash_effect() -> void:
-	# Sample the slash overlay from the attack clock so it shares swing freeze and hitstop.
-	var effect_frame: int = frame - _player.combat.active_start_frame if is_instance_valid(_player.combat) else -1
-	_slash_effect.visible = is_attack_animation() and effect_frame >= 0 and effect_frame < 2
-	if _slash_effect.visible:
-		var row := 2 if animation == &"attack" else 1
-		_slash_effect.frame_coords = Vector2i(effect_frame, row)
-		_slash_effect.offset = attack_offset + Vector2(-30, 0)
+	# Confirmed impacts share the attack clock, including hitstop, at the hit point.
+	for impact in _slash_impacts:
+		var effect_frame := frame - int(impact.get_meta("start_frame"))
+		impact.visible = is_attack_animation() and effect_frame >= 0 and effect_frame < 2
+		if impact.visible:
+			var row := 2 if animation == &"attack" else 1
+			impact.frame_coords = Vector2i(effect_frame, row)
 
 
 func finish_attack() -> void:
-	if _slash_effect != null:
-		_slash_effect.hide()
+	for impact in _slash_impacts:
+		impact.hide()
+		impact.queue_free()
+	_slash_impacts.clear()
 	flip_h = true
 	get_parent().scale.x = absf(get_parent().scale.x) * _player.facing_direction
 	update_animation()

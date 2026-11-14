@@ -22,8 +22,9 @@ func _on_movement_state_changed(state: Player.MovementState) -> void:
 	var dashing := state == Player.MovementState.DASHING
 	if dashing:
 		_dash_facing = player.dash_direction
-		play_burst(&"dash_start", &"DashStartBurst", Vector2(0, -15), _dash_facing > 0)
-	elif _was_dashing:
+		if player.is_on_floor():
+			play_burst(&"dash_start", &"DashStartBurst", Vector2(0, -15), _dash_facing > 0)
+	elif _was_dashing and player.is_on_floor():
 		play_burst(&"dash_end", &"DashEndBurst", Vector2(0, -15), _dash_facing > 0)
 	_was_dashing = dashing
 
