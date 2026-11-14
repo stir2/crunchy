@@ -20,6 +20,10 @@ func _ready() -> void:
 	if not Engine.is_editor_hint():
 		subtitles.visibility_changed.connect(_on_visibility_changed)
 	_apply_export_overrides()
+	# Our text hint replaces Dialogic's default blue advance icon.
+	var indicator := $Subtitles/Content/NextIndicator as DialogicNode_NextIndicator
+	if indicator.texture_rect != null:
+		indicator.texture_rect.hide()
 
 
 func _apply_export_overrides() -> void:

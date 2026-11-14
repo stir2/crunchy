@@ -66,6 +66,38 @@ func check_cutscene_pause() -> void:
 	host.pause_menu.resume()
 
 
+func check_pause_settings() -> void:
+	var pause_menu: CanvasLayer = host.pause_menu
+	var settings: Control = pause_menu.get_node("SettingsPanel")
+	for action in [&"ui_cancel", &"Controller Pause"]:
+		pause_menu.toggle()
+		pause_menu.get_node("%SettingsButton").pressed.emit()
+		check(settings.visible and not pause_menu.panel.visible and paused, "Settings did not own the paused view")
+		var event: InputEvent
+		if action == &"ui_cancel":
+			var key := InputEventKey.new()
+			key.physical_keycode = KEY_ESCAPE
+			key.pressed = true
+			event = key
+		else:
+			var button := InputEventJoypadButton.new()
+			button.button_index = JOY_BUTTON_START
+			button.pressed = true
+			event = button
+		Input.parse_input_event(event)
+		await process_frame
+		check(not settings.visible and pause_menu.panel.visible and paused, "Closing Settings resumed gameplay or stacked pause screens")
+		event = event.duplicate()
+		event.set("pressed", false)
+		Input.parse_input_event(event)
+		await process_frame
+		pause_menu.resume()
+	pause_menu.toggle()
+	pause_menu.get_node("%SettingsButton").pressed.emit()
+	pause_menu.resume()
+	check(not settings.visible and not pause_menu.panel.visible and not paused, "Resume left Settings visible")
+
+
 func check_blocked_extraction(abyss: AbyssRuntime) -> void:
 	var entrance := abyss.entrance_return.global_position
 	var origin := abyss.interactions.origin.global_position
@@ -100,7 +132,7 @@ func run() -> void:
 	var game := root.get_node("GameController")
 	var village := root.get_node("VillageManager")
 	saves = root.get_node("SaveManager")
-	saves.save_path = "user://run-flow-%d.json" % OS.get_process_id()
+	saves.save_path = "user://run-flow-%d.tmp" % OS.get_process_id()
 	change_scene_to_file("res://Scenes/Main/main.tscn")
 	if not await wait_for(func(): return current_scene != null):
 		check(false, "Main did not open")
@@ -114,6 +146,19 @@ func run() -> void:
 		finish()
 		return
 
+	var ui_font := load("res://Assets/Fonts/AlkhemikalUI.tres") as Font
+	for symbol in ["∞", "—", "…", "×", "·"]:
+		check(ui_font.has_char(symbol.unicode_at(0)), "Bundled UI font is missing a required symbol")
+	var project_config := ConfigFile.new()
+	check(project_config.load("res://project.godot") == OK, "Could not read project input bindings")
+	for action in project_config.get_section_keys("input"):
+		for binding in InputMap.action_get_events(action):
+			if binding is InputEventKey:
+				var key := binding.duplicate() as InputEventKey
+				key.device = 0
+				key.pressed = true
+				check(key.is_action_pressed(action), "Keyboard binding rejects a normal keyboard: " + action)
+	await check_pause_settings()
 	var workers: Array = village.get_idle_workers()
 	var jobs: Array[StringName] = [&"apothecary", &"blacksmith", &"farmer"]
 	for index in jobs.size():
@@ -262,6 +307,10 @@ func run() -> void:
 		if not waves.active:
 			break
 		for enemy: Node in waves._live.duplicate():
+			var expected_health: int = {"zombie_shambler.tscn": 4, "zombie_runner.tscn": 3,
+				"zombie_stalker.tscn": 5, "spider_rusher.tscn": 4, "spider_web_shooter.tscn": 4}[enemy.scene_file_path.get_file()]
+			check(enemy.max_health == expected_health and enemy.damageable.health_component.max_health == expected_health,
+				"Summoned enemy lost its health bonus")
 			enemy.take_damage(999)
 		await physics_frame
 	check(mixed_spawns == waves.FORMATIONS[0] + waves.FORMATIONS[1] and not waves.active, "Mixed summon encounter did not complete")

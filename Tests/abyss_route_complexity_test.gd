@@ -143,7 +143,9 @@ func _run() -> void:
 	print("Branches: %d, average %.2f, max %d, >=3 rooms %d; junctions %d, interior dead ends %d, independent cycles %d" % [branch_lengths.size(), float(branch_sum) / maxi(1, branch_lengths.size()), branch_lengths.max(), meaningful, junctions, dead_ends, cycles])
 	print("Secondary branch starts: %d" % secondary_branches)
 	print("Boundary endpoints N/E/S/W: %s; offsets horizontal %d/8 vertical %d/8; highways %d; shape variants %d" % [crossing_sides, horizontal_offsets.size(), vertical_offsets.size(), long_horizontal_rows, shape_signatures.size()])
-	var file := FileAccess.open("/tmp/abyss_route_edges.json", FileAccess.WRITE)
-	file.store_string(JSON.stringify(all_edges))
+	var file := FileAccess.open("user://abyss-route-edges.tmp", FileAccess.WRITE)
+	check(file != null, "Could not save route edges")
+	if file != null:
+		file.store_string(JSON.stringify(all_edges))
 	print("Route complexity tests: %d failures" % failures)
 	quit(0 if failures == 0 else 1)

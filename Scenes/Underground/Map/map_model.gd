@@ -137,7 +137,7 @@ func snapshot(current_level: int, player_position: Vector2 = Vector2.ZERO, local
 		for connection in connections(coords):
 			var adjacent: Vector2i = connection.neighbor
 			if not nodes.has(adjacent):
-				if local_rooms.has_area(): continue
+				if local_rooms.has_area() and not local_rooms.has_point(adjacent): continue
 				nodes[adjacent] = {"coords":adjacent,"position":room_anchor(adjacent),"visited":false,
 					"color":color_for(service.level_at(adjacent),current_level,false)}
 			if not nodes[adjacent].visited or seen_edges.has(connection.id): continue
@@ -156,10 +156,9 @@ func snapshot(current_level: int, player_position: Vector2 = Vector2.ZERO, local
 					active = service.is_gate_unlocked(definition)
 					position = (Vector2(coords*room_size)+Vector2(room_size.x-0.5,room_size.y/2+0.5))*tile_pixels
 				"fragment":
-					if not show_hints: continue
-					if not service.state.fragments.has(definition.id): continue
-					active = true # Collection memory survives consumption.
-			if local_rooms.has_area() and definition.kind == "checkpoint" and not active: continue
+					if not show_hints and not local_rooms.has_area(): continue
+					if not service.state.fragments.has(definition.id) and not local_rooms.has_area(): continue
+					active = service.state.fragments.has(definition.id) # Collection memory survives consumption.
 			markers.append({"kind":definition.kind,"id":definition.id,"position":position,"active":active})
 	# Collection can happen before the dwell threshold. Keep the memory dot even
 	# then, without upgrading that room to visited or revealing any of its edges.
@@ -175,6 +174,6 @@ func snapshot(current_level: int, player_position: Vector2 = Vector2.ZERO, local
 		if last.size() != 2 or not last[0].is_valid_int() or not last[1].is_valid_int(): continue
 		markers.append({"kind":"fragment","id":id,"position":room_anchor(Vector2i(int(last[0]),int(last[1]))),"active":true})
 	var grave: Dictionary = exploration.graves.get(service.world,{})
-	if not grave.is_empty() and (not local_rooms.has_area() or local_rooms.has_point(Vector2i(grave.x, grave.y))):
+	if not grave.is_empty():
 		markers.append({"kind":"grave","id":grave.id,"position":Vector2(grave.position_x,grave.position_y),"active":true})
 	return {"nodes":nodes,"edges":edges,"markers":markers}

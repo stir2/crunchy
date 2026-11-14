@@ -108,7 +108,7 @@ func _binding_text(action: StringName) -> String:
 func _prompt_for(target: InteractionTarget, channel: InteractionTarget.Channel, action: StringName) -> String:
 	if target == null: return ""
 	var text := target.get_prompt_for_action(player,channel)
-	return "%s â€” %s" % [_binding_text(action),text] if target.can_interact_for_action(player,channel) else text
+	return "%s — %s" % [_binding_text(action),text] if target.can_interact_for_action(player,channel) else text
 
 func _update_prompt() -> void:
 	var allowed := actions_allowed()

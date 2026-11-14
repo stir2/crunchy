@@ -80,6 +80,9 @@ func _ready() -> void:
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	new_game_dialog.confirmed.connect(func(): get_tree().current_scene.start_new_game(_run_length))
 	%NewGameButton.grab_focus()
+	get_viewport().size_changed.connect(_fit_actions)
+	$Buttons.resized.connect(_fit_actions)
+	_fit_actions.call_deferred()
 
 
 func _select_campaign(length: int) -> void:
@@ -107,3 +110,18 @@ func _new_game() -> void:
 func _continue() -> void:
 	if not get_tree().current_scene.continue_game(_run_length):
 		status_label.text = SaveManager.last_error
+
+
+func _fit_actions() -> void:
+	if not is_inside_tree(): return
+	var buttons := $Buttons as VBoxContainer
+	var viewport_size := get_viewport_rect().size
+	var natural := buttons.get_combined_minimum_size().max(Vector2(360, 1))
+	var available := (viewport_size - Vector2(32, 32)).max(Vector2.ONE)
+	var factor := minf(1.0, minf(available.x / natural.x, available.y / natural.y))
+	buttons.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	buttons.size = natural
+	buttons.scale = Vector2.ONE * factor
+	var displayed := natural * factor
+	buttons.position = Vector2(clampf(viewport_size.x * 0.16, 16, maxf(16, viewport_size.x - displayed.x - 16)),
+		clampf(viewport_size.y * 0.84 - displayed.y, 16, maxf(16, viewport_size.y - displayed.y - 16)))

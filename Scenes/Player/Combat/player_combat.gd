@@ -281,7 +281,7 @@ func end_physics_tick() -> void:
 			continue
 		_hit_targets[identity] = true
 		var hit := CombatHit.new()
-		hit.amount = attack_damage
+		hit.amount = target.player_melee_damage_override if target.player_melee_damage_override >= 0 else attack_damage
 		hit.source = player
 		hit.direction = Vector2(locked_facing, 0)
 		hit.knockback = Vector2(absf(attack_knockback.x) * locked_facing, attack_knockback.y)

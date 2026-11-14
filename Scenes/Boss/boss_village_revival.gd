@@ -4,16 +4,18 @@ const PORTRAITS = preload("res://Scenes/Village/villager_portraits.gd")
 const HEARTS = preload("res://Scenes/Player/Health/heart_hud.tscn")
 const CENTER := Vector2(320, 180)
 var _repeat_bell := true
+var _dark: ColorRect
 var _ritual := Control.new()
 var _portraits: Array[TextureRect] = []
 
 func play(max_hp: int, restored_hp: int, cue: Callable) -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var dark := ColorRect.new()
-	dark.size = Vector2(640, 360)
-	dark.color = Color(0.025, 0.022, 0.035, 0.0)
-	dark.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(dark)
+	_dark = ColorRect.new()
+	_dark.color = Color(0, 0, 0, 0)
+	_dark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_dark)
+	get_viewport().size_changed.connect(_fit_backdrop, CONNECT_DEFERRED)
+	_fit_backdrop()
 	_ritual.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_ritual.modulate.a = 0.0
 	add_child(_ritual)
@@ -35,7 +37,7 @@ func play(max_hp: int, restored_hp: int, cue: Callable) -> void:
 	hearts.show()
 	_place_portraits(0.0)
 	var curtain := create_tween().set_trans(Tween.TRANS_SINE)
-	curtain.tween_property(dark, "color:a", 1.0, 0.60)
+	curtain.tween_property(_dark, "color:a", 1.0, 0.60)
 	await curtain.finished
 	var sequence := create_tween().set_parallel()
 	sequence.tween_property(_ritual, "modulate:a", 1.0, 0.48)
@@ -97,3 +99,13 @@ func _place_portraits(progress: float) -> void:
 		var y := side * (lerpf(52.0, 33.0, progress) + floori(row / 2.0) * spacing.y)
 		_portraits[i].size = portrait_size
 		_portraits[i].position = CENTER + Vector2(x, y) - portrait_size * 0.5
+
+
+func _fit_backdrop() -> void:
+	if not is_inside_tree() or _dark == null:
+		return
+	# The ritual lives under a centered 640x360 HUD, but darkness covers the viewport.
+	var inverse := get_global_transform_with_canvas().affine_inverse()
+	var viewport_rect := get_viewport_rect()
+	_dark.position = inverse * viewport_rect.position
+	_dark.size = inverse * viewport_rect.end - _dark.position

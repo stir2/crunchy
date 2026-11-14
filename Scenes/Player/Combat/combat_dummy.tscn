@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://d1jip8j6bxams"]
 
-[ext_resource type="Script" path="res://Scenes/Player/Combat/combat_dummy.gd" id="1"]
-[ext_resource type="Script" path="res://Scenes/Player/Combat/damageable.gd" id="2"]
+[ext_resource type="Script" path="res://Tests/Scenes/Player/combat_dummy.gd" id="1"]
+[ext_resource type="Script" path="res://Scenes/Combat/damageable.gd" id="2"]
 
 [sub_resource type="RectangleShape2D" id="Body"]
 size = Vector2(22, 32)

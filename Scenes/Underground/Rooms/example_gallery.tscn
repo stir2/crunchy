@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://65pvcgwv4ujt"]
 
-[ext_resource type="Script" path="res://Scenes/Underground/Rooms/example_gallery.gd" id="1"]
+[ext_resource type="Script" path="res://Tests/Scenes/Underground/example_gallery.gd" id="1"]
 [ext_resource type="Resource" uid="uid://cjgh0g58wh0na" path="res://Scenes/Underground/Rooms/example_registry.tres" id="2"]
 
 [node name="RoomTemplateGallery" type="Node2D" unique_id=1102494163]

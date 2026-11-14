@@ -58,15 +58,19 @@ func _queue_wave() -> void:
 	for i in formation.size():
 		var point := Vector2(spots[i], 304)
 		spawn_warning.emit(point)
-		_pending.append({"scene": formation[i], "point": point, "bonus_health": 5, "time": 0.8 + i * 0.45})
+		_pending.append({"scene": formation[i], "point": point, "bonus_health": 2, "time": 0.8 + i * 0.45})
 
 func _spawn(entry: Dictionary) -> void:
 	var enemy: CharacterBody2D = entry.scene.instantiate()
 	enemy.position = entry.point
 	enemy.target = target
 	enemy.flesh_reward = 0
-	enemy.base_health += int(entry.bonus_health)
 	add_child(enemy)
+	# Variant initialization sets its base HP; apply the summon bonus afterward.
+	enemy.base_health += int(entry.bonus_health)
+	enemy.set_abyss_level(enemy.abyss_level)
+	# Summons retain regular-enemy damage; the boss still uses its own HP scale.
+	enemy.damageable.player_melee_damage_override = GameController.abyss_attack_damage()
 	enemy.hitbox.active = false
 	enemy.set_physics_process(false)
 	enemy.modulate.a = 0

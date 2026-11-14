@@ -68,7 +68,7 @@ func run() -> void:
 	host.change_scene("res://Scenes/Village/House/house.tscn")
 	await tick()
 	var saves := root.get_node("SaveManager")
-	saves.save_path = "/tmp/crunchy-flesh-hud-smoke.json"
+	saves.save_path = "user://abyss_flesh_hud_smoke-%d.tmp" % OS.get_process_id()
 	check(saves.save_game(),"Save during flight failed: "+saves.last_error)
 	check(saves.load_game(),"Flesh save/load failed: "+saves.last_error)
 	state = game.abyss_room_state.exploration

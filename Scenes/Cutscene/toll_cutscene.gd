@@ -60,6 +60,8 @@ class DigitReel extends Control:
 	signal landed
 
 	const COUNT_TOP := 1000000 # infinity counter races from 1 to this
+	const INFINITY_ICON = preload("res://Assets/Sprites/UI/infinity.svg")
+	const INFINITY_SIZE := Vector2(162, 90)
 	const BRAKE_DISTANCE := 15 # numbers it brakes through before landing on ∞
 	const BONE := Color(0.86, 0.83, 0.77, 1.0)
 	const CRIMSON := Color(0.85, 0.16, 0.16, 1.0)
@@ -118,6 +120,19 @@ class DigitReel extends Control:
 				lbl.add_theme_font_size_override("font_size", base_font_size)
 				lbl.visible = (g == 0)
 				add_child(lbl)
+				if counting:
+					var icon := TextureRect.new()
+					icon.name = "InfinityIcon"
+					icon.texture = INFINITY_ICON
+					icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+					icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+					icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+					icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+					icon.size = INFINITY_SIZE
+					icon.position = (Vector2(cell_w, cell_h) - INFINITY_SIZE) * 0.5
+					icon.modulate = CRIMSON
+					icon.hide()
+					lbl.add_child(icon)
 				layers.append(lbl)
 			_slots.append(layers)
 
@@ -158,16 +173,19 @@ class DigitReel extends Control:
 			var sym := _symbol_for(v)
 			var y := (float(v) - wheel) * cell_h + kick
 			var layers: Array = _slots[j]
-			var changed: bool = (layers[0] as Label).text != sym
+			var changed: bool = (layers[0] as Label).get_meta("symbol", "") != sym
 			for g in 5:
 				var lbl: Label = layers[g]
 				if g > 0:
 					lbl.visible = _blur_half > 0.5
 					if not lbl.visible:
 						continue
-				if changed or (g > 0 and lbl.text != sym):
-					lbl.text = sym
-					lbl.add_theme_color_override("font_color", CRIMSON if sym == "∞" else BONE)
+				if changed or (g > 0 and lbl.get_meta("symbol", "") != sym):
+					lbl.set_meta("symbol", sym)
+					lbl.text = "" if sym == "∞" else sym
+					if counting:
+						lbl.get_node("InfinityIcon").visible = sym == "∞"
+					lbl.add_theme_color_override("font_color", BONE)
 					lbl.add_theme_font_size_override("font_size", _fit_font(sym))
 				lbl.position.y = y + GHOST_MULT[g] * _blur_half
 				lbl.modulate.a = lerpf(1.0, 0.55, t) if g == 0 else GHOST_ALPHA[g] * t * 1.6

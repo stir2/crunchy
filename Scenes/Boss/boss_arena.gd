@@ -187,6 +187,7 @@ func _drop_to_lower_arena() -> void:
 	for x in range(40, 640, 72):
 		_ground_impact(Vector2(x, 304), false)
 	_floor_debris()
+	tiles.hide() # Hide arena walls during freefall without changing their collision.
 	_shake = 8.0
 	var landing := _lower_landing_y(player.position.x)
 	_fall_streaks()
@@ -224,6 +225,7 @@ func _drop_to_lower_arena() -> void:
 		stop_wind.tween_property(freefall_voice, "volume_db", -60.0, 0.06)
 		stop_wind.tween_callback(freefall_voice.queue_free)
 	_lower = true
+	tiles.show()
 	sprite.set_process(true)
 	player.reset_movement()
 	player.set_physics_process(true)

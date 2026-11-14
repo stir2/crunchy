@@ -12,6 +12,13 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+[node name="Backdrop" type="ColorRect" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.025, 0.035, 0.045, 1)
 [node name="View" type="Control" parent="Panel"]
 layout_mode = 1
 anchors_preset = 15
@@ -44,10 +51,12 @@ theme_override_constants/separation = 4
 layout_mode = 2
 mouse_filter = 2
 theme_override_font_sizes/font_size = 16
-text = "M / Esc: close   |   Drag / movement keys: pan   |   Wheel: zoom   |   N: toggle minimap in game"
+text = "M / Esc: close | Drag / movement keys: pan | Wheel: zoom | N: minimap
+Controller: View: map | B / Start: close | Left stick: pan | LB / RB: zoom | R3: center | L3: minimap"
+autowrap_mode = 3
 horizontal_alignment = 1
 
-[node name="Markers" type="HBoxContainer" parent="Panel/Legend"]
+[node name="Markers" type="HFlowContainer" parent="Panel/Legend"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 20

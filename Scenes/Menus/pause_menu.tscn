@@ -65,6 +65,11 @@ custom_minimum_size = Vector2(0, 44)
 text = "Save game"
 alignment = 0
 
+[node name="HelpButton" type="Button" parent="Panel/Layout/Paper/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Help"
+
 [node name="MainMenuButton" type="Button" parent="Panel/Layout/Paper/Buttons"]
 unique_name_in_owner = true
 layout_mode = 2

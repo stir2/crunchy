@@ -7,6 +7,7 @@ var selected_checkpoint := ""
 var show_player := true
 var marker_scale := 1.0
 var pin_gates := true
+var pin_grave := false
 var _press_position := Vector2.INF
 @export var marker_scene: PackedScene = preload("res://Scenes/Underground/Map/map_marker.tscn")
 @export_range(24.0,128.0,1.0) var room_spacing: float = 64.0
@@ -63,15 +64,32 @@ func pan_screen(delta: Vector2) -> void:
 
 func zoom_at(factor: float, cursor: Vector2) -> void:
 	var anchor := center+(cursor-size*0.5)*room_pixels/(room_spacing*map_zoom)
-	map_zoom = clampf(map_zoom*factor,minimum_zoom,3.0)
+	var bounds := graph_bounds()
+	var available := (size - Vector2(48, 48)).max(Vector2.ONE)
+	var fit_zoom := minf(available.x / maxf(bounds.size.x, room_pixels), available.y / maxf(bounds.size.y, room_pixels)) * room_pixels / room_spacing
+	var limit := minf(minimum_zoom, fit_zoom)
+	map_zoom = clampf(map_zoom*factor, limit, 3.0)
 	center = anchor-(cursor-size*0.5)*room_pixels/(room_spacing*map_zoom)
+	if factor < 1.0 and is_equal_approx(map_zoom, limit):
+		center = bounds.get_center()
 	_refresh_positions()
+
+func graph_bounds() -> Rect2:
+	var bounds := Rect2(player_position, Vector2.ZERO)
+	for node: Dictionary in graph.nodes.values():
+		bounds = bounds.expand(node.position)
+	for marker: Dictionary in graph.markers:
+		bounds = bounds.expand(marker.position)
+	return bounds
+
+func _is_pinned(marker: Dictionary) -> bool:
+	return (marker.kind == "gate" and pin_gates) or (marker.kind == "grave" and pin_grave)
 
 func _refresh_positions() -> void:
 	for index in range(_icons.size()):
 		var point: Vector2 = graph.markers[index].position if index < graph.markers.size() else player_position
 		_icons[index].position = world_to_screen(point)
-		if index < graph.markers.size() and graph.markers[index].kind == "gate" and pin_gates:
+		if index < graph.markers.size() and _is_pinned(graph.markers[index]):
 			_icons[index].position = _gate_screen_position(point)
 	queue_redraw()
 
@@ -128,13 +146,13 @@ func _draw() -> void:
 	for marker: Dictionary in graph.markers:
 		if marker.kind == "checkpoint" and marker.id == selected_checkpoint:
 			draw_arc(world_to_screen(marker.position), 12, 0, TAU, 24, Color(1, 0.82, 0.45), 2, true)
-		if marker.kind != "gate" or not pin_gates: continue
+		if not _is_pinned(marker): continue
 		var target := world_to_screen(marker.position)
 		var pinned := _gate_screen_position(marker.position)
 		if target.is_equal_approx(pinned): continue
 		var direction := (target-pinned).normalized()
 		var tip := pinned+direction*16.0
-		var color := Color(0.5,1,0.75) if marker.active else Color(0.8,0.65,0.45)
+		var color := Color.WHITE if marker.kind == "grave" else (Color(0.5,1,0.75) if marker.active else Color(0.8,0.65,0.45))
 		draw_line(pinned,tip,color,1.5,true)
 		draw_line(tip,tip-direction.rotated(0.6)*6.0,color,1.5,true)
 		draw_line(tip,tip-direction.rotated(-0.6)*6.0,color,1.5,true)

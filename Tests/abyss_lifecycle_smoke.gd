@@ -193,7 +193,7 @@ func run() -> void:
 	check(game.return_abyss_descent(world) == 0 and game.flesh == 170,"Return could bank twice")
 	# Persist the spent heal/ended descent using the real village SaveManager.
 	var saves := root.get_node("SaveManager")
-	saves.save_path = "/tmp/crunchy-lifecycle-smoke.json"
+	saves.save_path = "user://abyss_lifecycle_smoke-%d.tmp" % OS.get_process_id()
 	check(saves.save_game() and saves.load_game(),"Lifecycle save/load failed: "+saves.last_error)
 	if not await enter_runtime():
 		quit(1)

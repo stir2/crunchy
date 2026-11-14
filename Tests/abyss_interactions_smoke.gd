@@ -61,9 +61,9 @@ func run() -> void:
 	game.abyss_room_state = AbyssRoomState.new()
 	game.abyss_progression_state = AbyssProgressionState.new()
 	var fixture := AbyssRegionConfig.new()
-	fixture.global_seed = 12
+	fixture.global_seed = 12345
 	fixture.noise_frequency = 0.085
-	fixture.open_threshold = 0.0
+	fixture.open_threshold = 1.0 # This seed has connected PACKED gates in both sampled intervals.
 	var progression := AbyssProgressionConfig.new()
 	progression.checkpoint_probability = 1.0
 	var configs: Array[Resource] = [fixture,AbyssRouteConfig.new(),AbyssTerrainConfig.new(),progression]
@@ -102,6 +102,10 @@ func run() -> void:
 				checkpoint_coords = Vector2i(x,y)
 				break
 		if checkpoint_coords.x != 2147483647: break
+	if checkpoint_coords.x == 2147483647:
+		check(false, "Generated checkpoint fixture missing")
+		quit(1)
+		return
 	var room := await load_room(checkpoint_coords)
 	var checkpoint := target_in(room,&"checkpoint")
 	check(checkpoint != null,"Generated checkpoint missing")
@@ -124,6 +128,9 @@ func run() -> void:
 	var gate_a: Dictionary = service.interval_definitions(1,0).gate
 	var gate_b: Dictionary = service.interval_definitions(1,1).gate
 	check(not gate_a.is_empty() and not gate_b.is_empty(),"Generated gates missing")
+	if gate_a.is_empty() or gate_b.is_empty():
+		quit(1)
+		return
 	var gate_coords := Vector2i(gate_a.x,gate_a.y)
 	var gate_room := await load_room(gate_coords)
 	var right_room := await load_room(gate_coords+Vector2i.RIGHT)
@@ -196,7 +203,7 @@ func run() -> void:
 	host.change_scene("res://Scenes/Village/House/house.tscn")
 	await tick(2)
 	var saves := root.get_node("SaveManager")
-	saves.save_path = "/tmp/crunchy-interactions-smoke-save.json"
+	saves.save_path = "user://abyss_interactions_smoke-%d.tmp" % OS.get_process_id()
 	check(saves.save_game(),"SaveManager save failed: "+saves.last_error)
 	game.abyss_progression_state = AbyssProgressionState.new()
 	check(saves.load_game(),"SaveManager load failed: "+saves.last_error)

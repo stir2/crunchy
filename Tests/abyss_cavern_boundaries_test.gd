@@ -156,7 +156,7 @@ func run() -> void:
 					seams += 1
 		room.free()
 	image.resize(image.get_width() * 3, image.get_height() * 3, Image.INTERPOLATE_NEAREST)
-	image.save_png("/tmp/abyss-boundary-comparison.png")
+	check(image.save_png("user://abyss-boundary-comparison.tmp") == OK, "Could not save boundary comparison")
 	var reordered := AbyssRouteGenerator.new(config, routes)
 	reordered.get_chunk(Vector2i(-1, 1))
 	var reverse_field := AbyssCavernBoundaryField.new(reordered, selector, terrain)

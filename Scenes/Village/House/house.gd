@@ -14,6 +14,8 @@ var current_panel: RoomPanel = RoomPanel.DESK
 var ending_dialog: AcceptDialog
 var sleep_dialog: ConfirmationDialog
 var _descent_panel: Control
+var _descent_paper: PanelContainer
+var _descent_destinations: BoxContainer
 var _destination_list: VBoxContainer
 var _destination_scroll: ScrollContainer
 var _descent_cancel: Button
@@ -152,10 +154,10 @@ func _ready() -> void:
 	VillageManager.night_resolved.connect(_on_night_resolved)
 	VillageManager.village_wiped.connect(_on_village_wiped)
 
-	if GameController.day == 1 and not GameController.window_history.has(DAY_ONE_TUTORIAL.SKIPPED):
-		var tutorial := DAY_ONE_TUTORIAL.new()
-		tutorial.house = self
-		$UI.add_child(tutorial)
+	var tutorial := DAY_ONE_TUTORIAL.new()
+	tutorial.name = "DayOneTutorial"
+	tutorial.house = self
+	$UI.add_child(tutorial)
 	var start_panel := RoomPanel.DESK
 	if GameController.return_to_stairs:
 		GameController.return_to_stairs = false
@@ -260,11 +262,12 @@ func _build_descent_panel(panel_theme: Theme) -> void:
 	$UI.add_child(shade)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_descent_panel = shade
-	var center := CenterContainer.new()
+	var center := Control.new()
 	shade.add_child(center)
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var panel := PanelContainer.new()
 	panel.theme = panel_theme
+	_descent_paper = panel
 	panel.custom_minimum_size.x = 1050
 	center.add_child(panel)
 	var content := VBoxContainer.new()
@@ -274,7 +277,8 @@ func _build_descent_panel(panel_theme: Theme) -> void:
 	title.text = "Where will you descend?"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	content.add_child(title)
-	var destinations := HBoxContainer.new()
+	var destinations := BoxContainer.new()
+	_descent_destinations = destinations
 	destinations.add_theme_constant_override("separation", 16)
 	content.add_child(destinations)
 	var scroll := ScrollContainer.new()
@@ -298,6 +302,7 @@ func _build_descent_panel(panel_theme: Theme) -> void:
 	var map_help := Label.new()
 	map_help.text = "Click an activated checkpoint to select it. Drag to pan and scroll to zoom."
 	map_help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	map_help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(map_help)
 	_destination_confirm = Button.new()
 	_destination_confirm.pressed.connect(func():
@@ -310,7 +315,23 @@ func _build_descent_panel(panel_theme: Theme) -> void:
 	cancel.pressed.connect(_close_descent_panel)
 	content.add_child(cancel)
 	shade.hide()
+	get_viewport().size_changed.connect(_fit_descent_panel)
+	panel.minimum_size_changed.connect(_fit_descent_panel.call_deferred)
+	_fit_descent_panel.call_deferred()
 
+func _fit_descent_panel() -> void:
+	if not is_inside_tree() or not is_instance_valid(_descent_paper):
+		return
+	var available := (get_viewport_rect().size - Vector2(24, 24)).max(Vector2.ONE)
+	var narrow := available.x < 800
+	_descent_destinations.vertical = narrow
+	_descent_paper.custom_minimum_size.x = 300 if narrow else 1050
+	_destination_scroll.custom_minimum_size.x = 240 if narrow else 300
+	_destination_map.custom_minimum_size = Vector2(280, 240) if narrow else Vector2(640, 420)
+	_descent_paper.size = _descent_paper.get_combined_minimum_size()
+	var fit := minf(1.0, minf(available.x / _descent_paper.size.x, available.y / _descent_paper.size.y))
+	_descent_paper.scale = Vector2.ONE * fit
+	_descent_paper.position = (get_viewport_rect().size - _descent_paper.size * fit) * 0.5
 
 func _open_descent_panel() -> void:
 	if GameController.is_final_day():
@@ -386,6 +407,7 @@ func _open_descent_panel() -> void:
 	_destination_map.minimum_zoom = minf(0.35, _destination_map.map_zoom)
 	_destination_map.set_graph(graph, room_pixels, bounds.get_center())
 	_destination_map.recenter()
+	_fit_descent_panel()
 	_descent_panel.show()
 	_select_descent_destination("")
 	entrance.grab_focus()
@@ -472,7 +494,7 @@ func _refresh_top_hud() -> void:
 		top_potions_label.text = "%d Potions" % GameController.potions
 	top_trips_label.text = "%d/%d Trips" % [GameController.trips_left, GameController.TRIPS_PER_DAY]
 	if GameController.is_final_day():
-		top_flesh_label.text = "Toll ended" if GameController.boss_defeated else "Toll: ÃƒÂ¢Ã‹â€ Ã…Â¾"
+		top_flesh_label.text = "Toll ended" if GameController.boss_defeated else "Toll: ∞"
 		top_trips_label.text = "The village is safe" if GameController.boss_defeated else ("Investigate the abyss" if GameController.monster_missing else "Check the window")
 	top_hearts.set_display_health(GameController.health, int(GameController.stats.get("max_health", 6)))
 	top_vitals_label.text = "Stamina: %d/%d  |  Village Health: %d%%" % [
@@ -611,11 +633,15 @@ func _on_victim_choice_requested(candidates: Array) -> void:
 
 
 func _center_modal(modal: Control) -> void:
+	if not is_inside_tree() or not is_instance_valid(modal) or not modal.is_inside_tree():
+		return
 	modal.reset_size()
 	_position_modal(modal)
 
 
 func _position_modal(modal: Control) -> void:
+	if not is_inside_tree() or not is_instance_valid(modal) or not modal.is_inside_tree():
+		return
 	modal.position = (get_viewport_rect().size - modal.size) * 0.5
 
 

@@ -15,6 +15,9 @@ signal died(hit: CombatHit)
 signal health_reset
 @export_range(1, 1000, 1) var max_health: int = 6
 @export var invulnerable: bool = false
+## Optional player slash damage for encounters using a different boss damage scale.
+## -1 keeps the attacker's normal damage. Projectiles and knockback are unaffected.
+@export_range(-1, 100) var player_melee_damage_override: int = -1
 ## Empty creates an owned HealthComponent configured by max_health above.
 ## With an explicit Health node, configure HP on that node instead; max_health
 ## here is only used for the owned component. Paths are relative to this hurtbox.

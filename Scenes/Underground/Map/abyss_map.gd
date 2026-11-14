@@ -24,6 +24,10 @@ func _ready() -> void:
 	visible = false
 	$Panel/Center.pressed.connect(view.recenter)
 	_build_legend()
+	$Panel/Legend.resized.connect(_fit_legend, CONNECT_DEFERRED)
+	$Panel/Legend.minimum_size_changed.connect(_fit_legend, CONNECT_DEFERRED)
+	get_viewport().size_changed.connect(_fit_legend)
+	_fit_legend.call_deferred()
 	# This layer belongs to gameplay HUD, independent of the paused full map.
 	var hud := CanvasLayer.new()
 	hud.layer = layer - 1
@@ -37,6 +41,7 @@ func _ready() -> void:
 	_fit_minimap()
 	_minimap.clip_contents = true
 	_minimap.pin_gates = false
+	_minimap.pin_grave = true
 	_minimap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_minimap.hide()
 
@@ -55,9 +60,11 @@ func _fit_minimap() -> void:
 
 
 func _build_legend() -> void:
-	for entry in [["checkpoint", "Discovered checkpoint"], ["checkpoint", "Activated checkpoint"], ["gate", "Gate"], ["fragment", "Collected fragment"], ["grave", "Grave"]]:
+	for entry in [["player", "You"], ["checkpoint", "Discovered checkpoint"], ["checkpoint", "Activated checkpoint"], ["gate", "Locked gate"], ["gate", "Unlocked gate"], ["fragment", "Uncollected fragment"], ["fragment", "Collected fragment"], ["grave", "Grave"]]:
 		var label := Label.new()
 		label.text = entry[1]
+		label.set_meta("full_text", entry[1])
+		label.set_meta("short_text", {"Discovered checkpoint": "Checkpoint", "Activated checkpoint": "Active", "Locked gate": "Gate", "Unlocked gate": "Open gate", "Uncollected fragment": "Fragment", "Collected fragment": "Collected"}.get(entry[1], entry[1]))
 		label.add_theme_font_size_override("font_size", 16)
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var item := HBoxContainer.new()
@@ -67,13 +74,41 @@ func _build_legend() -> void:
 		icon_space.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var icon := view.marker_scene.instantiate() as Node2D
 		icon.kind = entry[0]
-		icon.active = entry[1] in ["Collected fragment", "Activated checkpoint"]
+		icon.active = entry[1] in ["Collected fragment", "Activated checkpoint", "Unlocked gate"]
 		icon.position = Vector2(8, 18 if icon.kind == "fragment" else 10)
 		icon_space.add_child(icon)
 		item.add_child(icon_space)
 		item.add_child(label)
 		$Panel/Legend/Markers.add_child(item)
 
+	var explanation := Label.new()
+	explanation.name = "Explanation"
+	explanation.text = "Faint dots: unexplored connections. Teal / gold / purple: current level 1 / 2 / 3; gray: other levels. Hollow gold circles: fragment hints, including nearby undiscovered rooms. Edge arrows point toward offscreen markers."
+	explanation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	explanation.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	explanation.add_theme_font_size_override("font_size", 16)
+	explanation.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$Panel/Legend.add_child(explanation)
+
+func _fit_legend() -> void:
+	if not is_inside_tree():
+		return
+	var viewport_size := get_viewport().get_visible_rect().size
+	var compact := viewport_size.y <= 480 or viewport_size.x < 800
+	var legend: VBoxContainer = $Panel/Legend
+	var controls: Label = $Panel/Legend/Controls
+	controls.text = "M / Esc / B: close | Move: pan | Wheel / LB / RB: zoom" if compact else "M / Esc: close | Drag / movement keys: pan | Wheel: zoom | N: minimap\nController: View: map | B / Start: close | Left stick: pan | LB / RB: zoom | R3: center | L3: minimap"
+	controls.add_theme_font_size_override("font_size", 12 if compact else 16)
+	$Panel/Legend/Explanation.visible = not compact
+	$Panel/Legend/Markers.add_theme_constant_override("h_separation", 8 if compact else 20)
+	$Panel/Legend/Markers.add_theme_constant_override("v_separation", 2 if compact else 4)
+	for item in $Panel/Legend/Markers.get_children():
+		var label := item.get_child(1) as Label
+		label.text = label.get_meta("short_text" if compact else "full_text")
+		label.add_theme_font_size_override("font_size", 12 if compact else 16)
+	legend.offset_top = -legend.get_combined_minimum_size().y - 8.0
+	view.offset_top = 52.0
+	view.offset_bottom = legend.offset_top - 8.0
 
 func configure(service: AbyssSpecialRooms, state: AbyssExplorationState, size: Vector2i) -> void:
 	close_map()
@@ -160,7 +195,8 @@ func _process(delta: float) -> void:
 	if opened:
 		if _dirty: _refresh_graph()
 		var direction := Input.get_vector("Move Left","Move Right","Move Up","Move Down")
-		if not direction.is_zero_approx(): view.pan_screen(-direction*220.0*delta)
+		if not direction.is_zero_approx():
+			view.pan_screen(-direction*220.0*delta)
 
 func _exit_tree() -> void:
 	close_map()

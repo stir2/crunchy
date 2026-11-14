@@ -44,8 +44,6 @@ var _combo_wedged := false
 var _burst := 0
 var _body_shift := Vector2.ZERO
 var _body_start := Vector2.ZERO
-var _hand_angle := 0.0
-var _hand_angle_start := 0.0
 var _head_tracking := 0.0
 var _fall_left := Vector2.ZERO
 var _fall_right := Vector2.ZERO
@@ -68,7 +66,6 @@ var _dead_morph := 0.0
 const SWIPE_DROP_TIME := 0.30
 const SLAM_X := 486.0
 const CLAW_LIFT := 183.0
-const DRAG_HAND = preload("res://BossSprites/Sweep Attack/bossHandDrag.png")
 const DEAD_SKULL = preload("res://BossSprites/bossDeadSkull.png")
 const DEAD_SKULL_OFFSET := Vector2(241, 83)
 const SKULL_TURN_SHADER_CODE := """shader_type canvas_item;
@@ -134,17 +131,12 @@ const RIGHT_REST := Vector2(527, 265)
 @onready var left_attack: CombatDamageArea = $SwipeHand/Attack
 @onready var right_attack: CombatDamageArea = $ClawHand/Attack
 
-@onready var _drag_sprite := Sprite2D.new()
 var _dead_skull := Sprite2D.new()
 var _head_turn_mat: ShaderMaterial
 var _dead_turn_mat: ShaderMaterial
 
 func _ready() -> void:
 	_setup_skull_layers()
-	_drag_sprite.texture = DRAG_HAND
-	_drag_sprite.centered = false
-	_drag_sprite.offset = Vector2(-69, -6)
-	left.add_child(_drag_sprite)
 	add_to_group("enemies")
 	health.base_max_health = maximum_health
 	health.reset_health()
@@ -251,7 +243,6 @@ func _physics_process(delta: float) -> void:
 	var smooth := t * t * t * (t * (t * 6.0 - 15.0) + 10.0)
 	var sweep_direction := signf(_sweep_to - _sweep_from)
 	var lean := Vector2.ZERO
-	_hand_angle = lerpf(_hand_angle_start, 0.0, smooth)
 	match phase:
 		Phase.REST:
 			left.position = _left_start.lerp(_idle_left(), smooth)
@@ -281,7 +272,6 @@ func _physics_process(delta: float) -> void:
 			var lift := sin(smooth * PI)
 			left.position = _left_start.lerp(_idle_left(), smooth) - Vector2(0, 38 * lift)
 			right.position = _right_start.lerp(_idle_right(), smooth) - Vector2(0, 38 * lift if _combo else 0)
-			_hand_angle += sweep_direction * 0.42 * lift
 		Phase.SLAM_TRACK:
 			right.position = _right_start.lerp(_raised_claw(), smooth)
 			lean = Vector2(-7, -9) * smooth
@@ -343,7 +333,7 @@ func _physics_process(delta: float) -> void:
 			_set_phase(Phase.SWIPE_DRAG, 1.44 if _combo else 1.5)
 		Phase.SWIPE_DRAG:
 			_set_phase(Phase.SWIPE_RECOVER, 2.2 if _combo_wedged else (1.45 if _combo else 1.9))
-		Phase.SWIPE_RECOVER: _set_phase(Phase.SWIPE_RETRACT, 0.66)
+		Phase.SWIPE_RECOVER: _set_phase(Phase.SWIPE_RETRACT, 1.05)
 		Phase.SWIPE_RETRACT, Phase.SLAM_RETRACT: _set_phase(Phase.REST, 0.45 if lower_arena else 0.8)
 		Phase.SLAM_TRACK: _set_phase(Phase.SLAM_LOCK, SLAM_LOCK_TIME)
 		Phase.SLAM_LOCK: _set_phase(Phase.SLAM_STRIKE, SLAM_FALL_TIME)
@@ -379,7 +369,6 @@ func _set_phase(next: Phase, seconds: float) -> void:
 	_left_start = left.position
 	_right_start = right.position
 	_body_start = _body_shift
-	_hand_angle_start = _hand_angle
 	if next == Phase.SWIPE_WINDUP:
 		_right_contact_used = false
 		_combo_landed = false
@@ -571,23 +560,9 @@ func _pose() -> void:
 	$Head.position = _body_shift + Vector2(_head_tracking * 4.0 + _turn_amount * 7.0, sin(_age * 1.1 - 0.3) * 3 + _landing_head_offset + absf(_turn_amount) * 1.5)
 	$Head.rotation = 0.0
 	var shoulder: Vector2 = Vector2(252, 104) + $Body.position
-	var hand_sprite: Sprite2D = $SwipeHand/Sprite
-	var drag_blend := 0.0
-	match phase:
-		Phase.SWIPE_DROP:
-			drag_blend = smoothstep(duration - 0.12, duration, elapsed)
-		Phase.SWIPE_DRAG, Phase.SWIPE_RECOVER:
-			drag_blend = 1.0
-		Phase.SWIPE_RETRACT:
-			drag_blend = 1.0 - smoothstep(0.0, 0.16, elapsed)
-	var wrist_offset := SWIPE_WRIST.lerp(Vector2(4, -76), drag_blend)
-	hand_sprite.rotation = _hand_angle
-	hand_sprite.position = wrist_offset - SWIPE_WRIST.rotated(_hand_angle)
-	hand_sprite.modulate.a = 1.0 - drag_blend
-	_drag_sprite.visible = drag_blend > 0.0
-	_drag_sprite.modulate.a = drag_blend
-	_drag_sprite.transform = Transform2D(_hand_angle, Vector2(-1.0 if sweep_direction() < 0.0 else 1.0, 1.0), 0.0, wrist_offset)
-	var wrist := left.position + wrist_offset
+	# Keep the hand's artwork and wrist fixed relative to its combat rig.
+	# The arm follows this pivot without fading or mirroring a second hand.
+	var wrist := left.position + SWIPE_WRIST
 	var span: Vector2 = wrist - shoulder
 	var elbow: Vector2 = shoulder + span * 0.5 - span.normalized().orthogonal() * 52
 	_fit_bone($UpperArm, Vector2(238, 104), Vector2(156, 110), shoulder, elbow)

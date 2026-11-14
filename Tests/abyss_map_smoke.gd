@@ -133,6 +133,8 @@ func run() -> void:
 	check(graph.nodes[adjacent].color.a < graph.nodes[coords].color.a,"Frontier node is not translucent")
 	for key: Vector2i in graph.nodes:
 		check(key == coords or absi(key.x-coords.x)+absi(key.y-coords.y) == 1,"Map revealed distant unvisited room")
+	var local_graph := model.snapshot(service.level_at(coords), player.position, Rect2i(coords - Vector2i(4, 3), Vector2i(9, 7)), false)
+	check(local_graph.nodes.has(adjacent) and not local_graph.nodes[adjacent].visited, "Minimap lost unexplored frontier")
 	state.visit(world,adjacent)
 	graph = model.snapshot(service.level_at(coords))
 	check(not graph.edges.is_empty(),"Visited neighbor has no graph edge")
@@ -173,6 +175,10 @@ func run() -> void:
 	graph = model.snapshot(1)
 	check(has_marker(graph,"checkpoint",false) and has_marker(graph,"gate",false),"Inactive checkpoint/locked gate markers missing")
 	check(not has_marker(graph,"fragment",true),"Uncollected fragment revealed on map")
+	local_graph = model.snapshot(1, Vector2.ZERO, Rect2i(Vector2i(cp.x, cp.y) - Vector2i(4, 3), Vector2i(9, 7)), false)
+	check(has_marker(local_graph, "checkpoint", false), "Minimap hid a discovered inactive checkpoint")
+	local_graph = model.snapshot(1, Vector2.ZERO, Rect2i(Vector2i(fragment.x, fragment.y) - Vector2i(4, 3), Vector2i(9, 7)), false)
+	check(has_marker(local_graph, "fragment", false), "Minimap hid an uncollected fragment in a visited room")
 	cp.spawn_x = model.room_center(Vector2i(cp.x,cp.y)).x
 	cp.spawn_y = model.room_center(Vector2i(cp.x,cp.y)).y
 	service.state.activate_checkpoint(cp)
@@ -202,6 +208,38 @@ func run() -> void:
 	await tick(20)
 	overlay.close_map()
 	check(abs((player.health._invulnerable_until-Engine.get_physics_frames())-before) <= 1,"Map pause consumed invulnerability")
+	check(overlay.open_map(), "Map failed before layout checks")
+	root.content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
+	root.content_scale_size = Vector2i.ZERO
+	for dimensions in [Vector2i(480, 270), Vector2i(640, 360), Vector2i(824, 789), Vector2i(1920, 1080), Vector2i(720, 1280), Vector2i(320, 568)]:
+		root.size = dimensions
+		await tick(8)
+		var legend: Control = overlay.get_node("Panel/Legend")
+		check(Rect2(Vector2.ZERO, Vector2(dimensions)).grow(1).encloses(legend.get_global_rect()), "Map legend overflow at %s" % dimensions)
+		check(overlay.view.size.y >= dimensions.y * 0.4, "Legend leaves no map space at %s" % dimensions)
+		check(overlay.get_node("Panel/Legend/Markers").visible, "Compact legend symbols are hidden")
+		var large_graph := {"nodes": {}, "edges": [], "markers": [{"kind": "grave", "id": "far", "position": Vector2(500000, 500000), "active": true}]}
+		overlay.view.set_graph(large_graph, 640.0, Vector2.ZERO)
+		overlay.view.zoom_at(0.000001, overlay.view.size * 0.5)
+		check(overlay.view.map_zoom < 0.35, "Large map cannot zoom out below old limit")
+		for point in [Vector2.ZERO, Vector2(500000, 500000)]:
+			check(Rect2(Vector2.ZERO, overlay.view.size).grow(-16).has_point(overlay.view.world_to_screen(point)), "Maximum zoom-out does not fit the whole map")
+		check(overlay._minimap._gate_screen_position(Vector2(500000,500000)).x <= overlay._minimap.size.x, "Offscreen grave pointer escaped minimap")
+		overlay.view.map_zoom = 1.0
+		overlay._refresh_graph()
+	check(overlay._minimap.pin_grave, "Minimap grave guidance disabled")
+	local_graph = model.snapshot(1, Vector2.ZERO, Rect2i(Vector2i(10000, 10000), Vector2i(9, 7)), false)
+	check(has_marker(local_graph, "grave", true), "Minimap lost a grave outside its local rooms")
+	check(overlay._minimap._is_pinned({"kind": "grave"}), "Offscreen grave is not pinned")
+	root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
+	root.content_scale_size = Vector2i(1920, 1080)
+	for dimensions in [Vector2i(480, 270), Vector2i(320, 568), Vector2i(1920, 1080)]:
+		root.size = dimensions
+		await tick(8)
+		var logical_size := root.get_visible_rect().size
+		check(overlay.view.size.y >= logical_size.y * 0.4, "Scaled map lost usable space")
+		check(Rect2(Vector2.ZERO, logical_size).grow(1).encloses(overlay.get_node("Panel/Legend").get_global_rect()), "Scaled legend overflow")
+	overlay.close_map()
 	var saved_visited := state.visited.duplicate(true)
 	# Leave and use the existing village SaveManager flow, isolated from the real slot.
 	runtime.leave()
@@ -220,6 +258,14 @@ func run() -> void:
 	if house._destination_buttons.has(cp.id):
 		house._destination_buttons[cp.id].pressed.emit()
 		check(house._destination_map.selected_checkpoint == cp.id, "Keyboard destination list did not highlight its map marker")
+		root.content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
+		root.content_scale_size = Vector2i.ZERO
+		for dimensions in [Vector2i(480, 270), Vector2i(640, 360), Vector2i(824, 789), Vector2i(1920, 1080), Vector2i(720, 1280), Vector2i(320, 568)]:
+			root.size = dimensions
+			await tick(8)
+			var bounds := Rect2(Vector2.ZERO, Vector2(dimensions))
+			check(bounds.grow(1).encloses(house._descent_paper.get_global_rect()), "Checkpoint panel overflow at %s" % dimensions)
+			check(house._descent_paper.get_global_rect().get_center().distance_to(bounds.get_center()) < 1, "Checkpoint panel not centered at %s" % dimensions)
 		house._close_descent_panel()
 	host.change_scene("res://Scenes/Underground/abyss_runtime.tscn")
 	runtime = host.active_scene

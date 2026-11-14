@@ -1,5 +1,5 @@
 extends Control
-## Optional Day 1 guidance. The highlighted controls remain usable.
+## Contextual guidance, shown on Day 1 or replayed through Help.
 
 const MENU_STYLE = preload("res://Scenes/Menus/menu_style.gd")
 const SKIPPED := "day1_tutorial_skipped"
@@ -9,6 +9,8 @@ const PREP_SEEN := "day1_tutorial_prepare"
 const STAFFING_DONE := "day1_tutorial_staffing"
 const ROUTE_SEEN := "day1_tutorial_route"
 const STAIRS_DONE := "day1_tutorial_stairs"
+const REPLAY_ENABLED := "tutorial_house_enabled"
+const FINALE_SEEN := "tutorial_house_finale_seen"
 
 var house: Node2D
 var _card: PanelContainer
@@ -18,6 +20,17 @@ var _next: Button
 var _skip: Button
 var _targets: Array[Control] = []
 var _step := ""
+
+static func enable_replay(history: Dictionary) -> void:
+	for key in [TOLL_SEEN, FOOD_SEEN, PREP_SEEN, STAFFING_DONE, ROUTE_SEEN, STAIRS_DONE, FINALE_SEEN]:
+		history.erase(key)
+	history[REPLAY_ENABLED] = true
+
+func replay() -> void:
+	enable_replay(GameController.window_history)
+	if not house.village_panel.visible and house.current_panel not in [house.RoomPanel.DESK, house.RoomPanel.STAIRS]:
+		house.set_panel(house.RoomPanel.DESK)
+	_step = ""
 
 func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_IGNORE
@@ -69,10 +82,14 @@ func _process(_delta: float) -> void:
 
 func _current_step() -> String:
 	var history := GameController.window_history
-	if GameController.day != 1 or history.has(SKIPPED) or DialogueManager.is_busy():
+	var replay_enabled := history.has(REPLAY_ENABLED)
+	if (not replay_enabled and (GameController.day != 1 or history.has(SKIPPED))) or DialogueManager.is_busy():
 		return ""
 	if house.refugee_modal.visible or house.sacrifice_modal.visible or house.sleep_dialog.visible:
 		return ""
+	if GameController.boss_defeated or GameController.is_final_day():
+		var objective := "complete" if GameController.boss_defeated else ("investigate" if GameController.monster_missing else "window")
+		return "" if history.get(FINALE_SEEN, "") == objective else objective
 	var village: VillageBlueprintPanel = house.village_panel
 	if village.visible:
 		if history.has(STAFFING_DONE):
@@ -83,7 +100,7 @@ func _current_step() -> String:
 			return "pick_worker"
 		return "assign" if village.selected_building == &"farmer" else "farm"
 	if house.current_panel == house.RoomPanel.STAIRS:
-		if history.has(STAIRS_DONE) or GameController.trips_left < GameController.TRIPS_PER_DAY:
+		if history.has(STAIRS_DONE) or (not replay_enabled and GameController.trips_left < GameController.TRIPS_PER_DAY):
 			return ""
 		return "route" if history.has(ROUTE_SEEN) else "stairs"
 	if house.current_panel != house.RoomPanel.DESK:
@@ -102,6 +119,18 @@ func _update_card() -> void:
 	var village: VillageBlueprintPanel = house.village_panel
 	var next_text := "Next"
 	match _step:
+		"window":
+			_heading.text = "The final day"
+			_body.text = "The toll can no longer be paid with Flesh. Check the Window to find out what has happened."
+			next_text = "Got it"
+		"investigate":
+			_heading.text = "Investigate the Abyss"
+			_body.text = "The monster has left the Window. Prepare your health and potions, then use the Stairs to investigate the Abyss."
+			next_text = "Got it"
+		"complete":
+			_heading.text = "The village is safe"
+			_body.text = "The monster has fallen and the toll has ended. Your campaign is complete."
+			next_text = "Got it"
 		"toll":
 			_heading.text = "Today's toll"
 			_body.text = "Hunt in the Abyss and return to the entrance to bank your Flesh. Bring home %d before you sleep." % GameController.current_quota()
@@ -161,7 +190,11 @@ func _layout_card() -> void:
 		_card.scale = Vector2.ONE
 		var width := minf(610.0, size.x * 0.76)
 		_size_card(width)
-		_card.position = Vector2((size.x - width) * 0.5, size.y * 0.16)
+		var available := (size - Vector2(24, 24)).max(Vector2.ONE)
+		var fit := minf(1.0, minf(available.x / _card.size.x, available.y / _card.size.y))
+		_card.scale = Vector2.ONE * fit
+		var displayed := _card.size * fit
+		_card.position = Vector2((size.x - displayed.x) * 0.5, minf(size.y * 0.16, size.y - displayed.y - 12))
 
 func _size_card(width: float) -> void:
 	var inner_width := width - 72.0
@@ -180,6 +213,7 @@ func _draw() -> void:
 func _advance() -> void:
 	var history := GameController.window_history
 	match _step:
+		"window", "investigate", "complete": history[FINALE_SEEN] = _step
 		"toll": history[TOLL_SEEN] = true
 		"food": history[FOOD_SEEN] = true
 		"prepare": history[PREP_SEEN] = true
@@ -188,4 +222,6 @@ func _advance() -> void:
 		"farm", "assign", "pick_worker", "village_done": history[STAFFING_DONE] = true
 
 func _skip_tutorial() -> void:
+	GameController.window_history.erase(REPLAY_ENABLED)
+	GameController.window_history.erase("tutorial_abyss_enabled")
 	GameController.window_history[SKIPPED] = true

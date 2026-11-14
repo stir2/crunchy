@@ -127,7 +127,14 @@ func run() -> void:
 						spawn.discover()
 						check(service.checkpoint_destination(spawn.definition.id).is_empty(),"Undiscovered activation available as destination")
 						check(spawn.activate(),"Checkpoint activation failed")
+						if int(spawn.definition.level) > 1 and not service.state.unlocked_levels.get(spawn.definition.world_level, false):
+							check(service.checkpoint_destination(spawn.definition.id).is_empty(), "Locked level exposed a checkpoint destination")
+							service.state.collect_fragment({"id": "checkpoint-access-%d" % spawn.definition.level, "world_level": "checkpoint-test-access"})
+							check(service.state.unlock_level(spawn.definition.world_level, "checkpoint-test-access", 1), "Checkpoint level unlock failed")
 						var destination := service.checkpoint_destination(spawn.definition.id)
+						check(not destination.is_empty(), "Activated checkpoint destination missing")
+						if destination.is_empty():
+							continue
 						check(destination.room_coords == coords and destination.spawn_position == room.position+spawn.local_position,"Checkpoint destination transform wrong")
 						check(service.request_checkpoint_chunk(spawn.definition.id),"Chunk request failed")
 	for coords in checkpoint_coords:

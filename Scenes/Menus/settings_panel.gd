@@ -5,6 +5,7 @@ signal closed(save_error: String)
 const MENU_STYLE = preload("res://Scenes/Menus/menu_style.gd")
 const AUDIO_LABELS := [&"Master", &"Music", &"Sound effects"]
 
+var _layout: Control
 var _paper: PanelContainer
 var _content: VBoxContainer
 var _fullscreen_button: Button
@@ -15,8 +16,15 @@ var _volume_labels: Dictionary = {}
 
 
 func _ready() -> void:
+	# Keep the paper's minimum size from enlarging this full-screen container.
+	_layout = Control.new()
+	_layout.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	add_child(_layout)
 	_paper = PanelContainer.new()
-	add_child(_paper)
+	_layout.add_child(_paper)
+	_paper.resized.connect(_position_paper)
 	_content = VBoxContainer.new()
 	_paper.add_child(_content)
 
@@ -43,11 +51,12 @@ func _ready() -> void:
 
 	var done_button := Button.new()
 	done_button.text = "Done"
-	done_button.pressed.connect(_close)
+	done_button.pressed.connect(close)
 	_content.add_child(done_button)
 
 	get_viewport().size_changed.connect(_fit_layout)
 	resized.connect(queue_redraw)
+	resized.connect(_fit_layout)
 	_fit_layout()
 	hide()
 
@@ -67,12 +76,12 @@ func open() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed("ui_cancel"):
+	if visible and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("Controller Pause")):
 		get_viewport().set_input_as_handled()
-		_close()
+		close()
 
 
-func _close() -> void:
+func close() -> void:
 	var save_error := ""
 	if GameSettings.save() != OK:
 		save_error = "Could not save settings. Changes apply for this session."
@@ -129,7 +138,8 @@ func _add_audio_row(bus: StringName, title: String) -> void:
 func _fit_layout() -> void:
 	if not is_inside_tree():
 		return
-	var pixel_mode := get_viewport().get_visible_rect().size.y <= 480
+	var viewport_size := get_viewport().get_visible_rect().size
+	var pixel_mode := viewport_size.y <= 480 or viewport_size.x <= 720
 	theme = MENU_STYLE.make_confirmation_theme(pixel_mode)
 	var rule := StyleBoxLine.new()
 	rule.color = Color("866446")
@@ -161,3 +171,17 @@ func _fit_layout() -> void:
 	for row in _audio_rows:
 		row.get_child(0).custom_minimum_size.x = 112 if pixel_mode else 200
 		row.get_child(2).custom_minimum_size.x = 48 if pixel_mode else 90
+
+	_paper.reset_size()
+	_position_paper.call_deferred()
+
+
+func _position_paper() -> void:
+	if not is_inside_tree() or _paper == null:
+		return
+	var viewport_size := get_viewport_rect().size
+	var paper_size := _paper.size
+	var available := (viewport_size - Vector2(24, 24)).max(Vector2.ONE)
+	var factor := minf(1.0, minf(available.x / maxf(1.0, paper_size.x), available.y / maxf(1.0, paper_size.y)))
+	_paper.scale = Vector2.ONE * factor
+	_paper.position = -paper_size * factor * 0.5 # The zero-size layout is centered by CenterContainer.

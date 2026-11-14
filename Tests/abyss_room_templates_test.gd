@@ -43,6 +43,22 @@ func _initialize() -> void:
 	call_deferred("run")
 
 
+func corridor_fixture(id: String) -> AbyssRoomTemplateMetadata:
+	var metadata := load("res://Scenes/Underground/Rooms/Metadata/%s.tres" % id).duplicate(true) as AbyssRoomTemplateMetadata
+	var room := load("res://Scenes/Underground/Rooms/room_base.tscn").instantiate() as AbyssAuthoredRoom
+	room.room_size = config.room_size
+	var solid := room.get_node("Solid") as TileMapLayer
+	for y in range(config.room_size.y):
+		for x in range(config.room_size.x):
+			var corridor := y in range(4, 7) if id == "packed_horizontal" else x in range(4, 7)
+			if not corridor:
+				solid.set_cell(Vector2i(x, y), 0, Vector2i.ZERO)
+	metadata.scene = PackedScene.new()
+	check(metadata.scene.pack(room) == OK, "Could not pack corridor fixture")
+	room.free()
+	return metadata
+
+
 func run() -> void:
 	# The example gallery deliberately keeps its original layout.
 	config.room_size = AbyssRegionConfig.LEGACY_ROOM_SIZE
@@ -50,7 +66,12 @@ func run() -> void:
 	routes.opening_width = 3
 	routes.horizontal_offsets = Vector2i(5, 18)
 	routes.vertical_offsets = Vector2i(5, 18)
-	registry = load("res://Scenes/Underground/Rooms/example_registry.tres")
+	registry = AbyssRoomTemplateRegistry.new()
+	var horizontal := corridor_fixture("packed_horizontal")
+	var vertical_metadata := corridor_fixture("packed_vertical")
+	var open_cavern := load("res://Scenes/Underground/Rooms/Metadata/open_cavern.tres") as AbyssRoomTemplateMetadata
+	var transition := load("res://Scenes/Underground/Rooms/Metadata/transition_west.tres") as AbyssRoomTemplateMetadata
+	registry.templates = [horizontal, vertical_metadata, open_cavern, transition]
 	var selector := AbyssRoomTemplateSelector.new(registry, 12345)
 	check(selector.registration_errors.is_empty(), "Example registration failed: %s" % selector.registration_errors)
 	var authored_registry: AbyssRoomTemplateRegistry = load("res://Scenes/Underground/Rooms/authored_registry.tres")
@@ -67,7 +88,7 @@ func run() -> void:
 		# a transition-only registry to demonstrate the intentionally open face.
 		if data[3] == "transition_west":
 			var transition_registry := AbyssRoomTemplateRegistry.new()
-			transition_registry.templates = [registry.templates[3]]
+			transition_registry.templates = [transition]
 			selected = AbyssRoomTemplateSelector.new(transition_registry, 12345).select(req)
 		check(selected.template_id == StringName(data[3]), "Wrong example selected: %s" % data[3])
 		var scene := AbyssRoomSceneInstantiator.instantiate_authored(selected)
@@ -82,7 +103,7 @@ func run() -> void:
 		check(fallback.global_seed == 12345 and fallback.room_seed == selector.select(requirements(ids)).room_seed, "Fallback seed missing or unstable")
 		check(AbyssRoomSceneInstantiator.instantiate_authored(fallback) == null, "Fallback unexpectedly built geometry")
 	var transition_registry := AbyssRoomTemplateRegistry.new()
-	transition_registry.templates = [registry.templates[3]]
+	transition_registry.templates = [transition]
 	var transition_selector := AbyssRoomTemplateSelector.new(transition_registry, 12)
 	check(transition_selector.select(requirements(["east:0"], Vector2i.ZERO, AbyssRoomData.Region.PACKED, 0)).scene == null, "Transition leaked into packed neighbor")
 	var unknown := requirements(["east:0"], Vector2i.ZERO, AbyssRoomData.Region.PACKED, 8)
@@ -108,7 +129,7 @@ func run() -> void:
 	check(selector.select(custom).scene == null, "Room size mismatch accepted")
 	# Weighted choice, input-order independence, and adding templates via registry.
 	var weighted := AbyssRoomTemplateRegistry.new()
-	var a := registry.templates[0].duplicate(true) as AbyssRoomTemplateMetadata
+	var a := horizontal.duplicate(true) as AbyssRoomTemplateMetadata
 	var b := a.duplicate(true) as AbyssRoomTemplateMetadata
 	a.template_id = &"a"
 	a.selection_weight = 1
@@ -136,11 +157,11 @@ func run() -> void:
 	check(b_count > 650 and b_count < 850 and seed_changes > 100, "Weighted seeded selection did not vary as expected")
 	# One template can declare several realizable combinations with scene overrides.
 	var combo_registry := AbyssRoomTemplateRegistry.new()
-	var combo := registry.templates[0].duplicate(true) as AbyssRoomTemplateMetadata
+	var combo := horizontal.duplicate(true) as AbyssRoomTemplateMetadata
 	combo.template_id = &"two_combinations"
-	var vertical := registry.templates[1].opening_combinations[0].duplicate(true) as AbyssRoomOpeningProfile
+	var vertical := vertical_metadata.opening_combinations[0].duplicate(true) as AbyssRoomOpeningProfile
 	vertical.variant_id = &"vertical"
-	vertical.scene = registry.templates[1].scene
+	vertical.scene = vertical_metadata.scene
 	combo.opening_combinations.append(vertical)
 	combo_registry.templates = [combo]
 	var combo_selector := AbyssRoomTemplateSelector.new(combo_registry, 1)
@@ -151,11 +172,11 @@ func run() -> void:
 	var duplicate_selector := AbyssRoomTemplateSelector.new(duplicate, 1)
 	check(not duplicate_selector.registration_errors.is_empty() and duplicate_selector.select(requirements(["west:0", "east:0"])).scene == null, "Duplicate stable IDs were not excluded")
 	# Geometry authoring errors are excluded before they can create extra holes.
-	var invalid := registry.templates[0].duplicate(true) as AbyssRoomTemplateMetadata
+	var invalid := horizontal.duplicate(true) as AbyssRoomTemplateMetadata
 	invalid.opening_combinations[0].openings = [&"east:0"]
 	invalid.opening_combinations[0].opening_tiles.erase(&"west:0")
 	check(not AbyssRoomTemplateValidator.validate(invalid).is_empty(), "Undeclared physical hole not detected")
-	invalid = registry.templates[0].duplicate(true) as AbyssRoomTemplateMetadata
+	invalid = horizontal.duplicate(true) as AbyssRoomTemplateMetadata
 	invalid.opening_combinations[0].opening_tiles[&"east:0"] = Vector2i(11, 8)
 	check(not AbyssRoomTemplateValidator.validate(invalid).is_empty(), "Blocked slot marker not detected")
 	for metadata in registry.templates:
